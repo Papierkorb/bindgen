@@ -1,0 +1,155 @@
+# Configuration template - Base your bindgen configuration on this!
+
+# A note on templates: Some values are "templated".  This means they're of type
+# `String`.  All occurences of the percent-sign ("%") will be replaced by a
+# computed value.
+
+# Defines the `module X` into which *all* code will be put.
+#   Mandatory!
+module: MyStuff
+
+# Defines the `ld_flags` value for the `@[Link]` directive of the generated `lib`.
+# `%` will be replaced by the path to the base-directory of your project,
+# relative to the path of the generated `.cr` file.
+library: "%/ext/binding.a"
+
+# Map of classes to bind to.  A class depending on another class should follow
+# *after* its dependency.
+classes:
+  # Maps from the name of the C++ class, to the Crystal class.
+  CppClassName: CrystalClassName
+
+# Map of enums to copy.
+enums:
+  # Maps from the name of the C++ enum, to the Crystal enum.
+  # `CrystalEnumName` can reside in a wrapped class.
+  CppEnumName: CrystalEnumName
+
+# List of container-types to wrap.  (Keyword: C++ Templates)
+containers:
+  - class: Name of the C++ class
+    type: "Sequential" or "Associative"
+    # access_method: C++ item access method.  Defaults to `at`.
+    # size_method: C++ container size method.  Defaults to `size`.
+    # push_method: C++ item append method.  Defaults to `push_back`.
+    instantiations: # All wanted instantiations of this container
+      - [ "C++ type name" ]
+      # - [ "..." ]
+
+# Output file configuration
+output:
+  # C++ output file path  (Mandatory!)
+  cpp: ext/my_bindings.cpp
+  # Crystal output file path  (Mandatory!)
+  crystal: src/my_lib/binding.cr
+  # C++ file preamble.  (Optional!)
+  cpp_preamble: |
+    #include "bindgen_helper.hpp"
+  # Command to build the C++ bindings.  (Optional!)
+  # Will be executed as-written in the C++ output directory.
+  cpp_build: make
+
+# Configuration for the C++ parser.
+parser:
+  # Path to the `bindgen-clang` binary.  (Optional!)
+  binary: path/to/bindgen-clang
+  # Additional Clang flags.  Example for C++11:
+  flags:
+    - -x
+    - c++
+    - -std=c++11
+  # List of files to include.  Can be relative to search-paths.
+  files:
+    - my_lib.h
+  # List of incldue search-paths.  Example points to Clangs standard library.
+  includes:
+    - /usr/lib/clang/4.0.1/include/
+  # Additional "#define"s passed to Clang.
+  defines:
+    - __STDC_CONSTANT_MACROS
+    - __STDC_LIMIT_MACROS
+
+# Additional type configuration, of both explicitly wrapped types and all other
+# found types.  All fields are optional.
+# Commonly referred to "type rules", or just "rules" in the source code.
+types:
+  FullCppTypeName: # Full name of the C++ Type (Like `std::string`)
+    # Ignore everything else in this map, and look-up the other type for rules.
+    alias_for: FullCppTypeName
+
+    # If all methods found using this type shall be ignored.
+    # Useful to quickly get started.
+    ignore: true | false
+
+    # Override the kind of this type.  Changes passing-behaviour.
+    # Defaults to `Class`.
+    kind: Class | Struct | Value | Enum
+
+    # Name of this type in the wrapper.
+    crystal_type: CrystalTypeName
+
+    # Name of this type in the C++ binding.  Useful when used with converters.
+    cpp_type: CppTypeName
+
+    # Name of this type in `lib Binding`.
+    binding_type: CrystalTypeName
+
+    # Inserted into C++ to turn the type into something the `binding_type` will
+    # be able to understand.  Template value is the whole C++ call.
+    from_cpp: "convert_from_cpp(%)"
+
+    # Inserted into C++ to turn the `binding_type` into something C++ can
+    # understand.  Template value is the C++ argument name.
+    to_cpp: "convert_to_cpp(%)"
+
+    # Crystal converter module used to turn the binding-type into a crystal-type
+    # and back.
+    #
+    # module TheConverter
+    #   def wrap(value : CrystalType) : BindingType
+    #   def unwrap(value : BindingType) : CrystalType
+    # end
+    converter: TheConverter
+
+    # Pendant to `to_cpp` in Crystal.  `converter` takes precedence.
+    # Template value is the whole binding call.
+    to_crystal: "CrystalType.from_cpp(%)"
+
+    # Pendant to `from_cpp` in Crystal.  `converter` takes precedence.
+    # Template value is the wrapper argument.
+    from_crystal: "%.to_cpp"
+
+    # Override of the pass-by semantics.  Use with caution.  Usually not
+    # required.  Defaults to `Original`.
+    pass_by: Original | Reference | Pointer | Value
+
+    # Override of the pass-by semantics only in the user-facing wrapper code.
+    # Defaults to the value of `pass_by:` from above.
+    wrapper_pass_by: Original | Reference | Pointer | Value
+
+    # Enable or disable check if this type should be sub-classed to allow
+    # overriding virtual methods of the wrapped type in Crystal.
+    # If the type has no virtual methods, no sub-class will be generated.
+    # Defaults to `true`.
+    sub_class: true | false
+
+    # Copy the read structure fields over to Crystal.  Useful for simple C-style
+    # structures.  `struct` will end up in `Binding::BindingName`.
+    # Defaults to `false`.
+    copy_structure: true | false
+
+    # Treat this type as built-in type in C++ and Crystal.
+    # Defaults to `false`.
+    builtin: true | false
+
+    # Generate the user-facing wrapper class for this type.
+    # Defaults to `true`.
+    generate_wrapper: true | false
+
+    # Generate the `fun` bindings of all wrapped methods of this type.
+    # Defaults to `true`.
+    generate_binding: true | false
+
+    # List of methods to ignore in only this type when wrapping.
+    ignore_methods:
+      - some_method_name
