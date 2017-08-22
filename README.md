@@ -54,11 +54,15 @@ Read the `TEMPLATE.yml` for configuration documentation.
 | Override virtual methods from Crystal            | **YES** |
 | Abstract classes                                 | **YES** |
 | Multiple inheritance wrapping                    | **YES** |
-| Qt signals                                       | **YES** |
+| Qt integration                                   |         |
+|  +- QObject signals                              | **YES** |
+|  +- QFlags types                                 | **YES** |
+|  +- QMetaObject generation (mimic `moc`)         |   TBD   |
 | `#define` fake enumerations                      |   TBD   |
 | Global functions                                 |   TBD   |
 | Custom (de-)allocators                           |   TBD   |
 | Copying in-source docs                           |   TBD   |
+| Platform specific type binding rules             |   TBD   |
 
 ## Name rewriting rules
 
