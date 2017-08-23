@@ -8,6 +8,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Driver/Options.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/AST.h"
 #include <iostream>
 #include <sstream>
@@ -23,7 +24,6 @@ static llvm::cl::OptionCategory BindgenCategory("bindgen options");
 static std::unique_ptr<llvm::opt::OptTable> Options(clang::driver::createDriverOptTable());
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
-
 
 class RecordMatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
@@ -137,12 +137,7 @@ public:
 		}
 
 		for (int i = 0; i < method->getNumParams(); i++) {
-			Argument arg;
-
-			auto descriptor = method->parameters()[i];
-			qualTypeToType(arg, descriptor->getType(), ctx);
-			arg.name = descriptor->getQualifiedNameAsString();
-			arg.hasDefault = descriptor->hasDefaultArg();
+			Argument arg = processFunctionParameter(method->parameters()[i]);
 
 			if (arg.hasDefault && m.firstDefaultArgument < 0)
 				m.firstDefaultArgument = i;
@@ -152,6 +147,60 @@ public:
 
 		// And we're done with this method!
 		this->m_class.methods.push_back(m);
+	}
+
+	Argument processFunctionParameter(const clang::ParmVarDecl *decl) {
+		clang::ASTContext &ctx = decl->getASTContext();
+		Argument arg;
+
+		clang::QualType qt = decl->getType();
+		qualTypeToType(arg, qt, ctx);
+		arg.name = decl->getQualifiedNameAsString();
+		arg.hasDefault = decl->hasDefaultArg();
+		arg.kind = Argument::TerminalKind;
+		arg.terminal_value = JsonStream::Null;
+
+		// If the parameter has a default value, try to figure out this value.  Can
+		// fail if e.g. the call has side-effects (Like calling another method).  Will
+		// work for constant expressions though, like `true` or `3 + 5`.
+		if (arg.hasDefault) {
+			tryReadDefaultArgumentValue(arg, qt, ctx, decl->getDefaultArg());
+		}
+
+		return arg;
+	}
+
+	void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt, clang::ASTContext &ctx, const clang::Expr *expr) {
+		clang::Expr::EvalResult result;
+
+		if (!expr->EvaluateAsRValue(result, ctx)) {
+			return; // Failed to evaluate.
+		}
+
+		if (result.HasSideEffects || result.HasUndefinedBehavior) {
+			return; // Don't accept if there are side-effects or undefined behaviour.
+		}
+
+		if (qt->isPointerType()) {
+			// For a pointer-type, just store if it was `nullptr` (== true).
+			arg.kind = Argument::BoolKind;
+			arg.bool_value = result.Val.isNullPointer();
+		} else if (qt->isBooleanType()) {
+			arg.kind = Argument::BoolKind;
+			arg.bool_value = result.Val.getInt().getBoolValue();
+		} else if (qt->isIntegerType()) {
+			const llvm::APSInt &v = result.Val.getInt();
+			int64_t i64 = v.getExtValue();
+
+			arg.kind = qt->isSignedIntegerType() ? Argument::IntKind : Argument::UIntKind;
+			if (qt->isSignedIntegerType())
+				arg.int_value = i64;
+			else // Is there better way?
+				arg.uint_value = static_cast<uint64_t>(i64);
+		} else if (qt->isFloatingType()) {
+			arg.kind = Argument::DoubleKind;
+			arg.double_value = result.Val.getFloat().convertToDouble();
+		}
 	}
 
 	void runOnRecord(const clang::CXXRecordDecl *record) {
@@ -304,7 +353,7 @@ public:
 	BindgenASTConsumer() {
 		using namespace clang::ast_matchers;
 
-		for (std::string &className : ClassList) {
+		for (const std::string &className : ClassList) {
 			DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
 			RecordMatchHandler *handler = new RecordMatchHandler(className);
@@ -312,7 +361,7 @@ public:
 			this->m_classHandlers.push_back(handler);
 		}
 
-		for (std::string &enumName : EnumList) {
+		for (const std::string &enumName : EnumList) {
 			DeclarationMatcher enumMatcher = enumDecl(hasName(enumName)).bind("enumDecl");
 			DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 

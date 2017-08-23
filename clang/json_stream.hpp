@@ -94,6 +94,14 @@ public:
 		return *this << object.ptr;
 	}
 
+	/* // Use once C++17 is enabled.
+	template< typename ... Types >
+	JsonStream &operator<<(const std::variant< Types ... > &variant) {
+		std::visit([this](const auto &v){ *this << v; }, variant);
+		return *this;
+	}
+	*/
+
 	JsonStream &operator<<(Terminal terminal) {
 		switch (terminal) {
 			case ObjectBegin: this->m_out << "{"; break;
