@@ -13,8 +13,8 @@ module: MyStuff
 # relative to the path of the generated `.cr` file.
 library: "%/ext/binding.a"
 
-# Map of classes to bind to.  A class depending on another class should follow
-# *after* its dependency.
+# Map of classes to bind to.  A class inheriting another class should follow
+# *after* that base-class.
 classes:
   # Maps from the name of the C++ class, to the Crystal class.
   CppClassName: CrystalClassName
