@@ -11,7 +11,9 @@ module Bindgen
       # to the *method*.  Otherwise, it's useful to generate a wrapper method.
       def analyze(method : Parser::Method, instance_name = nil, prefix = nil) : Call
         arguments = method.arguments.map_with_index do |arg, idx|
-          pass_to_wrapper(arg).to_argument(argument_name(arg, idx))
+          name = argument_name(arg, idx)
+          result = pass_to_wrapper(arg)
+          result.to_argument(name, default: arg.value)
         end
 
         result = pass_from_wrapper(method.return_type, method.any_constructor?)
