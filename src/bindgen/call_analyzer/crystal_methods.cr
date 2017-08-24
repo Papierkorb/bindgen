@@ -49,7 +49,7 @@ module Bindgen
 
       # Computes a result for passing *type* from Crystal to C++.
       def pass_to_binding(type : Parser::Type) : Call::Result
-        pass_to(type) do |is_ref, ptr, type_name|
+        pass_to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
             type_name = binding_typename(type)
@@ -59,13 +59,13 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          { is_ref, ptr, type_name, template }
+          { is_ref, ptr, type_name, template, false }
         end
       end
 
       # Computes a result for passing *type* to the wrapper.
       def pass_to_wrapper(type : Parser::Type) : Call::Result
-        pass_to(type) do |is_ref, ptr, type_name|
+        pass_to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             type_name = qualified_wrapper_typename(type)
 
@@ -78,7 +78,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          { is_ref, ptr, type_name, nil }
+          { is_ref, ptr, type_name, nil, nilable }
         end
       end
 
@@ -88,6 +88,7 @@ module Bindgen
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         type_name = type.base_name
+        nilable = type.nilable?
 
         # If the method expects a value, but we don't copy its structure, we pass
         # a reference to it instead.
@@ -97,7 +98,7 @@ module Bindgen
         end
 
         # Hand-off
-        is_ref, ptr, type_name, template = yield is_ref, ptr, type_name
+        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
 
         Call::Result.new(
           type: type,
@@ -105,25 +106,26 @@ module Bindgen
           reference: is_ref,
           pointer: { 0, ptr }.max,
           conversion: template,
+          nilable: nilable,
         )
       end
 
       # Computes a result for passing *type* from C++ to Crystal.
       def pass_from_binding(type : Parser::Type, is_constructor = false) : Call::Result
-        pass_from(type) do |is_ref, ptr, type_name|
+        pass_from(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             template = type_template(rules.converter, rules.to_crystal, "unwrap")
             type_name = binding_typename(type)
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
-          { is_ref, ptr, type_name, template }
+          { is_ref, ptr, type_name, template, false }
         end
       end
 
       # Computes a result for passing *type* from the wrapper to the user.
       def pass_from_wrapper(type : Parser::Type, is_constructor = false) : Call::Result
-        pass_from(type) do |is_ref, ptr, type_name|
+        pass_from(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             type_name, in_lib = wrapper_typename(type)
             if in_lib
@@ -143,7 +145,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          { is_ref, ptr, type_name, template }
+          { is_ref, ptr, type_name, template, nilable }
         end
       end
 
@@ -153,6 +155,7 @@ module Bindgen
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         type_name = type.base_name
+        nilable = type.nilable?
 
         # TODO: Check for copy-constructor.
         if is_constructor && is_copied
@@ -164,7 +167,7 @@ module Bindgen
         end
 
         # Hand-off
-        is_ref, ptr, type_name, template = yield is_ref, ptr, type_name
+        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
         ptr += 1 if is_ref # Translate reference to pointer
 
         Call::Result.new(
@@ -173,6 +176,7 @@ module Bindgen
           reference: is_ref,
           pointer: { 0, ptr }.max,
           conversion: template,
+          nilable: nilable,
         )
       end
 
