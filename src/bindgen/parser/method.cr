@@ -54,21 +54,38 @@ module Bindgen
         @type.constructor? || @type.copy_constructor?
       end
 
-      # Yields all variants of this method, going through an increasing level of default arguments.
+      # Yields all variants of this method, going through an increasing level of
+      # default arguments.  It will respect exposed default-values.
       #
-      # A C++ method like `int foo(int a, int b = 1, int c = 2)` would yield three methods like:
-      # * `int foo(int a, int b, int c)`
-      # * `int foo(int a, int b)`
-      # * `int foo(int a)`
+      # A C++ method like `int foo(int a, int b = 1, std::string c = "foo")`
+      # would yield two methods like:
+      # * `int foo(int a, int b, std::string c)`
+      # * `int foo(int a, int b = 1)`
+      #
+      # Note that only built-in types (These are: Integers, Floats and Booleans)
+      # support an exposed default value.  For other types (Like `std::string`
+      # in the example), no default value will be set.
+      #
+      # Also see `#find_variant_splits` for the algorithm.
       def variants
-        return self if private?
+        first_default = @firstDefaultArgument || @arguments.size
 
-        first_def = @firstDefaultArgument || @arguments.size
-        (first_def..@arguments.size).each do |idx|
-          first = first_def
+        find_variant_splits.each do |idx|
+          # Adjust yielded Methods `@firstDefaultArgument` to the correct value.
+          first = first_default
           first = nil if first >= idx
 
           args = @arguments[0...idx]
+          if without_until = args.rindex{|arg| !arg.has_exposed_default?}
+            args.map_with_index! do |arg, idx|
+              if idx <= without_until
+                arg.without_default
+              else
+                arg
+              end
+            end
+          end
+
           variant = Method.new(
             type: @type,
             access: @access,
@@ -94,6 +111,30 @@ module Bindgen
         list = [ ] of Method
         variants{|variant| list << variant}
         list
+      end
+
+      # Finds the indices in `@arguments` `#variants` should yield.
+      private def find_variant_splits
+        first_default = @firstDefaultArgument
+        return { @arguments.size } if first_default.nil?
+
+        # If we're here, the method has default arguments.
+        splits = [ ] of Int32
+        seen_non_exposed = false
+
+        # Split if the argument has a default value (In C++), but its default
+        # value is *not* exposed to Crystal.
+        @arguments.each_with_index do |arg, idx|
+          next unless arg.has_default? # Skip leading non-defaults
+          seen_non_exposed ||= !arg.has_exposed_default?
+
+          # Split just before an argument with an non-exposed default.
+          splits << idx if seen_non_exposed
+        end
+
+        # Add the variant of the whole method.
+        splits << @arguments.size
+        splits
       end
 
       # Try to deduce if this is a getter.
