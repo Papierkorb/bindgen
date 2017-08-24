@@ -24,6 +24,11 @@ module Bindgen
         pointer: Int32,
         baseName: String,
         fullName: String,
+        nilable: {
+          type: Bool,
+          key: "acceptsNull",
+          default: false,
+        },
         template: {
           type: Template,
           nilable: true,
@@ -41,6 +46,7 @@ module Bindgen
         baseName: "void",
         fullName: "void",
         template: nil,
+        nilable: false,
       )
 
       # Returns a `Type` of a C++ built-in type *cpp_name*.
@@ -55,6 +61,7 @@ module Bindgen
           baseName: cpp_name,
           fullName: cpp_name,
           template: nil,
+          nilable: false,
         )
       end
 
@@ -94,13 +101,17 @@ module Bindgen
           baseName: name.strip,
           fullName: type_name,
           template: nil,
+          nilable: false,
         )
       end
 
       def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind
 
-      def initialize(@baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Kind::Class, @template = nil)
+      def initialize(@baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Kind::Class, @template = nil, @nilable = false)
       end
+
+      # Is this type nilable?  For compatibility with `Argument`.
+      getter? nilable : Bool
 
       # Is this type constant?
       def const?

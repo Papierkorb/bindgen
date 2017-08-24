@@ -89,7 +89,7 @@ module Bindgen
         self
       end
 
-      # Non-yielding version of `#variant`.
+      # Non-yielding version of `#variants`.
       def variants : Array(Method)
         list = [ ] of Method
         variants{|variant| list << variant}

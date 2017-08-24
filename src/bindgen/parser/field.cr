@@ -16,6 +16,15 @@ module Bindgen
         pointer: Int32,
         baseName: String,
         fullName: String,
+        nilable: {
+          type: Bool,
+          key: "acceptsNull",
+          default: false,
+        },
+        template: {
+          type: Template,
+          nilable: true,
+        },
 
         # Field part
         access: AccessSpecifier,
