@@ -43,7 +43,8 @@ Read the `TEMPLATE.yml` for configuration documentation.
 |  +- Destructor                                   | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
-| Overloaded methods                               | **YES** |
+| Overloaded methods (Also default arguments)      | **YES** |
+| Copying default argument values (Builtin types)  | **YES** |
 | Enumerations                                     | **YES** |
 | Copying structures                               | **YES** |
 | Custom type conversions between C/++ and Crystal | **YES** |
