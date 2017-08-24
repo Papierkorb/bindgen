@@ -1,11 +1,29 @@
 module Bindgen
   module CallAnalyzer
     # Shared code used by call generators calling from or to C++.
+    #
+    # These are pure C++-world methods.  Do not use for Crystal-world code.
     module CppMethods
       include Helper
       extend self
 
       # Computes a result for passing *type* from Crystal to C++.
+      #
+      # The primary job of this method is to figure out how to pass something of
+      # *type* over to C++.  It doesn't matter if this is a result from a method
+      # or an argument for this.  It also signals how a value of this type shall
+      # be handled by the receiver, e.g., if conversions apply (Which?).
+      #
+      # The method responsible for the opposite direction is `#pass_to_crystal`.
+      #
+      # Pass rules:
+      # 1. The type is a value-type and passed by-value
+      #   a. The type is copied? Then pass by-value.
+      #   b. Else, pass by-reference.
+      # 2. The type is passed by-reference
+      #   a. Pass by-reference
+      # 2. The type is passed by-pointer
+      #   a. Pass by-pointer
       def pass_to_cpp(type : Parser::Type) : Call::Result
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
@@ -36,6 +54,21 @@ module Bindgen
       end
 
       # Computes a result for passing *type* from C++ to Crystal.
+      # Also see `#pass_to_cpp` for the reverse direction.
+      # See `#passthrough_to_crystal` to call Crystal from C++.
+      #
+      # Set *is_constructor* to `true` if this is a return-result of a method
+      # and this method is a constructor.
+      #
+      # Pass rules:
+      # 1. If *is_constructor* and the type is copied
+      #   a. Then pass by-value.  (See `#generate_method_name` too)
+      # 2. If pass by-reference
+      #   a. Invoke the types copy-constructor and pass by-pointer.
+      # 3. If pass by-value but the type is not copied
+      #   a. Invoke the types copy-constructor and pass by-pointer.
+      # 4. In all other cases
+      #   a. Pass by-reference or by-pointer as defined by *type*.
       def pass_to_crystal(type : Parser::Type, is_constructor = false) : Call::Result
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
@@ -72,6 +105,11 @@ module Bindgen
 
       # Computes a result which is directly usable from C++ code, without
       # changes, and passes it through to crystal using conversion.
+      #
+      # The pass rules are similar to `#pass_to_crystal`.  The primary
+      # difference is that this version has no special handling of constructors.
+      #
+      # TODO: Check if this can be merged with `#pass_to_crystal`.
       def passthrough_to_crystal(type : Parser::Type)
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
@@ -99,8 +137,18 @@ module Bindgen
         )
       end
 
-      # Generates the C++ *method* name.
-      def generate_method_name(method, klass, self_var)
+      # Generates the C++ *method* name.  The class name is not taken from
+      # *method* to support sub-classing: The user doesn't really know we
+      # sub-classed the real class, and in these cases *klass* contains the
+      # actual name (Something like `BgInherit_CLASSNAME`).
+      #
+      # If this kind of method requires an instance, it will use *self_var* and
+      # use `->` on it.
+      #
+      # If the *method* is any constructor, and the type is copied, the
+      # constructor will be called without `new`, effectively returning a value.
+      # Otherwise, a normal `new` is used to return a pointer.
+      def generate_method_name(method, klass : String, self_var : String)
         case method
         when .copy_constructor?, .constructor?
           if is_type_copied?(method.class_name)
