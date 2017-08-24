@@ -15,8 +15,12 @@ module Bindgen
       # Type to use for passing
       getter type_name : String
 
+      # Is this expression nil-able?  A type is only nil-able if the wrapped
+      # type is an object-type (`Reference` in Crystal), and the C++-world
+      # accepts this pointer being `nullptr`.
+      getter? nilable : Bool
 
-      def initialize(@type, @reference, @pointer, @type_name)
+      def initialize(@type, @reference, @pointer, @type_name, @nilable)
       end
     end
 
@@ -26,11 +30,11 @@ module Bindgen
       # ready to be returned back.
       getter conversion : String?
 
-      def initialize(@type, @type_name, @reference, @pointer, @conversion)
+      def initialize(@type, @type_name, @reference, @pointer, @conversion, @nilable = false)
       end
 
       # Converts the result into an argument of *name*.
-      def to_argument(name : String) : Argument
+      def to_argument(name : String, default = nil) : Argument
         call = name
         templ = @conversion # Conversion template
         call = Util.template(templ, name) if templ
@@ -42,6 +46,8 @@ module Bindgen
           call: call,
           reference: @reference,
           pointer: @pointer,
+          nilable: @nilable,
+          default_value: default,
         )
       end
     end
@@ -52,6 +58,7 @@ module Bindgen
       getter method : Parser::Method
 
       def initialize(@method, @type_name, @reference = false, @pointer = 0, @conversion = nil)
+        @nilable = false
         @type = @method.return_type
       end
 
@@ -81,8 +88,10 @@ module Bindgen
       # How to use the argument variable.
       getter call : String
 
+      # Default value for this argument.
+      getter default_value : Parser::Argument::DefaultValueTypes?
 
-      def initialize(@type, @type_name, @name, @call, @reference = false, @pointer = 0)
+      def initialize(@type, @type_name, @name, @call, @reference = false, @pointer = 0, @default_value = nil, @nilable = false)
       end
     end
 
@@ -95,6 +104,8 @@ module Bindgen
       getter method : Parser::Method
 
       def initialize(@method, @type_name, @name, @call, @reference, @pointer, @block = false)
+        @default_value = nil
+        @nilable = false
         @type = @method.return_type
       end
     end
