@@ -361,6 +361,36 @@ module Bindgen
       end
     end
 
+    # Tries to find *method* in the inheritance chain of *klass*.  If found,
+    # will return a method matching the original methods argument deduction.
+    #
+    # Required when the base classes method is deduced to `foo(bar : Widget?)`
+    # but the current *klass*es method is deduced to `foo(bar : Widget)`.
+    private def inherit_method_argument_types(klass, method) : Parser::Method
+      if first = find_first_method_definition(klass, method)
+        if first.arguments == method.arguments
+          method # Arguments are exactly the same.  Skip.
+        else
+          method.merge(first)
+        end
+      else # Method is the original one
+        method
+      end
+    end
+
+    # Finds the first definition of *method* in the inheritance chain of
+    # *klass*.
+    private def find_first_method_definition(klass, method) : Parser::Method?
+      first = nil # Actually the last, thus deepest in the inheritance chain
+
+      recursive_base_classes(klass) do |base|
+        found = base.find_parent_method(method)
+        first = found || first
+      end
+
+      first
+    end
+
     # Writes a class implementation of the abstract class *klass*, inheriting
     # it, and only implementing pure virtual methods.
     #
@@ -373,12 +403,24 @@ module Bindgen
       block "class", crystal_class, "< #{base_class}" do
         write_disable_inheritance("You can't sub-class #{crystal_class}, inherit from #{base_class} instead")
 
-        klass.wrap_methods.each do |method|
+        find_all_methods_where(klass, &.pure?).each do |method|
           next if method.filtered?(@db)
-          next unless method.pure?
           write_method_wrapper(klass, method, abstract_pure: false)
         end
       end
+    end
+
+    # Finds all methods in *klass* where the block responds with a truth value.
+    # Recurses into all base-classes, and makes sure to only return a list of
+    # unique methods.
+    private def find_all_methods_where(klass : Parser::Class, &block : Parser::Method -> _) : Array(Parser::Method)
+      methods = klass.wrap_methods.select(&block)
+
+      recursive_base_classes(klass) do |base|
+        methods.concat base.wrap_methods.select(&block)
+      end
+
+      Util.uniq_by(methods){|a, b| a.equals_except_const?(b) || a.equals_virtually?(b)}
     end
 
     # Writes an `inherited` Crystal hook, which raises *message*.  This is used
@@ -572,6 +614,8 @@ module Bindgen
 
       binding = CallAnalyzer::CrystalBinding.new(@db)
       wrapper = CallAnalyzer::CrystalWrapper.new(@db)
+
+      method = inherit_method_argument_types(klass, method)
 
       # Mark pure methods as such in Crystal.
       if abstract_pure && method.pure?

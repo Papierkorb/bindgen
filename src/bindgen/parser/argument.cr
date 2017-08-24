@@ -97,6 +97,27 @@ module Bindgen
         )
       end
 
+      # Merges this argument with *other*.  Only merges defaultness, its value
+      # and nil-ability.  For the value, this argument takes precedence over
+      # *other*.
+      def merge(other : Argument)
+        self.class.new(
+          name: @name,
+          baseName: @baseName,
+          fullName: @fullName,
+          isConst: @isConst,
+          isReference: @isReference,
+          isMove: @isMove,
+          isBuiltin: @isBuiltin,
+          isVoid: @isVoid,
+          pointer: @pointer,
+          kind: @kind,
+          hasDefault: @hasDefault || other.has_default?,
+          value: @value || other.value,
+          nilable: nilable? || other.nilable?,
+        )
+      end
+
       # Checks if the type-part of this equals the type-part of *other*.
       def type_equals?(other : Type)
         {% for i in %i[ baseName fullName isConst isReference isMove isBuiltin isVoid pointer template ] %}

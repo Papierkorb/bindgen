@@ -114,7 +114,7 @@ module Bindgen
       end
 
       # And recurse into all base-classes
-      wrapped_base_classes_of(klass) do |base_class|
+      recursive_base_classes(klass) do |base_class|
         if base_class.has_virtual_methods?
           unique_virtual_methods(base_class, list)
         end
@@ -153,6 +153,25 @@ module Bindgen
       else
         list
       end
+    end
+
+    # Like `#wrapped_base_classes_of`, but recursive.
+    protected def recursive_base_classes(klass : Parser::Class, &block : Parser::Class -> _) : Nil
+      wrapped_base_classes_of(klass) do |base|
+        block.call base
+        recursive_base_classes(base, &block)
+      end
+    end
+
+    # ditto
+    protected def recursive_base_classes(klass : Parser::Class) : Nil
+      list = [ ] of Parser::Class
+
+      recursive_base_classes(klass) do |base|
+        list << base
+      end
+
+      list
     end
 
     # The name of the jump-table setter binding method.

@@ -118,6 +118,25 @@ module Bindgen
         Util.uniq_by(list){|a, b| a.equals_except_const?(b) || a.equals_virtually?(b)}
       end
 
+      # Assumes that *method* exists in a class inheriting from this class.
+      # Tries to find a method in this class which is overriden by *method*.
+      def find_parent_method(method : Method) : Method?
+        wrap_methods.find do |m|
+          next if method.arguments.size != m.arguments.size
+          next if method.name != m.name # Name check
+          next unless method.return_type.equals_except_nil?(m.return_type)
+
+          # Check all arguments for type-equality.
+          hit_count = 0
+          method.arguments.zip(m.arguments) do |l, r|
+            break unless l.equals_except_nil?(r)
+            hit_count += 1
+          end
+
+          hit_count == method.arguments.size
+        end
+      end
+
       # Returns a `Type` referencing this class.
       def as_type(pointer = 1, reference = false, const = false) : Type
         full_name = name

@@ -105,13 +105,22 @@ module Bindgen
         )
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind
+      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
 
       def initialize(@baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Kind::Class, @template = nil, @nilable = false)
       end
 
       # Is this type nilable?  For compatibility with `Argument`.
       getter? nilable : Bool
+
+      # Checks if this type equals the *other* type, except for nil-ability.
+      def equals_except_nil?(other : Type)
+        {% for i in %i[ baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind ] %}
+        return false if @{{ i.id }} != other.{{ i.id }}
+        {% end %}
+
+        true
+      end
 
       # Is this type constant?
       def const?

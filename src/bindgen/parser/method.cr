@@ -369,6 +369,36 @@ module Bindgen
         args = @arguments.map(&.full_name)
         "#{@returnType.full_name}(#{prefix}*#{name})(#{args.join(", ")})#{suffix}"
       end
+
+      # Merges this and the *other* method with regards to default values and
+      # type deductions.  Expects that this and *other* methods point at the
+      # same method, but in different classes in the inheritance chain.
+      #
+      # Keeps the class name, access, constness, virtuality and type of this
+      # method.
+      def merge(other : Method) : Method
+        args = [ ] of Argument
+
+        @arguments.zip(other.arguments) do |l, r|
+          args << l.merge(r)
+        end
+
+        result = Method.new(
+          type: @type,
+          access: @access,
+          name: @name,
+          className: @className,
+          arguments: args,
+          firstDefaultArgument: @firstDefaultArgument,
+          returnType: @returnType,
+          isConst: @isConst,
+          isVirtual: @isVirtual,
+          isPure: @isPure && other.pure?,
+        )
+
+        result.crystal_name = @crystal_name
+        result
+      end
     end
   end
 end
