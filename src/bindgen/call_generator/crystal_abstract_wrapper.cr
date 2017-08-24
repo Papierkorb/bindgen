@@ -5,6 +5,9 @@ module Bindgen
     class CrystalAbstractWrapper
       include CrystalMethods
 
+      def initialize(@db : TypeDatabase)
+      end
+
       # Method is API compatible to `CrystalWrapper#generate`.
       def generate(wrapper : Call, _binding = nil, _body = nil) : String
         method_args, _ = crystal_arguments(wrapper)

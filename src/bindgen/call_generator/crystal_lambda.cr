@@ -5,6 +5,9 @@ module Bindgen
     class CrystalLambda
       include CrystalMethods
 
+      def initialize(@db : TypeDatabase)
+      end
+
       # Generates the lambda, calling from *binding* to *wrapper*.  If *wrap* is
       # `true`, the whole lambda will be encapsulated by a helper turning the
       # proc into a `CrystalProc`, ready to be passed on to *binding*.

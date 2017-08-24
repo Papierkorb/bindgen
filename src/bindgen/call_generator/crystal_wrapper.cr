@@ -4,6 +4,9 @@ module Bindgen
     class CrystalWrapper
       include CrystalMethods
 
+      def initialize(@db : TypeDatabase)
+      end
+
       # Generates a method calling from *wrapper* to the *binding*.
       def generate(wrapper : Call, binding : Call, ctor_body : String?) : String
         if wrapper.origin.any_constructor?

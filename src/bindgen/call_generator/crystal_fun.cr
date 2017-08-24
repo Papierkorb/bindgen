@@ -4,6 +4,9 @@ module Bindgen
     class CrystalFun
       include CrystalMethods
 
+      def initialize(@db : TypeDatabase)
+      end
+
       def generate(call : Call) : String
         func_args, _ = crystal_arguments(call)
         type = crystal_typename(call.result)

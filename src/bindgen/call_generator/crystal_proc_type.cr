@@ -4,6 +4,9 @@ module Bindgen
     class CrystalProcType
       include CrystalMethods
 
+      def initialize(@db : TypeDatabase)
+      end
+
       def generate(call : Call) : String
         types = call.arguments.map{|arg| crystal_typename(arg)}
         types << crystal_typename(call.result)

@@ -289,7 +289,7 @@ module Bindgen
     # Writes lib binding for *method* from class *type*.
     private def write_method_binding(method : Parser::Method, type)
       analyzer = CallAnalyzer::CrystalBinding.new(@db)
-      generator = CallGenerator::CrystalFun.new
+      generator = CallGenerator::CrystalFun.new(@db)
 
       call = analyzer.analyze(method, type)
       print generator.generate(call)
@@ -434,9 +434,9 @@ module Bindgen
       reverse = CallAnalyzer::CrystalReverseBinding.new(@db)
       wrapper = CallAnalyzer::CrystalWrapper.new(@db)
       to_proc = CallAnalyzer::CppToCrystalProc.new(@db)
-      proc_gen = CallGenerator::CrystalProcType.new
-      wrapper_gen = CallGenerator::CrystalWrapper.new
-      lambda_gen = CallGenerator::CrystalLambda.new
+      proc_gen = CallGenerator::CrystalProcType.new(@db)
+      wrapper_gen = CallGenerator::CrystalWrapper.new(@db)
+      lambda_gen = CallGenerator::CrystalLambda.new(@db)
 
       binding_call = binding.analyze(conn_method, klass.as_type)
       block_call = reverse.analyze(method, nil)
@@ -539,7 +539,7 @@ module Bindgen
     private def generate_call_in_lambda(instance_name, method : Parser::Method) : String
       binding = CallAnalyzer::CrystalReverseBinding.new(@db)
       wrapper = CallAnalyzer::CrystalWrapper.new(@db)
-      lambda_gen = CallGenerator::CrystalLambda.new
+      lambda_gen = CallGenerator::CrystalLambda.new(@db)
 
       binding_call = binding.analyze(method, klass_type: nil)
       wrapper_call = wrapper.analyze(method, instance_name)
@@ -575,9 +575,9 @@ module Bindgen
 
       # Mark pure methods as such in Crystal.
       if abstract_pure && method.pure?
-        wrapper_gen = CallGenerator::CrystalAbstractWrapper.new
+        wrapper_gen = CallGenerator::CrystalAbstractWrapper.new(@db)
       else
-        wrapper_gen = CallGenerator::CrystalWrapper.new
+        wrapper_gen = CallGenerator::CrystalWrapper.new(@db)
       end
 
       binding_call = binding.analyze(method, klass.as_type(pointer: 1))
