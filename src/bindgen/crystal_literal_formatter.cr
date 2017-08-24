@@ -28,7 +28,12 @@ module Bindgen
     # valid a Crystal literal, and can be directly written.
     def number_literal(type_name, value) : String?
       if suffix = number_literal_suffix(type_name)
-        value = value.to_i unless floating_type?(type_name)
+        if floating_type?(type_name)
+          value = value.to_f
+        else
+          value = value.to_i
+        end
+
         "#{value}#{suffix}" # TODO: Literal thousand's grouping
       end
     end
@@ -57,7 +62,7 @@ module Bindgen
       names = [ ] of String
 
       # Find all names of all set bits in *bitmask*
-      (1...64).each do |bit_idx|
+      (0...64).each do |bit_idx|
         value = 1u64 << bit_idx
         next if (bitmask & value) == 0
 

@@ -12,6 +12,9 @@ module Bindgen
         values: Hash(String, Int64), # Enum fields
       )
 
+      def initialize(@name, @values, @type = "unsigned int", @isFlags = false)
+      end
+
       # Tries to figure out if this enumeration is actually a bit-mask flag.
       def flags?
         @isFlags
