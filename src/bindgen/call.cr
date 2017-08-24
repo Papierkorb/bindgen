@@ -1,21 +1,28 @@
 module Bindgen
   # Stores a analyzed call to a method.
   class Call
-    # Call result type configuration.
-    class Result
+    # Base-class for `Result` and `Argument`.
+    abstract class Expression
+      # The data this expression originated in.
+      getter type : Parser::Type
+
       # Pass in as reference?
       getter reference : Bool
 
       # Pointer depth, *without* the reference "pointer"
       getter pointer : Int32
 
-      # Original type
-      getter type : Parser::Type
-
-      # Type to use for returning
+      # Type to use for passing
       getter type_name : String
 
-      # Conversion template (`Util.template`) to get the data out of the method,
+
+      def initialize(@type, @reference, @pointer, @type_name)
+      end
+    end
+
+    # Call result type configuration.
+    class Result < Expression
+    # Conversion template (`Util.template`) to get the data out of the method,
       # ready to be returned back.
       getter conversion : String?
 
@@ -67,24 +74,13 @@ module Bindgen
     end
 
     # A `Call` argument.
-    class Argument
-      # The data this argument originated in.
-      getter type : Parser::Type
-
+    class Argument < Expression
       # The variable name.
       getter name : String
 
       # How to use the argument variable.
       getter call : String
 
-      # Pass in as reference?
-      getter reference : Bool
-
-      # Pointer depth, *without* the reference "pointer"
-      getter pointer : Int32
-
-      # Type to use for passing
-      getter type_name : String
 
       def initialize(@type, @type_name, @name, @call, @reference = false, @pointer = 0)
       end
