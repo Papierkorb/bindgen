@@ -22,7 +22,7 @@ module Bindgen
         is_copied = rules.copy_structure
 
         if name = rules.crystal_type
-          { name, is_copied }
+          { name, false }
         elsif name = rules.binding_type
           { name, is_copied }
         else

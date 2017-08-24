@@ -246,7 +246,7 @@ module Bindgen
       config.kind = kind if new_config
       # config.binding_type ||= crystal_name
       config.cpp_type ||= cpp_name
-      config.crystal_type ||= crystal_name
+      config.crystal_type ||= crystal_name if config.generate_wrapper
 
       @types[cpp_name] = config
     end
