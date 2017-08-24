@@ -81,6 +81,7 @@ module Bindgen
 
         # TODO: Check for copy-constructor.
         if is_ref || (is_val && !is_copied)
+          # Don't change the external type (is_ref, ptr)!
           template = "new (UseGC) #{type.base_name} (%)"
         end
 
