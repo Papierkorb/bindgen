@@ -61,10 +61,10 @@ describe Bindgen::CallAnalyzer::CppMethods do
 
     context "with user configuration" do
       it "supports rules.to_cpp" do
-        result = subject.pass_to_cpp(Parser.type("HasToCpp &"))
+        result = subject.pass_to_cpp(Parser.type("HasToFromCpp &"))
 
-        result.type.should eq(Parser.type("HasToCpp &"))
-        result.type_name.should eq("HasToCpp")
+        result.type.should eq(Parser.type("HasToFromCpp &"))
+        result.type_name.should eq("HasToFromCpp")
         result.reference.should eq(true)
         result.pointer.should eq(0)
         result.conversion.should eq("my_to_cpp(%)")
@@ -170,6 +170,38 @@ describe Bindgen::CallAnalyzer::CppMethods do
         end
       end
     end
+
+    context "with user configuration" do
+      it "supports rules.from_cpp" do
+        result = subject.pass_to_crystal(Parser.type("HasToFromCpp &"))
+
+        result.type.should eq(Parser.type("HasToFromCpp &"))
+        result.type_name.should eq("HasToFromCpp")
+        result.reference.should eq(false)
+        result.pointer.should eq(1)
+        result.conversion.should eq("my_from_cpp(%)")
+      end
+
+      it "supports rules.cpp_type" do
+        result = subject.pass_to_crystal(Parser.type("HasCppType &"))
+
+        result.type.should eq(Parser.type("HasCppType &"))
+        result.type_name.should eq("MyType")
+        result.reference.should eq(false)
+        result.pointer.should eq(1)
+        result.conversion.should eq("new (UseGC) MyType (%)")
+      end
+
+      it "supports rules.pass_by" do
+        result = subject.pass_to_crystal(Parser.type("ForceByReference"))
+
+        result.type.should eq(Parser.type("ForceByReference"))
+        result.type_name.should eq("ForceByReference")
+        result.reference.should eq(true)
+        result.pointer.should eq(0)
+        result.conversion.should eq(nil)
+      end
+    end
   end
 
   describe "#passthrough_to_crystal" do
@@ -219,6 +251,42 @@ describe Bindgen::CallAnalyzer::CppMethods do
         result.type_name.should eq("Foo")
         result.reference.should eq(false)
         result.pointer.should eq(1)
+        result.conversion.should eq(nil)
+      end
+    end
+
+    context "with user configuration" do
+      it "supports rules.from_cpp" do
+        result = subject.passthrough_to_crystal(Parser.type("HasToFromCpp &"))
+
+        result.type.should eq(Parser.type("HasToFromCpp &"))
+        result.type_name.should eq("HasToFromCpp")
+        result.reference.should eq(true)
+        result.pointer.should eq(0)
+        result.conversion.should eq("my_from_cpp(%)")
+      end
+
+      it "supports rules.cpp_type" do
+        result = subject.passthrough_to_crystal(Parser.type("HasCppType &"))
+
+        # Signals the original C++ to the outside, but uses the rules internally.
+        result.type.should eq(Parser.type("HasCppType &"))
+
+        # Use C++ rule to the outside vvv
+        result.type_name.should eq("HasCppType")
+        result.reference.should eq(true)
+        result.pointer.should eq(0)
+        # Use Crystal rule for conversion vvv
+        result.conversion.should eq("new (UseGC) MyType (%)")
+      end
+
+      it "supports rules.pass_by" do
+        result = subject.passthrough_to_crystal(Parser.type("ForceByReference"))
+
+        result.type.should eq(Parser.type("ForceByReference"))
+        result.type_name.should eq("ForceByReference")
+        result.reference.should eq(false)
+        result.pointer.should eq(0)
         result.conversion.should eq(nil)
       end
     end

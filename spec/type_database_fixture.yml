@@ -5,8 +5,9 @@
 
 Copied:
   copy_structure: true
-HasToCpp:
+HasToFromCpp:
   to_cpp: "my_to_cpp(%)"
+  from_cpp: "my_from_cpp(%)"
 HasCppType:
   cpp_type: MyType
 ForceByReference:

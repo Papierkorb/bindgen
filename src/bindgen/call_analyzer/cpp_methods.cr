@@ -72,26 +72,32 @@ module Bindgen
       def pass_to_crystal(type : Parser::Type, is_constructor = false) : Call::Result
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
-        is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
+        is_val = type.pointer < 1
         type_name = type.base_name
+        generate_template = false
 
         # TODO: Check for copy-constructor.
-        if is_constructor && is_copied
+        if (is_constructor || is_val) && is_copied
           is_ref = false
           ptr = 0
         elsif is_ref || (is_val && !is_copied)
           is_ref = false
           ptr = 1
 
-          template = "new (UseGC) #{type.base_name} (%)"
+          generate_template = true
         end
 
         if rules = @db[type]?
           # Support `from_cpp`.
-          template = rules.from_cpp || template
+          generate_template = false unless rules.pass_by.original?
+          template = rules.from_cpp
           type_name = rules.cpp_type || type_name
           is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
+        end
+
+        if generate_template && template.nil?
+          template = "new (UseGC) #{type_name} (%)"
         end
 
         Call::Result.new(
@@ -109,23 +115,40 @@ module Bindgen
       # The pass rules are similar to `#pass_to_crystal`.  The primary
       # difference is that this version has no special handling of constructors.
       #
-      # TODO: Check if this can be merged with `#pass_to_crystal`.
+      # There is a second major difference:  This method always signals the C++
+      # type to the outside, as received by C++ (Thus even ignoring
+      # `rules.cpp_type`!).  It still follows the passing rules towards Crystal.
       def passthrough_to_crystal(type : Parser::Type)
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         type_name = type.base_name
+        conversion_type_name = type_name
+        generate_template = false
 
         # TODO: Check for copy-constructor.
         if is_ref || (is_val && !is_copied)
           # Don't change the external type (is_ref, ptr)!
-          template = "new (UseGC) #{type.base_name} (%)"
+          generate_template = true
         end
 
         if rules = @db[type]?
+          unless rules.pass_by.original?
+            template = nil
+            generate_template = false
+          end
+
           # Support `from_cpp`.
           template = rules.from_cpp || template
+
+          # We accept a C++ type here: The original one!  Don't let the user
+          # overwrite this, as it would result in a compilation error anyway.
+          conversion_type_name = rules.cpp_type || conversion_type_name
+        end
+
+        if generate_template && template.nil?
+          template = "new (UseGC) #{conversion_type_name} (%)"
         end
 
         Call::Result.new(
