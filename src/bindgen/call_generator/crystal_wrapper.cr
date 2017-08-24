@@ -39,7 +39,7 @@ module Bindgen
       # but yields the `pass_args` (The argument-list to pass on).  The block
       # is expected to return the methods body.
       def generate(wrapper : Call, binding : Call) : String
-        method_args, _ = crystal_arguments(wrapper)
+        method_args, _ = crystal_arguments(wrapper, with_defaults: true)
         _, pass_args = crystal_arguments(binding)
         result_type = crystal_typename(wrapper.result)
 
