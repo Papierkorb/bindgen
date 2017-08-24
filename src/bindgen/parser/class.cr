@@ -96,22 +96,22 @@ module Bindgen
       # List of all wrappable-methods.  This includes all `Method#variants`.
       # Methods which use `Method#move_semantics?` on any type are explicitly
       # removed.
+      #
+      # Note: This is a memoized getter.  Thus it's cheap to call it multiple
+      # times.
       getter wrap_methods : Array(Method) do
         list = [ ] of Method
 
         # Collect all method variants
         @methods.each do |method|
-          method.variants do |m|
-            next if m.operator? # TODO: Support Operators!
-            next if m.copy_constructor? # TODO: Support copy constructors!
-            next if m.has_move_semantics? # Move semantics are hard to wrap.
+          next if method.operator? # TODO: Support Operators!
+          next if method.copy_constructor? # TODO: Support copy constructors!
+          next if method.has_move_semantics? # Move semantics are hard to wrap.
 
-            # Don't try to wrap copy-constructors in an abstract class.
-            next if @isAbstract && method.copy_constructor?
+          # Don't try to wrap copy-constructors in an abstract class.
+          next if @isAbstract && method.copy_constructor?
 
-            # Okay!
-            list << m
-          end
+          method.variants{|m| list << m}
         end
 
         # And make sure there are no duplicates.
