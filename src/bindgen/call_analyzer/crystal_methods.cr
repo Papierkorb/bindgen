@@ -146,7 +146,7 @@ module Bindgen
             end
 
             if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
-              template = "#{type_name}.new(unwrap: %)"
+              template = wrapper_initialize_template(type_name)
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.crystal_pass_by, is_ref, ptr)
@@ -195,6 +195,12 @@ module Bindgen
         else
           translator
         end
+      end
+
+      # Returns the `Call::Result#conversion` template to turn a pointer into an
+      # instance of *type_name* by using its `#initialize(unwrap: x)` method.
+      def wrapper_initialize_template(type_name)
+        "#{type_name}.new(unwrap: %)"
       end
 
       # Helper to get a non-colliding *argument* name.  Makes sure that the name

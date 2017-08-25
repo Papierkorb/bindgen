@@ -455,11 +455,33 @@ module Bindgen
     # Writes all `#as_X` wrappers for *klass*.
     private def write_as_other_type_wrappers(klass : Parser::Class)
       wrapped_base_classes_of(klass, range: 1..-1).each do |base|
-        method = as_other_type_method(klass, base)
-        target_name = pass_from_wrapper(base.as_type).type_name.underscore
-        method.crystal_name = "as_#{target_name}"
-        write_method_wrapper(klass, method)
+        write_as_other_type_wrapper(klass, base)
       end
+    end
+
+    # Writes a single `#as_X` wrapper from *klass* to *base*.
+    #
+    # TODO: Remove after fixing code architecture.
+    private def write_as_other_type_wrapper(klass, base)
+      method = as_other_type_method(klass, base)
+      target_name = pass_from_wrapper(base.as_type).type_name.underscore
+      method.crystal_name = "as_#{target_name}"
+
+      binding = CallAnalyzer::CrystalBinding.new(@db)
+      wrapper = CallAnalyzer::CrystalWrapper.new(@db)
+      wrapper_gen = CallGenerator::CrystalWrapper.new(@db)
+
+      binding_call = binding.analyze(method, klass.as_type(pointer: 1))
+      wrapper_call = wrapper.analyze(method)
+
+      if base.abstract?
+        actual_name = impl_class_name(base)
+        template = wrapper_initialize_template(actual_name)
+        result = Call::Result.new(base.as_type, actual_name, false, 0, template)
+        wrapper_call = Call.new(wrapper_call.origin, wrapper_call.name, result, wrapper_call.arguments)
+      end
+
+      print wrapper_gen.generate(wrapper_call, binding_call, nil)
     end
 
     # Writes the connect method for the signal in *method*.  The user can then
