@@ -95,10 +95,7 @@ module Bindgen
     # If *klass* shall be sub-classed, or not.
     def is_class_subclassed?(klass)
       return false unless klass.has_virtual_methods?
-      allow_sub_class = @db[klass.name].try(&.sub_class)
-
-      # It's a `Bool?`, `||` would break it.
-      allow_sub_class.nil? || allow_sub_class == true
+      @db.try_or(klass.name, true, &.sub_class)
     end
 
     # Finds all unique virtual methods in *klass*, including all base-classes,
