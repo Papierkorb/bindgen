@@ -625,7 +625,7 @@ module Bindgen
       wrapper_call = wrapper.analyze(method)
 
       # Generate the code
-      if is_class_subclassed?(klass)
+      if method.any_constructor? && is_class_subclassed?(klass)
         body = generate_virtual_table_initialization(klass)
       end
 
