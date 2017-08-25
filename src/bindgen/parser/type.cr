@@ -56,7 +56,7 @@ module Bindgen
           isMove: false,
           isReference: reference,
           isBuiltin: true,
-          isVoid: false,
+          isVoid: (cpp_name == "void"),
           pointer: pointer,
           baseName: cpp_name,
           fullName: cpp_name,

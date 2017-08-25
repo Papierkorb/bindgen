@@ -151,7 +151,9 @@ module Bindgen
       rules = @db.get_or_add(cpp_type_name)
       result = pass_to_wrapper(var_type)
 
+      rules.builtin = true # `Void` is built-in!
       rules.binding_type = "Void"
+      rules.pass_by = TypeDatabase::PassBy::Pointer
       rules.crystal_type ||= "Enumerable(#{result.type_name})"
       rules.to_crystal ||= "#{klass.name}.new(unwrap: %)"
       rules.from_crystal ||= "BindgenHelper.wrap_container(#{klass.name}, %)"
@@ -161,7 +163,7 @@ module Bindgen
     private def container_baseclass(container, instantiation) : Parser::BaseClass
       if container.type.sequential?
         var_type = Parser::Type.parse(instantiation.first)
-        type_name = qualified_wrapper_typename(var_type)
+        type_name = qualified_typename(*wrapper_typename(var_type))
         class_name = "#{SEQUENTIAL_BASECLASS}(#{type_name})"
 
         Parser::BaseClass.new(name: class_name)
@@ -194,6 +196,13 @@ module Bindgen
     def add_binding_type(type)
       return if type.builtin?
       return if @external_types.includes?(type.base_name)
+
+      if rules = @db[type]?
+        return if rules.ignore
+        return if rules.builtin
+        return if rules.binding_type
+      end
+
       @lib_types << type.base_name
     end
 

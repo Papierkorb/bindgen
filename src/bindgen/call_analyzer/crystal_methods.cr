@@ -30,21 +30,30 @@ module Bindgen
         end
       end
 
-      # Returns the qualified type-name of *type*, allowing a look-up based in
-      # the wrapper target module.
-      def qualified_wrapper_typename(type : Parser::Type) : String
-        name, in_lib = wrapper_typename(type)
-
+      # Returns the qualified type-name of *type_name* from the output module.
+      # If *in_lib* is `true`, the *type_name* is stored in `lib Binding`.  Else
+      # it can is defined outside Binding, and thus doesn't need this prefix.
+      def qualified_typename(type_name : String, in_lib : Bool) : String
         if in_lib
-          "Binding::#{name}"
+          "Binding::#{type_name}"
         else
-          name
+          type_name
         end
       end
 
       # The type-name of *type* for use in a binding.
-      def binding_typename(type : Parser::Type) : String
-        @db.try_or(type, type.base_name, &.lib_type)
+      def binding_typename(type : Parser::Type)
+        rules = @db[type]?
+        return { type.base_name, !type.builtin? } if rules.nil?
+
+        in_lib = rules.copy_structure # Copied structures end up in Binding
+        in_lib ||= !rules.kind.enum? && !rules.builtin && !type.builtin?
+
+        if name = rules.lib_type
+          { name, in_lib }
+        else
+          { type.base_name, in_lib }
+        end
       end
 
       # Computes a result for passing *type* from Crystal to C++.
@@ -52,7 +61,7 @@ module Bindgen
         pass_to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
-            type_name = binding_typename(type)
+            type_name, _ = binding_typename(type)
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
@@ -67,7 +76,7 @@ module Bindgen
       def pass_to_wrapper(type : Parser::Type) : Call::Result
         pass_to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
-            type_name = qualified_wrapper_typename(type)
+            type_name = qualified_typename(*wrapper_typename(type))
 
             if rules.kind.class?
               ptr -= 1 # It's a Crystal `Reference`.
@@ -115,7 +124,7 @@ module Bindgen
         pass_from(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             template = type_template(rules.converter, rules.to_crystal, "unwrap")
-            type_name = binding_typename(type)
+            type_name = qualified_typename(*binding_typename(type))
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
@@ -136,7 +145,7 @@ module Bindgen
               ptr -= 1
             end
 
-            if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib
+            if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
               template = "#{type_name}.new(unwrap: %)"
             end
 
@@ -206,7 +215,7 @@ module Bindgen
       def self_argument(klass_type : Parser::Type) : Call::Argument
         Call::Argument.new(
           type: klass_type,
-          type_name: binding_typename(klass_type),
+          type_name: qualified_typename(*binding_typename(klass_type)),
           name: "_self_",
           call: "self",
           reference: false,
