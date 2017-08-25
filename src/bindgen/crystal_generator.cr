@@ -20,6 +20,7 @@ module Bindgen
       @external_types = Set(String).new
       @lib_types = Set(String).new
       @lib_methods = { } of Parser::Method => Parser::Type
+      @copy_structures = { } of String => Parser::Class
       @classes = { } of String => Parser::Class
       @last_classes = { } of String => Parser::Class
       @enums = [ ] of Parser::Enum
@@ -98,6 +99,10 @@ module Bindgen
 
       # Support for classes without constructors:
       add_binding_type klass_type
+
+      if @db.try_or(klass.name, false, &.copy_structure)
+        @copy_structures[klass.name] = klass
+      end
 
       unless @db.try_or(klass.name, true, &.generate_wrapper)
         return # The user wants to write manual bindings.
@@ -198,17 +203,12 @@ module Bindgen
       copy_structures = [ ] of String
 
       @lib_types.each do |type|
-        # Only write an `alias X = Void` if we don't copy the structure.
-        if @db.try_or(type, false, &.copy_structure)
-          copy_structures << type
-        else
-          print "alias #{type} = Void"
-        end
+        print "alias #{type} = Void"
       end
 
       # Copy structures of those types requested
-      copy_structures.each do |name|
-        write_structure(@classes[name])
+      @copy_structures.each do |_, klass|
+        write_structure(klass)
       end
 
       @io.puts ""
@@ -469,7 +469,6 @@ module Bindgen
     # Hopefully a `btn.on_pressed do .. end` reading nicer than
     # `btn.pressed do .. end` is worth the confusion.
     private def write_signal_connect_wrapper(klass, method : Parser::Method)
-      # block_type = proc_type(Parser::Type::VOID, method.arguments)
       conn_method, proc_method = generate_signal_connect_binding_method(method)
 
       binding = CallAnalyzer::CrystalBinding.new(@db)
