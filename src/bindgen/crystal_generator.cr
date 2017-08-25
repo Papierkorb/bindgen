@@ -456,21 +456,10 @@ module Bindgen
     private def write_as_other_type_wrappers(klass : Parser::Class)
       wrapped_base_classes_of(klass, range: 1..-1).each do |base|
         method = as_other_type_method(klass, base)
+        target_name = pass_from_wrapper(base.as_type).type_name.underscore
+        method.crystal_name = "as_#{target_name}"
         write_method_wrapper(klass, method)
       end
-    end
-
-    # Builds a `#as_X` user-facing wrapper method.
-    private def as_other_type_method(klass : Parser::Class, target : Parser::Class) : Parser::Method
-      target_name = pass_from_wrapper(target.as_type).type_name.underscore
-
-      method = build_method(
-        name: klass.converter_name(target),
-        class_name: klass.name,
-        return_type: target.as_type,
-        arguments: [ ] of Parser::Argument,
-        crystal_name: "as_#{target_name}",
-      )
     end
 
     # Writes the connect method for the signal in *method*.  The user can then

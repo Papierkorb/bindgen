@@ -90,7 +90,7 @@ module Bindgen
       def converter_name(target : Class | String) : String
         target = target.name if target.is_a?(Class)
         target = Util.mangle_type_name(target)
-        "bg_#{binding_name}_AS_#{target}"
+        "AS_#{target}"
       end
 
       # List of all wrappable-methods.  This includes all `Method#variants`.

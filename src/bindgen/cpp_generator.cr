@@ -71,12 +71,17 @@ module Bindgen
     # a proper C++ `static_cast<T*>(self)`.  This is required for types using
     # multiple-inheritance!
     private def write_as_other_type_method(klass : Parser::Class, target : Parser::Class)
-      source_ptr = with_pointer klass.name
-      target_ptr = with_pointer target.name
+      method = as_other_type_method(klass, target)
+      analyzer = CallAnalyzer::CrystalToCpp.new(@db)
+      generator = CallGenerator::CppWrapper.new
 
-      @io.puts %[extern "C" #{target_ptr} #{klass.converter_name(target)}(#{source_ptr} self) {]
-      @io.puts %[  return static_cast< #{target_ptr} >(self);]
-      @io.puts %[}]
+      call = analyzer.analyze(method)
+      code = generator.generate(call) do
+        target_ptr = CallGenerator::CppMethods.cpp_typename(call.result)
+        "static_cast< #{target_ptr} >(_self_)"
+      end
+
+      print code
     end
 
     # Generates a destructor for *klass*

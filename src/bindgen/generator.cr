@@ -257,5 +257,15 @@ module Bindgen
     protected def container_cpp_type_name(container, instantiation : Array(String)) : String
       "#{container.class}<#{instantiation.join(", ")}>"
     end
+
+    # Builds a `#as_X` user-facing wrapper method.
+    private def as_other_type_method(klass : Parser::Class, target : Parser::Class) : Parser::Method
+      method = build_method(
+        name: klass.converter_name(target),
+        class_name: klass.name,
+        return_type: target.as_type,
+        arguments: [ ] of Parser::Argument,
+      )
+    end
   end
 end

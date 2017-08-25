@@ -47,7 +47,9 @@ module Bindgen
           return literal if literal
         end
 
-        raise "Can't format literal of default value of argument #{argument.name.inspect}"
+        raise "Can't format literal of default value (#{value.class}) " \
+              "#{value.inspect} of argument #{argument.name.inspect} as " \
+              "#{argument.type_name}"
       end
 
       # Generates the qualified type-name of *expr* for Crystal.  This includes

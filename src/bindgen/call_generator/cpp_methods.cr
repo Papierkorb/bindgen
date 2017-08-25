@@ -3,6 +3,7 @@ module Bindgen
     # Helper methods for C++ centric generators.
     module CppMethods
       include Helper
+      extend self
 
       # Generates the `func_args` and `pass_args` for a call.
       def cpp_arguments(call, needs_instance)
