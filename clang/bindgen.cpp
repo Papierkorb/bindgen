@@ -114,7 +114,10 @@ public:
 
 			m.type = ctor->isCopyConstructor() ? Method::CopyConstructor : Method::Constructor;
 		} else if (llvm::isa<clang::CXXDestructorDecl>(method)) {
-			// Everything can be destroyed.  Don't expose explicitly.
+			this->m_class.isDestructible = m.access != clang::AS_private;
+
+			// For a destructor, only store if this type can be destructed publicly or
+			// not.
 			return;
 
 		} else { // Normal method

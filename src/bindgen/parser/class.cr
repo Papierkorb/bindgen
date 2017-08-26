@@ -10,6 +10,7 @@ module Bindgen
         hasDefaultConstructor: Bool,
         hasCopyConstructor: Bool,
         isAbstract: Bool,
+        isDestructible: Bool,
         name: String,
         byteSize: Int32,
         bases: Array(BaseClass),
@@ -17,7 +18,7 @@ module Bindgen
         methods: Array(Method),
       )
 
-      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false)
+      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true)
         @bases = Array(BaseClass).new
         @fields = Array(Field).new
         @methods = Array(Method).new
@@ -46,6 +47,11 @@ module Bindgen
       # Size of an instance of the class in memory.
       def byte_size : Int32
         @byteSize
+      end
+
+      # Is this class publicly destructible?
+      def destructible?
+        @isDestructible
       end
 
       # Is this class abstract?

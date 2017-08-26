@@ -232,6 +232,7 @@ struct Class {
 	bool isClass; // Class or struct?
 	bool hasDefaultConstructor;
 	bool hasCopyConstructor;
+	bool isDestructible = true; // Does this class have a public or protected destructor?
 	bool isAbstract; // Does the class have pure virtual methods?
 	int byteSize; // Size of an instance in memory.
 	std::string name; // Fully::qualified::class::name
@@ -248,6 +249,7 @@ JsonStream &operator<<(JsonStream &s, const Class &value) {
 		<< std::make_pair("byteSize", value.byteSize) << c
 		<< std::make_pair("isClass", value.isClass) << c
 		<< std::make_pair("isAbstract", value.isAbstract) << c
+		<< std::make_pair("isDestructible", value.isDestructible) << c
 		<< std::make_pair("hasDefaultConstructor", value.hasDefaultConstructor) << c
 		<< std::make_pair("hasCopyConstructor", value.hasCopyConstructor) << c
 		<< std::make_pair("bases", value.bases) << c
