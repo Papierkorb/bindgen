@@ -76,10 +76,11 @@ module BindgenHelper
 
   # Wraps a *list* into a container *wrapper*, if it's not already one.
   macro wrap_container(wrapper, list)
-    if {{ list }}.is_a?({{ wrapper }})
-      {{ list }}
+    %instance = {{ list }}
+    if %instance.is_a?({{ wrapper }})
+      %instance
     else
-      {{wrapper}}.new.concat({{ list }})
+      {{wrapper}}.new.concat(%instance)
     end
   end
 
