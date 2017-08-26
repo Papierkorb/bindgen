@@ -103,11 +103,7 @@ public:
 		m.isPure = method->isPure();
 		m.access = method->getAccess();
 
-		if (m.access != clang::AS_public && m.access != clang::AS_protected)
-			return;
-
 		clang::ASTContext &ctx = method->getASTContext();
-
 		const clang::CXXConstructorDecl* ctor = llvm::dyn_cast<clang::CXXConstructorDecl>(method);
 
 		// Figure out what we have found

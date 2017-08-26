@@ -104,6 +104,7 @@ module Bindgen
 
         # Collect all method variants
         @methods.each do |method|
+          next if method.private?
           next if method.operator? # TODO: Support Operators!
           next if method.copy_constructor? # TODO: Support copy constructors!
           next if method.has_move_semantics? # Move semantics are hard to wrap.

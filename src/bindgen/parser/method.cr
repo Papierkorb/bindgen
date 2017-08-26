@@ -299,6 +299,7 @@ module Bindgen
 
       # Is this method filtered out?
       def filtered?(db : TypeDatabase) : Bool
+        return true if private?
         return true if db[@returnType]?.try(&.ignore?)
         return true if @arguments.any?{|arg| db[arg]?.try(&.ignore?)}
 
