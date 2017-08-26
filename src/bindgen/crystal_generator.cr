@@ -112,7 +112,7 @@ module Bindgen
         add_method?(method, klass_type)
       end
 
-      add_method?(klass.destructor_method, klass_type)
+      add_method?(klass.destructor_method, klass_type) if klass.destructible?
       add_as_other_type_bindings(klass, klass_type)
     end
 

@@ -42,7 +42,7 @@ module Bindgen
       end
 
       klass_type = klass.as_type(pointer: 1)
-      write_destructor klass
+      write_destructor klass if klass.destructible?
 
       klass.wrap_methods.each do |method|
         add_method?(method, klass_type)
