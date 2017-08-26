@@ -56,11 +56,16 @@ module Bindgen
         end
       end
 
-      # Computes a result for passing *type* from Crystal to C++.
-      def pass_to_binding(type : Parser::Type) : Call::Result
+      # Computes a result for passing *type* from Crystal to C++.  If
+      # *to_unsafe* is `true`, and the type is not built-in, the result will
+      # be wrapped in a call to `to_unsafe` - Except if a user-defined
+      # conversion is set.
+      def pass_to_binding(type : Parser::Type, to_unsafe = false) : Call::Result
         pass_to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
+            template ||= "%.to_unsafe" if to_unsafe && !rules.builtin && !type.builtin?
+
             type_name, _ = binding_typename(type)
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)

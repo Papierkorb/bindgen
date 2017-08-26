@@ -156,7 +156,7 @@ module Bindgen
       rules.pass_by = TypeDatabase::PassBy::Pointer
       rules.crystal_type ||= "Enumerable(#{result.type_name})"
       rules.to_crystal ||= "#{klass.name}.new(unwrap: %)"
-      rules.from_crystal ||= "BindgenHelper.wrap_container(#{klass.name}, %)"
+      rules.from_crystal ||= "BindgenHelper.wrap_container(#{klass.name}, %).to_unsafe"
     end
 
     # Computes the base-class of the wrapper-class.

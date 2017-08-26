@@ -23,7 +23,7 @@ module Bindgen
         end
 
         callee = pass_to_wrapper(method.return_type)
-        caller = pass_to_binding(method.return_type)
+        caller = pass_to_binding(method.return_type, to_unsafe: true)
         result = combine_result(callee, caller)
 
         Call.new(
