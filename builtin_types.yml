@@ -45,6 +45,7 @@ ulong: { binding_type: UInt32, kind: Struct, builtin: true }
 ulonglong: { binding_type: UInt64, kind: Struct, builtin: true }
 
 qptrdiff: { binding_type: Int64, kind: Struct, builtin: true } # Size of a pointer!
+qintptr: { binding_type: Int64, kind: Struct, builtin: true }
 quintptr: { binding_type: UInt64, kind: Struct, builtin: true }
 quint8: { binding_type: UInt8, kind: Struct, builtin: true }
 quint16: { binding_type: UInt16, kind: Struct, builtin: true }
