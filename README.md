@@ -44,7 +44,9 @@ Read the `TEMPLATE.yml` for configuration documentation.
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
 | Overloaded methods (Also default arguments)      | **YES** |
-| Copying default argument values (Builtin types)  | **YES** |
+| Copying default argument values                  |         |
+|  +- Integer, float, boolean types                | **YES** |
+|  +- String                                       | **YES** |
 | Enumerations                                     | **YES** |
 | Copying structures                               | **YES** |
 | Custom type conversions between C/++ and Crystal | **YES** |
