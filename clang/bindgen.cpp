@@ -156,8 +156,7 @@ public:
 		qualTypeToType(arg, qt, ctx);
 		arg.name = decl->getQualifiedNameAsString();
 		arg.hasDefault = decl->hasDefaultArg();
-		arg.kind = Argument::TerminalKind;
-		arg.terminal_value = JsonStream::Null;
+		arg.value = JsonStream::Null;
 
 		// If the parameter has a default value, try to figure out this value.  Can
 		// fail if e.g. the call has side-effects (Like calling another method).  Will
@@ -169,11 +168,56 @@ public:
 		return arg;
 	}
 
+	bool describesStringClass(const clang::CXXConstructorDecl *ctorDecl) {
+		std::string name = ctorDecl->getParent()->getQualifiedNameAsString();
+		if (name == "std::__cxx11::basic_string" || name == "QString") {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	bool stringLiteralFromExpression(Argument &arg, const clang::Expr *expr) {
+		if (const clang::MaterializeTemporaryExpr *argExpr = llvm::dyn_cast<clang::MaterializeTemporaryExpr>(expr)) {
+			return stringLiteralFromExpression(arg, argExpr->GetTemporaryExpr());
+		} else if (const clang::CXXBindTemporaryExpr *bindExpr = llvm::dyn_cast<clang::CXXBindTemporaryExpr>(expr)) {
+			return stringLiteralFromExpression(arg, bindExpr->getSubExpr());
+		} else if (const clang::CastExpr *castExpr = llvm::dyn_cast<clang::CastExpr>(expr)) {
+			return stringLiteralFromExpression(arg, castExpr->getSubExprAsWritten());
+		} else if (const clang::CXXConstructExpr *ctorExpr = llvm::dyn_cast<clang::CXXConstructExpr>(expr)) {
+			return tryReadStringConstructor(arg, ctorExpr);
+		} else if (const clang::StringLiteral *strExpr = llvm::dyn_cast<clang::StringLiteral>(expr)) {
+			// We found it!
+			arg.value = strExpr->getString().str();
+			return true;
+		} else { // Failed to destructure.
+			return false;
+		}
+	}
+
+	bool tryReadStringConstructor(Argument &arg, const clang::CXXConstructExpr *expr) {
+		if (!describesStringClass(expr->getConstructor())) {
+			return false;
+		}
+
+		// The constructor call needs to have no (= empty) or a single argument.
+		if (expr->getNumArgs() == 0) { // This is an empty string!
+			arg.value = std::string();
+			return true;
+		} else if (expr->getNumArgs() == 1) {
+			return stringLiteralFromExpression(arg, expr->getArg(0));
+		} else { // No rules for more than one argument.
+			return false;
+		}
+	}
+
 	void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt, clang::ASTContext &ctx, const clang::Expr *expr) {
 		clang::Expr::EvalResult result;
 
 		if (!expr->EvaluateAsRValue(result, ctx)) {
-			return; // Failed to evaluate.
+			// Failed to evaluate - Try to unpack this expression
+			stringLiteralFromExpression(arg, expr);
+			return;
 		}
 
 		if (result.HasSideEffects || result.HasUndefinedBehavior) {
@@ -182,23 +226,19 @@ public:
 
 		if (qt->isPointerType()) {
 			// For a pointer-type, just store if it was `nullptr` (== true).
-			arg.kind = Argument::BoolKind;
-			arg.bool_value = result.Val.isNullPointer();
+			arg.value = result.Val.isNullPointer();
 		} else if (qt->isBooleanType()) {
-			arg.kind = Argument::BoolKind;
-			arg.bool_value = result.Val.getInt().getBoolValue();
+			arg.value = result.Val.getInt().getBoolValue();
 		} else if (qt->isIntegerType()) {
 			const llvm::APSInt &v = result.Val.getInt();
 			int64_t i64 = v.getExtValue();
 
-			arg.kind = qt->isSignedIntegerType() ? Argument::IntKind : Argument::UIntKind;
 			if (qt->isSignedIntegerType())
-				arg.int_value = i64;
+				arg.value = i64;
 			else // Is there better way?
-				arg.uint_value = static_cast<uint64_t>(i64);
+				arg.value = static_cast<uint64_t>(i64);
 		} else if (qt->isFloatingType()) {
-			arg.kind = Argument::DoubleKind;
-			arg.double_value = result.Val.getFloat().convertToDouble();
+			arg.value = result.Val.getFloat().convertToDouble();
 		}
 	}
 
