@@ -58,23 +58,17 @@ JsonStream &operator<<(JsonStream &s, const Template &value) {
 	return s;
 }
 
-struct Argument : public Type {
-	bool hasDefault; // Does this argument have a default value?
-	std::string name; // Name of the argument
-
-	// Use this once C++17 compilers are widely used.
-	// std::variant< bool, int64_t, uint64_t, double, JsonStream::Terminal > value;
-
+struct LiteralData {
 	enum Kind {
 		None,
 		BoolKind,
 		IntKind,
 		UIntKind,
 		DoubleKind,
+		StringKind,
 		TerminalKind,
 	};
 
-	// If possible, the default value.
 	Kind kind;
 
 	union {
@@ -83,7 +77,77 @@ struct Argument : public Type {
 		uint64_t uint_value;
 		double double_value;
 		JsonStream::Terminal terminal_value;
-	};
+		std::string *string_value;
+	} container;
+
+	LiteralData() : kind(None) { }
+	LiteralData(const LiteralData &other)
+		: kind(other.kind), container(other.container)
+	{
+		if (kind == StringKind)
+			this->container.string_value = new std::string(*other.container.string_value);
+	}
+
+	~LiteralData() {
+		if (kind == StringKind)
+			delete this->container.string_value;
+	}
+
+	bool hasValue() const {
+		return (this->kind != None);
+	}
+
+	template<typename T>
+	LiteralData &operator=(const T &value) {
+		set(value);
+		return *this;
+	}
+
+	// Setters
+
+	void set(bool v) { this->kind = BoolKind; this->container.bool_value = v; }
+	void set(int64_t v) { this->kind = IntKind; this->container.int_value = v; }
+	void set(uint64_t v) { this->kind = UIntKind; this->container.uint_value = v; }
+	void set(double v) { this->kind = DoubleKind; this->container.double_value = v; }
+	void set(JsonStream::Terminal v) { this->kind = TerminalKind; this->container.terminal_value = v; }
+	void set(const std::string &v) {
+		this->kind = StringKind;
+		this->container.string_value = new std::string(v);
+	}
+};
+
+JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
+	// This will be much better with C++17 std::variant :)
+	switch(value.kind) {
+	case LiteralData::BoolKind:
+		s << value.container.bool_value;
+		break;
+	case LiteralData::IntKind:
+		s << value.container.int_value;
+		break;
+	case LiteralData::UIntKind:
+		s << value.container.uint_value;
+		break;
+	case LiteralData::DoubleKind:
+		s << value.container.double_value;
+		break;
+	case LiteralData::TerminalKind:
+		s << value.container.terminal_value;
+		break;
+	case LiteralData::StringKind:
+		s << *value.container.string_value;
+		break;
+	}
+	return s;
+}
+
+struct Argument : public Type {
+	bool hasDefault; // Does this argument have a default value?
+	std::string name; // Name of the argument
+
+	// Use this once C++17 compilers are widely used.
+	// std::variant< bool, int64_t, uint64_t, double, JsonStream::Terminal > value;
+	LiteralData value;
 };
 
 JsonStream &operator<<(JsonStream &s, const Argument &value) {
@@ -93,27 +157,8 @@ JsonStream &operator<<(JsonStream &s, const Argument &value) {
 	s << std::make_pair("hasDefault", value.hasDefault) << c
 		<< std::make_pair("name", value.name);
 
-	// This will be much better with C++17 std::variant :)
-	if (value.hasDefault && value.kind != Argument::None) {
-		s << c << "value" << JsonStream::Separator;
-
-		switch(value.kind) {
-		case Argument::BoolKind:
-			s << value.bool_value;
-			break;
-		case Argument::IntKind:
-			s << value.int_value;
-			break;
-		case Argument::UIntKind:
-			s << value.uint_value;
-			break;
-		case Argument::DoubleKind:
-			s << value.double_value;
-			break;
-		case Argument::TerminalKind:
-			s << value.terminal_value;
-			break;
-		}
+	if (value.hasDefault && value.value.hasValue()) {
+		s << c << std::make_pair("value", value.value);
 	}
 
 	s << JsonStream::ObjectEnd;
