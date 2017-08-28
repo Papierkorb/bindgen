@@ -15,6 +15,11 @@ module Bindgen
     # Generic argument for a `CrystalProc`, defined in `Binding::`
     CRYSTAL_PROC_TYPE = "CrystalProc"
 
+    # List of flag-enum constants that it must not use.  Crystal will
+    # auto-generate these.  If we don't do this, Crystal will fail to compile
+    # the file at all.
+    ILLEGAL_FLAGS_NAMES = %w[ None All ]
+
     def initialize(@db : TypeDatabase, @io : IO)
       @depth = 0
       @external_types = Set(String).new
@@ -82,7 +87,9 @@ module Bindgen
       print "@[Flags]" if enumeration.flags?
       block "enum", enum_name, ":", backing_type_name do
         enumeration.values.each do |key, value|
-          print "#{key.camelcase} = #{value}"
+          name = key.camelcase
+          next if enumeration.flags? && ILLEGAL_FLAGS_NAMES.includes?(name)
+          print "#{name} = #{value}"
         end
       end
     end
