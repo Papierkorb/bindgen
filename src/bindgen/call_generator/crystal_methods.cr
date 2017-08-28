@@ -22,7 +22,7 @@ module Bindgen
         # Support the ampersand-prefix for `Call::ProcArgument#block?`
         prefix = "&" if argument.responds_to?(:block?) && argument.block?
 
-        if with_default && (value = argument.default_value)
+        if with_default && argument.default_value != nil
           suffix = " = #{argument_value_to_literal(argument)}"
         end
 
