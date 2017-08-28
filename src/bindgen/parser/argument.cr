@@ -4,7 +4,7 @@ module Bindgen
   module Parser
     # Describes a method argument.
     class Argument < Type
-      alias DefaultValueTypes = Bool | UInt64 | Int64 | Float64
+      alias DefaultValueTypes = Bool | UInt64 | Int64 | Float64 | String
 
       JSON.mapping(
         # `Type` part
