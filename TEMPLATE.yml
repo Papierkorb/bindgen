@@ -3,6 +3,13 @@
 # A note on templates: Some values are "templated".  This means they're of type
 # `String`.  All occurences of the percent-sign ("%") will be replaced by a
 # computed value.
+# Additionally, templated strings allow access to environment variables  using
+# curly braces: `{CC}` would be expanded to the value of `ENV["CC"]`.  It's
+# possible to provide a fall back value, which is used only if the given
+# environment variable doesn't exist: `{CC|gcc}` would expand to `ENV["CC"]`,
+# or if it is not set, to `gcc`.  You can also put a percent-sign in there:
+# `{LIBRARY_PATH|%}` will expand to `ENV["LIBRARY_PATH"]`, or to the replacement
+# value otherwise.
 
 # Defines the `module X` into which *all* code will be put.
 #   Mandatory!
