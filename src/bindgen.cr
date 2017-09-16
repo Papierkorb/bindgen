@@ -7,6 +7,9 @@ if ARGV.empty? || { "-h", "--help", "help" }.includes?(ARGV.first)
   exit 1
 end
 
-config = Bindgen::Configuration.from_yaml File.read(ARGV.first)
-tool = Bindgen::Tool.new(config)
-tool.run!
+config_path = ARGV.first
+config = Bindgen::ConfigReader.from_file(
+  klass: Bindgen::Configuration,
+  path: config_path,
+)
+tool = Bindgen::Tool.new(File.dirname(config_path), config)
