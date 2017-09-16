@@ -3,28 +3,43 @@ module Bindgen
   # program parameter.
   class Configuration
 
-    # The `output:` sub-section of `Configuration`.
-    class Output
+    # Configuration of a generator, as given as value in `generators:`
+    class Generator
       YAML.mapping(
-        # Where to write the C++ wrapper code
-        cpp: String,
+        # Output file path of this generator.  Can be a template string: If a
+        # percent-sign is found in it, the generator will split the output data
+        # after each logical unit.  A logical unit is generator-specific, though
+        # it's usually something like a class.
+        output: String,
 
-        # Where to write the Crystal code
-        crystal: String,
-
-        # Code to include in the generated CPP code at the top
-        cpp_preamble: {
+        # Custom preamble.  Will be added to each output file right at the
+        # beginning, before anything else.
+        preamble: {
           type: String,
           nilable: true,
         },
 
-        # Command to run in the cpp output directory to build the C/C++ binding
-        # library.
-        cpp_build: {
+        # If set, the command (including any set arguments) will be executed
+        # using `#system`.  Use this to build the output of a generator.  If
+        # the ran command fails (That means its exit code is not zero), then
+        # bindgen fails immediately, passing on the same exit code.
+        build: {
           type: String,
           nilable: true,
-        }
+        },
       )
+
+      def initialize(@output, @preamble, @build)
+      end
+
+      # Builds an empty, dummy generator configuration
+      def self.dummy
+        Generator.new(
+          preamble: nil,
+          build: nil,
+          output: "", # Will not be used.
+        )
+      end
     end
 
     # Configuration of template container types and their instantiations.
@@ -42,7 +57,10 @@ module Bindgen
         type: Type,
 
         # List of instantiations to create.
-        instantiations: Array(Array(String)),
+        instantiations: {
+          type: Array(Array(String)),
+          default: [ ] of Array(String),
+        },
 
         # Method to access an element at an index.
         access_method: { type: String, default: "at" },
@@ -57,7 +75,13 @@ module Bindgen
 
     YAML.mapping(
       # Target Crystal module
-      module: String,
+      module: String, # TODO: Keep this?  Or move into `Generator`?
+
+      # Used processors
+      processors: Array(String),
+
+      # Used generators
+      generators: Hash(String, Generator),
 
       # What to put into `@[Link(ldflags: "x")]`
       library: {
@@ -82,9 +106,6 @@ module Bindgen
         type: Array(Container),
         default: Array(Container).new,
       },
-
-      # Where to write the output
-      output: Output,
 
       # Type database configuration
       types: TypeDatabase::Configuration,

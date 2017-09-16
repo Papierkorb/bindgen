@@ -20,11 +20,50 @@ module: MyStuff
 # relative to the path of the generated `.cr` file.
 library: "%/ext/binding.a"
 
+# Processors pipeline.  See `README.md` for details.
+# The following pipeline is what you probably want to use for C++.
+processors:
+  # Graph-refining processors:
+  - filter_methods # Throw out filtered methods
+  - copy_structs # Copy structures as marked
+  - auto_container_instantiation # Figure out which templates to instantiate
+  - instantiate_containers # Actually instantiate containers
+  - virtual_override # Allow overriding virtual methods
+  # Preliminary generation processors:
+  - cpp # Create C++ <-> C wrappers
+  - crystal_cpp_binding # Create `lib` bindings for the C wrapper
+  - crystal # Create Crystal wrappers
+  - sanity_check # Shows issues, if any
+
+# Generator configuration.  These write the actual output to disk.
+generators:
+  # C++ generator
+  cpp:
+    # Output file path  (Mandatory)
+    output: ext/my_bindings.cpp
+    # Output file preamble  (Optional)
+    preamble: |-
+      #include "bindgen_helper.hpp"
+    # Command to run after the generator.  (Optional!)
+    # Will be executed as-written in the output directory.
+    # If the command signals failure, bindgen will halt too.
+    build: make
+    # Small-ish bindings may get away without a custom Makefile:
+    # build: "{CXX|g++} -std=c++11 -c -o binding.o -lMyLib my_bindings.cpp"
+    # Do you have complex dependencies?  Use a conditional!
+    # if_os_is_windows: # Read the `YAML configuration` section in README.md
+    #   build: mingw-make
+  # Crystal generator.  Configuration style is exactly the same.
+  crystal:
+    # You'll most likely only need the `output` option.
+    output: src/my_lib/binding.cr
+
 # Map of classes to bind to.  A class inheriting another class should follow
 # *after* that base-class.
 classes:
   # Maps from the name of the C++ class, to the Crystal class.
   CppClassName: CrystalClassName
+  MayBeEqual: MayBeEqual # This is fine, too.
 
 # Map of enums to copy.
 enums:
@@ -40,21 +79,9 @@ containers:
     # size_method: C++ container size method.  Defaults to `size`.
     # push_method: C++ item append method.  Defaults to `push_back`.
     instantiations: # All wanted instantiations of this container
+      # You may like the `AutoContainerInstantiation` processor, too!
       - [ "C++ type name" ]
       # - [ "..." ]
-
-# Output file configuration
-output:
-  # C++ output file path  (Mandatory!)
-  cpp: ext/my_bindings.cpp
-  # Crystal output file path  (Mandatory!)
-  crystal: src/my_lib/binding.cr
-  # C++ file preamble.  (Optional!)
-  cpp_preamble: |
-    #include "bindgen_helper.hpp"
-  # Command to build the C++ bindings.  (Optional!)
-  # Will be executed as-written in the C++ output directory.
-  cpp_build: make
 
 # Configuration for the C++ parser.
 parser:
