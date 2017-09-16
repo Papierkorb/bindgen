@@ -180,13 +180,18 @@ module Bindgen
     # Look up *type* in the database.
     def [](type : Parser::Type | String)
       type = type.base_name if type.is_a?(Parser::Type)
-      check_for_alias @types[type]
+
+      if found = check_for_alias(@types[type], nil)
+        found
+      else
+        raise IndexError.new("No rules for type #{type.inspect}")
+      end
     end
 
     # Look up *type* in the database.
-    def []?(type : Parser::Type | String)
+    def []?(type : Parser::Type | String, recursion_check = nil)
       type = type.base_name if type.is_a?(Parser::Type)
-      check_for_alias @types[type]?
+      check_for_alias @types[type]?, recursion_check
     end
 
     # Look-up an enumeration of name *type*
@@ -206,7 +211,7 @@ module Bindgen
 
     # Helper, equivalent to calling `#[type]?.try(&.x) || default`
     def try_or(type : Parser::Type | String, default)
-      result = check_for_alias(self[type]?).try{|x| yield x}
+      result = check_for_alias(self[type]?, nil).try{|x| yield x}
 
       if result.nil?
         default
@@ -259,9 +264,17 @@ module Bindgen
     # Checks if *rules* has an `TypeConfig#alias_for` set.  If so, looks up the
     # rules of that aliased name, and returns it.  Otherwise, returns the given
     # *rules*.
-    private def check_for_alias(rules)
+    #
+    # The *previous_rules* argument is passed through `#[]?` by
+    # `#check_for_alias` to support recursive type-aliasing, while at least
+    # detecting direct self-references.
+    private def check_for_alias(rules, previous_rules)
       if other_name = rules.try(&.alias_for)
-        self[other_name]?
+        if previous_rules == rules
+          raise "Recursive type-alias found: #{other_name.inspect} is aliased to itself!"
+        end
+
+        self[other_name, rules]?
       else
         rules
       end
