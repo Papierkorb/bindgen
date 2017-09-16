@@ -6,7 +6,9 @@ module Bindgen
       # Default path to the binary
       BINARY_PATH = "#{File.dirname(__FILE__)}/../../../clang/bindgen"
 
-      def initialize(@classes : Array(String), @enums : Array(String), @config : Configuration)
+      # *project_root* must be a path to the directory the configuration YAML
+      # resides.
+      def initialize(@classes : Array(String), @enums : Array(String), @config : Configuration, @project_root : String)
         @binary_path = ENV["BINDGEN_BIN"]? || @config.binary || BINARY_PATH
       end
 
@@ -16,12 +18,12 @@ module Bindgen
         enums = @enums.flat_map{|x| [ "-e", "#{x}" ] }
         flags = @config.flags
         defines = @config.defines.map{|x| "-D#{x}"}
-        includes = @config.includes.map{|x| "-I#{x}"}
+        includes = template_include_paths.map{|x| "-I#{x}"}
 
         [ input_file ] + classes + enums + [ "--" ] + flags + defines + includes
       end
 
-      # Calls the clang tool and returns its output as string
+      # Calls the clang tool and returns its output as string.
       def run : String
         generate_source_file do |file|
           command = "#{@binary_path} #{arguments(file).join(" ")}"
@@ -52,6 +54,13 @@ module Bindgen
         end
 
         result.not_nil!
+      end
+
+      # Returns the `-I` paths with template expansion to the project root.
+      private def template_include_paths
+        @config.includes.map do |path|
+          Util.template(path, @project_root)
+        end
       end
     end
   end
