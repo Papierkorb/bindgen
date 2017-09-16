@@ -109,6 +109,9 @@ module Bindgen
         }
       )
 
+      # The node this type is represented by in the graph, if any
+      property graph_node : Graph::Node?
+
       def initialize(
         @crystal_type = nil, @cpp_type = nil, @binding_type = nil,
         @from_cpp = nil, @to_cpp = nil, @converter = nil,
@@ -116,6 +119,7 @@ module Bindgen
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
         @generate_binding = true, @builtin = false, @ignore_methods = [ ] of String,
+        @graph_node = nil,
       )
       end
 
@@ -154,7 +158,7 @@ module Bindgen
 
     # Helper method to read the built-in type configuration.
     def self.load_builtins : Configuration
-       Configuration.from_yaml File.read(BUILTIN_CONFIG_PATH)
+      ConfigReader.from_file(Configuration, BUILTIN_CONFIG_PATH)
     end
 
     # Registered enumerations.
@@ -170,6 +174,8 @@ module Bindgen
 
       @types = config.dup
     end
+
+    delegate each, to: @types
 
     # Look up *type* in the database.
     def [](type : Parser::Type | String)
@@ -244,7 +250,6 @@ module Bindgen
       config ||= TypeConfig.new
 
       config.kind = kind if new_config
-      # config.binding_type ||= crystal_name
       config.cpp_type ||= cpp_name
       config.crystal_type ||= crystal_name if config.generate_wrapper
 
