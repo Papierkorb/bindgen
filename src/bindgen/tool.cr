@@ -1,9 +1,23 @@
 module Bindgen
   # Front-end tool class
   class Tool
+    # Dummy error that can be thrown by a class to exit out of the tool.
+    class ExitError < Exception
+      # The exit code to signal.
+      getter code : Int32
+
+      def initialize(message = "Internal error", @code = 1)
+        super(message)
+      end
+    end
+
     getter database : TypeDatabase
 
-    def initialize(@config : Configuration)
+    # Path to the projects root, commonly the directory the YAML configuration
+    # file is contained in.
+    getter root_path : String
+
+    def initialize(@root_path : String, @config : Configuration, @show_stats = false)
       @database = TypeDatabase.new(@config.types)
 
       # Add enum types to the db
@@ -15,105 +29,68 @@ module Bindgen
       @config.classes.each do |cpp_name, crystal_name|
         @database.add_sparse_type cpp_name, crystal_name, Parser::Type::Kind::Class
       end
+
+      # Build pipelines
+      @processors = Processor::Runner.new(@config, @database)
+      @generators = Generator::Runner.new(@config, @database)
     end
 
-    # Runs the tool.
-    def run!
-      # 1. Run the parser
-      document = parse_cpp_sources
-      @database.enums.merge!(document.enums)
+    # Runs the tool.  Returns the process exit code.
+    def run! : Int32
+      stats = run_steps
 
-      # 2. Generate CPP code
-      generate_cpp_wrapper(document.classes)
-
-      # 3. Generate Crystal code
-      generate_crystal_wrapper(document)
-
-      # 4. Build C++ code
-      run_cpp_build_step
-    end
-
-    # Runs the build step defined in `Configuration::Output#cpp_build` to build
-    # the generated C++ code project.
-    private def run_cpp_build_step
-      command = @config.output.cpp_build
-      return if command.nil?
-
-      Dir.cd(File.dirname @config.output.cpp) do
-        unless system(command)
-          STDERR.puts "CPP build step failed!"
-          STDERR.puts "  Directory: #{Dir.current}"
-          STDERR.puts "  Command: #{command}"
-          exit 2
-        end
+      if @show_stats
+        puts "Timing statistics:"
+        puts stats.to_s(depth: 1)
+        puts "  Total time: #{stats.total_duration}"
       end
+
+      0 # Success!
+    rescue err : ExitError
+      err.code # Failure
+    end
+
+    # Runs all steps in the tool, measuring each steps timings.
+    private def run_steps : Statistics
+      stats = Statistics.new
+
+      document = stats.measure("Parse C++"){ parse_cpp_sources }
+      graph = stats.measure("Build graph"){ build_graph(document) }
+
+      stats.measure("Processors"){ @processors.process(graph, document) }
+      stats.measure("Generators"){ @generators.process(graph) }
+
+      stats
+    end
+
+    private def build_graph(document)
+      builder = Graph::Builder.new(@database)
+      graph = Graph::Namespace.new(@config.module, nil)
+      builder.build_document(document, graph)
+
+      Graph::Library.new( # Add `lib Binding`
+        name: Graph::LIB_BINDING,
+        parent: graph,
+        ld_flags: templated_ld_flags,
+      )
+
+      graph
     end
 
     # Generates a `Parser::Document` from the given configuration and C/C++
     # header files.
     private def parse_cpp_sources
-      parser = Parser::Runner.new(@config.classes.keys, @config.enums.keys, @config.parser)
+      parser = Parser::Runner.new(@config.classes.keys, @config.enums.keys, @config.parser, @root_path)
       parser.run_and_parse
     end
 
-    # Generates the C++ wrapper file.
-    private def generate_cpp_wrapper(classes)
-      File.open(@config.output.cpp, "w") do |handle|
-        gen = CppGenerator.new(@database, handle)
-        gen.print_header
-
-        @config.parser.files.each do |path|
-          gen.add_include path
-        end
-
-        gen.print @config.output.cpp_preamble
-        classes.each do |_, klass|
-          gen.add_class klass
-        end
-
-        @config.containers.each do |container|
-          gen.add_container container
-        end
-
-        gen.emit_all_methods
-      end
-    end
-
-    # Generates the Crystal wrapper file.
-    private def generate_crystal_wrapper(document)
-      File.open(@config.output.crystal, "w") do |handle|
-        gen = CrystalGenerator.new(@database, handle)
-
-        gen.block "module", @config.module do
-          gen.print GlueReader.read
-
-          @config.containers.each do |container|
-            gen.add_container container
-          end
-
-          document.enums.each do |_, enumeration|
-            gen.add_enumeration enumeration
-          end
-
-          document.classes.each do |_, klass|
-            gen.add_class klass
-          end
-
-          gen.lib_block "Binding", ld_flags do
-            gen.emit_bindings
-          end
-
-          gen.emit_wrappers
-        end
-      end
-    end
-
     # Returns the ld_flags for the `lib Binding` block.
-    private def ld_flags : String?
+    private def templated_ld_flags : String?
       haystack = @config.library
       return if haystack.nil?
 
-      depth = File.dirname(@config.output.crystal).count('/') + 1
+      crystal_output = @config.generators["crystal"].output
+      depth = File.dirname(crystal_output).count('/') + 1
       project_dir = ([ ".." ] * depth).join("/")
 
       Util.template(haystack, "\#{__DIR__}/#{project_dir}")
