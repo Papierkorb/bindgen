@@ -34,6 +34,24 @@ module Bindgen
       def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false)
       end
 
+      # Utility method to easily build a `Method` using a more Crystal-style
+      # syntax.
+      def self.build(name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String, type = Parser::Method::Type::MemberMethod, crystal_name = nil) : self
+        method = Parser::Method.new(
+          type: type,
+          access: Parser::AccessSpecifier::Public,
+          name: name,
+          isConst: false,
+          className: class_name,
+          firstDefaultArgument: nil,
+          returnType: return_type,
+          arguments: arguments,
+        )
+
+        method.crystal_name = crystal_name if crystal_name
+        method
+      end
+
       delegate constructor?, copy_constructor?, member_method?, static_method?, signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
@@ -298,6 +316,8 @@ module Bindgen
       end
 
       # Is this method filtered out?
+      #
+      # TODO: Can we move this into `Processor::FilterMethods`?
       def filtered?(db : TypeDatabase) : Bool
         return true if private?
         return true if db[@returnType]?.try(&.ignore?)

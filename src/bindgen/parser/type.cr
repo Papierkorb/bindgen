@@ -2,6 +2,10 @@ module Bindgen
   module Parser
     # Stores information about a specific C++ type.
     class Type
+      # Name of the `CrystalProc` C++ and Crystal type.  This type is a template
+      # type in C++, and a `struct` in Crystal.
+      CRYSTAL_PROC = "CrystalProc"
+
       # Type kinds.  Currently not used by the clang tool.
       enum Kind
         Class
@@ -66,10 +70,9 @@ module Bindgen
       end
 
       # Parser for qualified C++ type-names.  It's really stupid though.
-      def self.parse(type_name : String)
+      def self.parse(type_name : String, pointer_depth = 0)
         name = type_name.strip # Clean the name
         reference = false
-        pointer_depth = 0
         const = false
 
         # Is it const-qualified?
@@ -101,6 +104,36 @@ module Bindgen
           baseName: name.strip,
           fullName: type_name,
           template: nil,
+          nilable: false,
+        )
+      end
+
+      # Creates a `Type` describing a Crystal `Proc` type, which returns a
+      # *return_type* using *arguments*.
+      #
+      # The generated type will use `CrystalPoc` as base type.
+      def self.proc(return_type : Type, arguments : Enumerable(Type))
+        base = "CrystalPoc"
+
+        template_args = [ return_type ] + arguments.to_a
+        cpp_type = "#{base}<#{template_args.map(&.full_name).join(", ")}>"
+
+        template = Template.new(
+          fullName: base,
+          baseName: base,
+          arguments: template_args,
+        )
+
+        new( # Build the `Type`
+          isConst: false,
+          isMove: false,
+          isReference: false,
+          isBuiltin: false,
+          isVoid: false,
+          pointer: 0,
+          baseName: name,
+          fullName: cpp_type,
+          template: template,
           nilable: false,
         )
       end

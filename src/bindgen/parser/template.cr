@@ -12,18 +12,21 @@ module Bindgen
         # Template arguments
         arguments: Array(Type),
       )
-    end
 
-    def_equals_and_hash @fullName, @baseName, @arguments
+      def initialize(@fullName, @baseName, @arguments)
+      end
 
-    # Full name, like `std::vector<_Tp, _Alloc>`
-    def full_name : String
-      @fullName
-    end
+      def_equals_and_hash @fullName, @baseName, @arguments
 
-    # Base name of the type, like `std::vector`
-    def base_name : String
-      @baseName
+      # Full name, like `std::vector<_Tp, _Alloc>`
+      def full_name : String
+        @fullName
+      end
+
+      # Base name of the type, like `std::vector`
+      def base_name : String
+        @baseName
+      end
     end
   end
 end
