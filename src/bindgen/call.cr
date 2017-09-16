@@ -1,5 +1,14 @@
 module Bindgen
-  # Stores a analyzed call to a method.
+  # Stores a representation of a method call, or a method definition.
+  # These are nuilt by language-specific processors, and are written by the
+  # generators.
+  #
+  # A `Call` is generally platform-specific: They are bound to a certain context
+  # which is described by the code around it.
+  #
+  # Think about a call like a piece of code that has no side-effects on its
+  # surroundings:  Its body is self-contained, which expects variables as given
+  # in the *arguments* list, and returns something described by the *result*.
   class Call
     # Base-class for `Result` and `Argument`.
     abstract class Expression
@@ -22,6 +31,8 @@ module Bindgen
 
       def initialize(@type, @reference, @pointer, @type_name, @nilable)
       end
+
+      def_equals_and_hash @type, @reference, @pointer, @type_name, @nilable
     end
 
     # Call result type configuration.
@@ -110,6 +121,47 @@ module Bindgen
       end
     end
 
+    # The body of a `Call` which is to be materialized as function or method of
+    # some sort.  The `Generator` will later call `#to_code` with its *platform*
+    # to generate the code, which it will then embed into the function itself.
+    #
+    # ## Choosing a body type
+    #
+    # When building a custom `Body`, consider using `HookableBody` instead to
+    # allow later processors to augment your body.
+    abstract class Body
+      # Will be called by a `Generator` later on, passing in the *call* and the
+      # target *platform*.
+      abstract def to_code(call : Call, platform : Graph::Platform) : String
+    end
+
+    # A body allowing to add additional code before and after the actual code
+    # body.  This is useful to allow later processors to refine existing calls
+    # with additional logic.  An example of this is the `VirtualOverride`
+    # processor, which uses this to augment `#initialize` methods setting the
+    # jump-table.
+    #
+    # **Note**: The *pre_hook* and *post_hook* must be manually called in your
+    # `#to_code` implementation.
+    #
+    # See `CallBuilder::CrystalBinding::InvokeBody` for an example of this.
+    abstract class HookableBody < Body
+      # Code snippet ran before the body code itself.  Access to the arguments
+      # of the body can be accessed directly by their name.
+      getter pre_hook : Body?
+
+      # Code snippet ran after the body code itself.  The result value is stored
+      # in a variable called `result`.
+      getter post_hook : Body?
+    end
+
+    # Dummy body, storing a fixed empty body.
+    class EmptyBody < Body
+      def to_code(_call : Call, _platform : Graph::Platform) : String
+        ""
+      end
+    end
+
     # Origin method
     getter origin : Parser::Method
 
@@ -122,7 +174,10 @@ module Bindgen
     # Return type
     getter result : Result
 
-    def initialize(@origin, @name, @result, @arguments)
+    # The call body, semi-serialized.
+    getter body : Body
+
+    def initialize(@origin, @name, @result, @arguments, @body)
     end
   end
 end
