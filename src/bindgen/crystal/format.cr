@@ -12,7 +12,13 @@ module Bindgen
 
         value = arg.default_value
         unless value.nil?
-          default = " = #{literal arg.type_name, value}"
+          stringified = literal arg.type_name, value
+
+          if stringified.nil? && value.is_a?(Number)
+            stringified = qualified_enum_name arg.type, value.to_i
+          end
+
+          default = " = #{stringified}" if stringified
         end
 
         "#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
