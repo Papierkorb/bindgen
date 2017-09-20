@@ -221,18 +221,6 @@ module Bindgen
       end
     end
 
-    # Tries to lookup the fully-qualified type *name* and return its kind.
-    # If none found, returns *default*.
-    def kind_of(name : String, default = Parser::Type::Kind::Class) : Parser::Type::Kind
-      if kind = @types[name]?.try(&.kind)
-        kind
-      elsif @enums[name]?
-        Parser::Type::Kind::Enum
-      else
-        default
-      end
-    end
-
     # Adds a type configuration to the type database.  If a configuration for
     # this type was set by the user, it's updated - *not* replaced!
     def add_sparse_type(cpp_name : String, crystal_name : String?, kind)
