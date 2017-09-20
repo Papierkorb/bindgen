@@ -17,6 +17,12 @@ module Bindgen
     # ```
     class Inheritance < Base
       def visit_class(klass : Graph::Class)
+        # Mark abstract classes
+        klass.abstract = klass.origin.abstract?
+
+        # Abstract classes can't be directly instantiated.
+        add_abstract_impl_class(klass) if klass.abstract?
+
         # Find all non-private, wrapped bases.
         bases = klass.origin.bases.reject{|b| b.private? || b.virtual?}
         wrapped = wrapped_classes(bases)
@@ -81,6 +87,85 @@ module Bindgen
         end
 
         nodes
+      end
+
+      # Adds a non-abstract `KlassImpl < Klass` class
+      private def add_abstract_impl_class(klass)
+        impl_class = create_impl_class(klass)
+        klass.wrap_class = impl_class
+        impl_class.wrapped_class = klass
+        impl_class.base_class = klass.name
+
+        klass.nodes.each do |node|
+          next unless node.is_a?(Graph::Method)
+          next unless node.origin.pure?
+          add_unabstract_method(node, impl_class)
+        end
+      end
+
+      # Creates a non-abstract graph class from *klass*, and adds it to
+      # *klass*es parent container.
+      private def create_impl_class(klass)
+        parent = klass.parent.as(Graph::Container)
+
+        host = parent.platform_specific(Graph::Platform::Crystal)
+        Graph::Class.new(
+          origin: unabstract_class(klass.origin),
+          name: "#{klass.name}Impl",
+          parent: host,
+        )
+      end
+
+      # Adds a non-abstract copy of *method* to *klass*
+      private def add_unabstract_method(method, klass)
+        graph = Graph::Method.new(
+          name: method.name,
+          origin: unabstract_method(method.origin),
+          parent: klass,
+        )
+
+        graph.calls.merge!(method.calls)
+      end
+
+      # Returns a non-abstract copy of *method*.
+      private def unabstract_method(method)
+        return method unless method.pure?
+
+        Parser::Method.new(
+          type: method.type,
+          name: method.name,
+          access: method.access,
+          isConst: method.const?,
+          isVirtual: method.virtual?,
+          isPure: false,
+          className: method.className, # Keep original class!
+          arguments: method.arguments,
+          firstDefaultArgument: method.first_default_argument,
+          returnType: method.return_type,
+        )
+      end
+
+      # Returns a non-abstract copy of *klass*.
+      private def unabstract_class(klass)
+        base = Parser::BaseClass.new(
+          isVirtual: false,
+          inheritedConstructor: true,
+          name: klass.name,
+          access: Parser::AccessSpecifier::Public,
+        )
+
+        Parser::Class.new(
+          isClass: klass.class?,
+          hasDefaultConstructor: klass.has_default_constructor?,
+          hasCopyConstructor: klass.has_copy_constructor?,
+          isAbstract: false,
+          isDestructible: klass.destructible?,
+          name: "#{klass.name}Impl",
+          byteSize: klass.byteSize,
+          bases: [ base ],
+          fields: klass.fields.dup,
+          methods: klass.methods.map{|m| unabstract_method(m)},
+        )
       end
 
       # C++ body doing a `static_cast<T*>(_self_)`.
