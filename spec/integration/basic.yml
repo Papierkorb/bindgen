@@ -2,6 +2,7 @@ module: Test
 
 processors:
   - filter_methods
+  - default_constructor
   - cpp_wrapper
   - crystal_binding
   - crystal_wrapper
@@ -21,8 +22,14 @@ generators:
 library: "%/tmp/basic.o -lstdc++"
 classes:
   Adder: AdderWrap
+  ImplicitConstructor: ImplicitConstructor
 
-types: { }
+types:
+  IgnoreMe: # Ignore by type
+    ignore: true
+  Adder: # Ignore by method name
+    ignore_methods:
+      - ignoreByName
 
 parser:
   flags: [ "-x", "c++", "-std=c++11" ]
