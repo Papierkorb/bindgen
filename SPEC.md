@@ -3,7 +3,7 @@
 This document specifies all rules bindgen uses to do conversions.  All have
 an assigned paragraph number for easy referencing.
 
-All rules **must** have one (or more) examples, showcasing its implications.
+Rules **should** have one (or more) examples, showcasing its implications.
 
 ## §1. C/C++ Parsing
 
@@ -87,6 +87,106 @@ like this: `foo(unnamed_arg_0 : Int32, two : Int32, unnamed_arg_2 : Int32)`.
 
 If an argument has a name which is a reserved word in Crystal, it gets an
 underscore (`_`) appended: `void foo(int next) -> foo(next_ : Int32)`.
+
+### §2.3 Inheritance and abstract classes
+
+Inheritance from wrapped C++ classes is replicated in Crystal.
+
+For a C++ class to be used as base-class in the Crystal wrapper, all of these
+have to be true:
+
+1. The base-class is wrapped.
+2. The base-class is publicly inherited.
+
+#### §2.3.1 Single inheritance
+
+The base-class is inherited in Crystal, mirroring the C++ definition.
+
+```cpp
+class Foo : public Bar { ... };
+```
+
+If both `Foo` and `Bar` are wrapped, the following wrapper will be generated:
+
+```crystal
+class Foo < Bar
+  # ...
+end
+```
+
+#### §2.3.2 Multiple inheritance
+
+The Crystal wrapper class will inherit from the first of all base-classes.  All
+following base-classes are wrapped through an `#as_X` conversion method.
+
+```cpp
+class Foo : public Bar, public AnotherOne { ... };
+```
+
+Will generate:
+
+```crystal
+class Foo < Bar
+  def as_another_one : AnotherOne
+    # Conversion code ...
+  end
+
+  # ...
+end
+```
+
+#### §2.3.3 Abstract classes
+
+An abstract C++ class will also be declared `abstract` in Crystal.  Further,
+an implementation class is generated to aid in conversion calls later on:
+
+```cpp
+class Foo { // A pure class
+  virtual void doSomething() = 0;
+};
+```
+
+Will be wrapped as:
+
+```crystal
+abstract class Foo
+  abstract def do_something
+end
+
+class FooImpl < Foo
+  def do_something
+    # Call implementation ...
+  end
+end
+```
+
+**Note**: The `Impl` class cannot be inherited from.
+
+#### §2.3.4 Virtual method override
+
+It's possible to override a C++ method in a Crystal sub-class, if the C++ method
+was defined as `virtual`.  A Crystal method is considered to override a C++
+virtual method if the Crystal method and the C++ method share the same name.
+
+```cpp
+class Foo {
+  virtual int doWork() { ... }
+};
+```
+
+Can be overriden from Crystal like this:
+
+```crystal
+class MyFoo < Foo # Inherit
+  def do_work
+    # ...
+  end
+end
+```
+
+The arguments and result values are proxied back and forth from C++ like normal
+wrappers do.  The rules of argument handling is the same.  Such overrides will
+look and behave the same to C++ as any other virtual C++ method.
 
 ## §3. Crystal bindings
 
