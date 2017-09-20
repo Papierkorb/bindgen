@@ -132,7 +132,7 @@ module Bindgen
             end
 
             if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
-              template = wrapper_initialize_template(type_name)
+              template = wrapper_initialize_template(rules, type_name)
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.crystal_pass_by, is_ref, ptr)
@@ -191,7 +191,14 @@ module Bindgen
 
       # Returns the `Call::Result#conversion` template to turn a pointer into an
       # instance of *type_name* by using its `#initialize(unwrap: x)` method.
-      private def wrapper_initialize_template(type_name)
+      private def wrapper_initialize_template(rules, type_name)
+        # If the target type is abstract, use its `Impl` class instead.
+        if klass = rules.graph_node.as?(Graph::Class)
+          if impl = klass.wrap_class
+            type_name = impl.name
+          end
+        end
+
         "#{type_name}.new(unwrap: %)"
       end
     end
