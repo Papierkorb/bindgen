@@ -5,6 +5,9 @@ module Bindgen
     # A structure can host both raw variable fields (C-style) and other methods
     # at once.
     class Struct < Container
+      # Used to signal the `Generator::Cpp` to generate a `using BASE::BASE;`.
+      INHERIT_CONSTRUCTORS_TAG = "INHERIT_CONSTRUCTORS_TAG"
+
       # Fields in this struct.
       getter fields : Hash(String, Call::Result)
 

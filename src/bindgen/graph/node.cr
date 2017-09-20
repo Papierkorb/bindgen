@@ -8,6 +8,13 @@ module Bindgen
       # Name of this node.
       getter name : String
 
+      # Tags.  Can be used to store flag-like data, as signal between
+      # processors.  Also see the `x_TAG` constants in sub-classes of `Node`.
+      #
+      # Before you use tags, check if you can get the information you require
+      # on some other way, e.g. infer through other existing properties.
+      getter tags = { } of String => String
+
       def initialize(@name, parent = nil)
         @parent = parent
 
@@ -19,6 +26,26 @@ module Bindgen
       # Is this node kind a constant in Crystal?
       def constant? : Bool
         true # Most are constants, so default to it.
+      end
+
+      # Sets the value of tag *name* to *value*.  Raises if a tag of the same
+      # name is already set.
+      def set_tag(name : String, value : String = "")
+        if @tags.has_key?(name)
+          raise IndexError.new("Tag #{name.inspect} is already set")
+        end
+
+        @tags[name] = value
+      end
+
+      # Returns the value of tag *name*, if any.
+      def tag?(name : String)
+        @tags[name]?
+      end
+
+      # Returns the value of tag *name*.
+      def tag(name : String)
+        @tags[name]
       end
 
       # Gives a list of nodes, going from the root node all the way to this

@@ -3,6 +3,10 @@ module Bindgen
     # A method, and its calls.  The `#calls` will be populated later on by
     # processors.
     class Method < Node
+      # If this tag is set, it means this method is a `#initialize(unwrap: )`.
+      # The value is left empty.
+      UNWRAP_INITIALIZE_TAG = "UNWRAP_INITIALIZE_TAG"
+
       # `Parser::Method` this method node is based on.
       getter origin : Parser::Method
 
