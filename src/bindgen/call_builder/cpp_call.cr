@@ -9,7 +9,7 @@ module Bindgen
         pass = Cpp::Pass.new(@db)
         method_name = Cpp::MethodName.new(@db)
 
-        name = method_name.generate(method, method.class_name, self_var)
+        name = method_name.generate(method, self_var)
 
         Call.new(
           origin: method,
