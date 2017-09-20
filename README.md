@@ -19,7 +19,7 @@ dependencies:
 **Note**: If you intend to ship the generated code with your shard, you can
 replace `dependencies` with `development_dependencies`.
 
-Read the `TEMPLATE.yml` for configuration documentation.
+See `TEMPLATE.yml` for configuration documentation.
 
 ### Development dependencies
 
@@ -88,7 +88,7 @@ The following rules are automatically applied to all bindings:
 
 *Made a published, stable-y binding with bindgen?  Want to see it here?  PR!*
 
-## YAML configuration files
+## Conditions and dependencies in YAML files
 
 YAML configuration files support conditionals elements (So, `if`s), and loading
 external dependency files.
@@ -301,18 +301,27 @@ Generates the C++ wrapper method `Call`s.
 ### `CrystalBinding`
 
 * **Kind**: Generation
-* **Run after**: *Refining* processors and `CppWrapper`
-* **Run before**: `CrystalWrapper`
+* **Run after**: `CppWrapper`, `VirtualOverride` and `CrystalWrapper`
+* **Run before**: No specific dependency
 
 Generates the `lib Binding` `fun`s.
 
 ### `CrystalWrapper`
 
 * **Kind**: Generation
-* **Run after**: *Refining* processors and `CrystalBinding`
-* **Run before**: Nothing, likely last in the pipeline.
+* **Run after**: *Refining* processors
+* **Run before**:  `CrystalBinding` and `VirtualOverride`
 
 Generates the Crystal methods in the wrapper classes.
+
+### `DefaultConstructor`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Clang doesn't expose default constructors methods for implicit default
+constructors.  This processor finds these cases and adds an explicit constructor.
 
 ### `DumpGraph`
 
@@ -342,6 +351,8 @@ of the pipeline.
 * **Run before**: `VirtualOverride`
 
 Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
+Also handles abstract classes in that it adds an `Impl` class, so code can
+return instances to the (otherwise) abstract class.
 
 ### `InstantiateContainers`
 
@@ -382,10 +393,28 @@ Checks are as follows:
 
 * **Kind**: Refining, but ran after generation processors!
 * **Run after**: `CrystalWrapper`!
-* **Run before**: No specific dependency
+* **Run before**: `CrystalBinding` and `CppWrapper`
 
 Adds C++ and Crystal wrapper code to allow overriding C++ virtual methods from
 within Crystal.
+
+**Important Note**: Make sure to run this processor after `CrystalWrapper` but
+before `CrystalBinding`.
+
+It needs to modify the `#initialize` methods, and generate `lib` structures,
+bindings, and C++ code too.
+
+This is the recommended processor order:
+
+```yaml
+processors:
+  # ...
+  - crystal_wrapper
+  - virtual_override
+  - cpp_wrapper
+  - crystal_binding
+```
+
 
 ## Contributing
 
