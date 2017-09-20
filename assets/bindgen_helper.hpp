@@ -39,11 +39,20 @@
 
 #include <gc/gc.h> // Boehm GC
 #include <cstring>
+#include <string>
 
 // Helper structure to transfer a `String` between C++ and Crystal.
 struct CrystalString {
-  char *ptr;
+  const char *ptr;
   int size;
+
+  static CrystalString create(const std::string &str) {
+    return CrystalString{ str.data(), static_cast<int>(str.size()) };
+  }
+
+  std::string toStdString() {
+    return std::string(this->ptr, this->size);
+  }
 };
 
 /* Wrapper for a Crystal `Proc`. */

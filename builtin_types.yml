@@ -43,6 +43,20 @@ ssize_t: { binding_type: "LibC::SsizeT", kind: Struct, builtin: true }
 float: { binding_type: Float32, kind: Struct, builtin: true }
 double: { binding_type: Float64, kind: Struct, builtin: true }
 
+# C++ STL
+"std::string":
+  builtin: true
+  kind: Struct
+  opaque: true
+  wrapper_pass_by: Value
+  crystal_type: String
+  cpp_type: CrystalString
+  binding_type: CrystalString
+  to_cpp: "(%.toStdString())"
+  from_cpp: "CrystalString::create(%)"
+  from_crystal: "Binding::CrystalString.new(ptr: %.to_unsafe, size: %.bytesize)"
+  to_crystal: "String.new(%.ptr, %.size)"
+
 # Qt specific types
 uchar: { binding_type: UInt8, kind: Struct, builtin: true }
 ushort: { binding_type: UInt16, kind: Struct, builtin: true }
