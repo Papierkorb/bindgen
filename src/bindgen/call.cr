@@ -148,11 +148,11 @@ module Bindgen
     abstract class HookableBody < Body
       # Code snippet ran before the body code itself.  Access to the arguments
       # of the body can be accessed directly by their name.
-      getter pre_hook : Body?
+      property pre_hook : Body?
 
       # Code snippet ran after the body code itself.  The result value is stored
       # in a variable called `result`.
-      getter post_hook : Body?
+      property post_hook : Body?
     end
 
     # Dummy body, storing a fixed empty body.
