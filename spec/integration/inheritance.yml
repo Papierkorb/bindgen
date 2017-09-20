@@ -1,0 +1,17 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - default_constructor
+  - inheritance
+  - cpp_wrapper
+  - crystal_binding
+  - crystal_wrapper
+  - sanity_check
+
+classes:
+  Base: Base
+  AbstractThing: AbstractThing
+  Subclass: Subclass
+
+types: { }
