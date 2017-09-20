@@ -5,8 +5,9 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      def build(method : Parser::Method, target : Call, self_var = "_self_", needs_instance = nil)
+      def build(method : Parser::Method, target : Call, class_name : String? = nil, self_var = "_self_", needs_instance = nil)
         pass = Cpp::Pass.new(@db)
+        class_name ||= method.class_name
 
         if needs_instance.nil?
           needs_instance = method.needs_instance?
@@ -14,7 +15,7 @@ module Bindgen
 
         arguments = pass.arguments_to_cpp(method.arguments)
         if needs_instance # Add `_self_`
-          klass_type = Parser::Type.parse(method.class_name, 1)
+          klass_type = Parser::Type.parse(class_name, 1)
           arguments.unshift(Cpp::Argument.self(klass_type))
         end
 
@@ -37,8 +38,13 @@ module Bindgen
           func_result = typer.full(call.result)
           func_args = formatter.argument_list(call.arguments)
 
+          # Can we do better than this?
+          func_result = "const #{func_result}" if call.result.type.const?
+          # Returning a `void` from a void method generates a warning.
+          prefix = "return " unless call.result.type.void?
+
           %[extern "C" #{func_result} #{call.name}(#{func_args}) {\n] \
-          %[  return #{@target.body.to_code(@target, platform)};\n] \
+          %[  #{prefix}#{@target.body.to_code(@target, platform)};\n] \
           %[}\n\n]
         end
       end
