@@ -6,6 +6,8 @@ module Bindgen
     # 1. Ignoring a type the method uses as argument or result type
     # 2. By adding the name to `type.CLASS.ignore_methods`
     class FilterMethods < Base
+      include Graph::Visitor::MayDelete
+
       def visit_method(method : Graph::Method)
         m = method.origin
 
@@ -14,7 +16,7 @@ module Bindgen
 
         # Rule 2: Explicitly ignored method
         if ignored = @db[m.class_name]?.try(&.ignore_methods)
-          remove ||= ignored.includes?(method.name)
+          remove ||= ignored.includes?(m.name)
         end
 
         # Remove if ignored

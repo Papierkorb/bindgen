@@ -3,6 +3,22 @@ module Bindgen
     # A `Graph::Node` visitor module.  Use `#visit_node` as entry-point, and
     # override the remaining `#visit_X` methods as you require.
     module Visitor
+      # A visitor including this module will be allowed to *delete* a node out
+      # of a `Container`, while iterating over that same container, from within
+      # an inner visitor method.
+      module MayDelete
+        include Visitor
+
+        # Visits all children of *container*.  The *container*s nodes list is
+        # copied internally before iterating.  It is thus acceptable to
+        # **delete** items from the `#visit_X` method called by this.
+        def visit_children(container : Container)
+          container.nodes.dup.each do |child|
+            visit_node(child)
+          end
+        end
+      end
+
       # Checks if *node* shall be visited.  Can be overriden in the host class
       # to only visit specific nodes.
       #
