@@ -111,9 +111,9 @@ module Bindgen
       # Creates a `Type` describing a Crystal `Proc` type, which returns a
       # *return_type* using *arguments*.
       #
-      # The generated type will use `CrystalPoc` as base type.
+      # The generated type will use `CrystalProc` as base type.
       def self.proc(return_type : Type, arguments : Enumerable(Type))
-        base = "CrystalPoc"
+        base = "CrystalProc"
 
         template_args = [ return_type ] + arguments.to_a
         cpp_type = "#{base}<#{template_args.map(&.full_name).join(", ")}>"
@@ -131,7 +131,7 @@ module Bindgen
           isBuiltin: false,
           isVoid: false,
           pointer: 0,
-          baseName: name,
+          baseName: base,
           fullName: cpp_type,
           template: template,
           nilable: false,
