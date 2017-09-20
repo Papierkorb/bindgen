@@ -33,6 +33,11 @@ module Bindgen
         prototype = type_prototype :struct, structure.name, structure.base_class
         puts "#{prototype} {"
         indented do
+          if structure.tag?(Graph::Struct::INHERIT_CONSTRUCTORS_TAG)
+            base = structure.base_class
+            puts "using #{base}::#{base};" # C++11
+          end
+
           structure.fields.each do |name, type|
             puts "#{type.type_name} #{name};"
           end
