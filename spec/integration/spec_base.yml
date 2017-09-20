@@ -1,0 +1,27 @@
+# Required by the spec helpers.
+# This indirectly also tests that configuration dependencies work fine.
+
+module: Test
+
+generators:
+  cpp:
+    output: tmp/{SPEC_NAME}.cpp
+    build: g++ -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -Wall -Werror
+    preamble: |-
+      #include <gc/gc_cpp.h>
+      #include "bindgen_helper.hpp"
+      #include "../{SPEC_NAME}.cpp"
+  crystal:
+    output: tmp/{SPEC_NAME}.cr
+
+library: "%/tmp/{SPEC_NAME}.o -lstdc++"
+
+parser:
+  flags: [ "-x", "c++", "-std=c++11" ]
+  files: [ "{SPEC_NAME}.cpp" ]
+  includes:
+    - "%"
+    - /usr/lib/clang/4.0.1/include/
+  defines:
+    - __STDC_CONSTANT_MACROS
+    - __STDC_LIMIT_MACROS

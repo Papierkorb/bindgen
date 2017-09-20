@@ -1,4 +1,4 @@
-module: Test
+<<: spec_base.yml
 
 processors:
   - filter_methods
@@ -8,18 +8,6 @@ processors:
   - crystal_wrapper
   - sanity_check
 
-generators:
-  cpp:
-    output: tmp/basic.cpp
-    build: g++ -c -o basic.o basic.cpp -Wall -Werror
-    preamble: |-
-      #include <gc/gc_cpp.h>
-      #include "bindgen_helper.hpp"
-      #include "../test.cpp"
-  crystal:
-    output: tmp/basic.cr
-
-library: "%/tmp/basic.o -lstdc++"
 classes:
   Adder: AdderWrap
   ImplicitConstructor: ImplicitConstructor
@@ -30,13 +18,3 @@ types:
   Adder: # Ignore by method name
     ignore_methods:
       - ignoreByName
-
-parser:
-  flags: [ "-x", "c++", "-std=c++11" ]
-  files: [ "test.cpp" ]
-  includes:
-    - "%"
-    - /usr/lib/clang/4.0.1/include/
-  defines:
-    - __STDC_CONSTANT_MACROS
-    - __STDC_LIMIT_MACROS
