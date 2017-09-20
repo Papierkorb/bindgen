@@ -66,7 +66,6 @@ module Bindgen
     private def build_graph(document)
       builder = Graph::Builder.new(@database)
       graph = Graph::Namespace.new(@config.module, nil)
-      builder.build_document(document, graph)
 
       Graph::Library.new( # Add `lib Binding`
         name: Graph::LIB_BINDING,
@@ -74,6 +73,7 @@ module Bindgen
         ld_flags: templated_ld_flags,
       )
 
+      builder.build_document(document, graph)
       graph
     end
 
