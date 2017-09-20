@@ -17,6 +17,18 @@ module Bindgen
         super(name, parent)
       end
 
+      # Returns the class containing this method.
+      def parent_class : Graph::Class?
+        p = @parent
+
+        while p
+          return p if p.is_a?(Graph::Class)
+          p = p.parent
+        end
+
+        nil
+      end
+
       # Returns a dot (`.`) if the origin method is static.  Returns a number
       # sign (`#`) otherwise.
       def crystal_prefix : String
