@@ -63,12 +63,13 @@ module Bindgen
         )
 
         binding_method.calls[PLATFORM] = call
+
         add_type_aliases(call)
       end
 
       # Creates a `fun` `Call` of *method* to automatically bind to C++ methods.
       private def add_and_get_call(method)
-        if klass = method.parent.as?(Graph::Class)
+        if klass = method.parent_class
           klass_type = klass.origin.as_type
         end
 
@@ -90,8 +91,10 @@ module Bindgen
         return if type.builtin? || type.void? # Built-ins don't need aliases
         return if @aliases.has_key? expr.type_name
         if rules = @db[type]?
+          return if rules.builtin
           return if rules.ignore
           return if rules.copy_structure
+          return if rules.graph_node.is_a?(Graph::Enum)
         end
 
         @aliases[expr.type_name] = Graph::Alias.new( # `alias EXPR_NAME = Void`
