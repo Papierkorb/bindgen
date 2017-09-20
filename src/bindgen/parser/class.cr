@@ -18,10 +18,7 @@ module Bindgen
         methods: Array(Method),
       )
 
-      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true)
-        @bases = Array(BaseClass).new
-        @fields = Array(Field).new
-        @methods = Array(Method).new
+      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [ ] of BaseClass, @fields = [ ] of Field, @methods = [ ] of Method)
       end
 
       # Is this a `class`?  Opposite of `#struct?`.
@@ -88,15 +85,6 @@ module Bindgen
           firstDefaultArgument: nil,
           returnType: Type::VOID,
         )
-      end
-
-      # The full binding function name of a `_AS_` function, used to cast
-      # a class instance into an instance of another type in a
-      # multiple-inheritance scenario.
-      def converter_name(target : Class | String) : String
-        target = target.name if target.is_a?(Class)
-        target = Util.mangle_type_name(target)
-        "AS_#{target}"
       end
 
       # List of all wrappable-methods.  This includes all `Method#variants`.
