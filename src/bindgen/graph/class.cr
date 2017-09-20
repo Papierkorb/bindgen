@@ -14,10 +14,15 @@ module Bindgen
       property cpp_sub_class : String?
 
       # If this is set, the class is assumed to be `abstract`.  This property
-      # then contains the qualified Crystal name of the implementation class.
-      property wrap_class : String?
+      # then contains the implementation class node.
+      property wrap_class : Class?
 
-      # Name of the base-class, if any.
+      # Opposite direction of `#wrap_class`: From the `Impl` class back to its
+      # `abstract` parent.
+      property wrapped_class : Class?
+
+      # Name of the base-class, if any.  Used by both Crystal and C++, and may
+      # point at types outside the graph.
       property base_class : String?
 
       # Is this class abstract?
