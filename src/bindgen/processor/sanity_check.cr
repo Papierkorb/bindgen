@@ -139,7 +139,7 @@ module Bindgen
         if node.constant?
           check_valid_constant_name!(node)
         else
-          check_valid_non_constant_name!(node)
+          check_method_name!(node.as(Graph::Method))
         end
       end
 
@@ -151,10 +151,10 @@ module Bindgen
       end
 
       # Checks if *node* has a valid non-constant name.  If not, adds an error.
-      private def check_valid_non_constant_name!(node)
+      private def check_method_name!(node)
         return if node.name.empty? # Accept initializers
 
-        unless NON_CONSTANT_RX.match(node.name)
+        unless NON_CONSTANT_RX.match(node.origin.crystal_name)
           add_error(node, "Invalid #{node.kind_name.downcase} name #{node.name.inspect}")
         end
       end
