@@ -34,29 +34,29 @@ module Bindgen
         },
 
         # The crystal name of this type.
-        crystal_type: String?,
+        crystal_type: { type: String, nilable: true },
 
         # The C++ type to pass it around.
-        cpp_type: String?,
+        cpp_type: { type: String, nilable: true },
 
         # The type used in Crystal, but only in the `lib` binding.
-        binding_type: String?,
+        binding_type: { type: String, nilable: true },
 
         # Template code ran to turn the real C++ type into the crystal type.
-        from_cpp: String?,
+        from_cpp: { type: String, nilable: true },
 
         # Template code ran to turn the crystal type into the real C++ type.
-        to_cpp: String?,
+        to_cpp: { type: String, nilable: true },
 
         # Converter for this type in Crystal.  Takes precedence over the
         # `#to_crystal` and `#from_crystal` fields.
-        converter: String?,
+        converter: { type: String, nilable: true },
 
         # Template code ran to turn the binding type to Crystal.
-        to_crystal: String?,
+        to_crystal: { type: String, nilable: true },
 
         # Template code ran to turn the Crystal type for the binding.
-        from_crystal: String?,
+        from_crystal: { type: String, nilable: true },
 
         # How to pass this type to C++?
         pass_by: {
