@@ -6,6 +6,8 @@ module Bindgen
       # Default path to the binary
       BINARY_PATH = "#{File.dirname(__FILE__)}/../../../clang/bindgen"
 
+      @binary_path : String
+
       # *project_root* must be a path to the directory the configuration YAML
       # resides.
       def initialize(@classes : Array(String), @enums : Array(String), @config : Configuration, @project_root : String)
@@ -26,7 +28,8 @@ module Bindgen
       # Calls the clang tool and returns its output as string.
       def run : String
         generate_source_file do |file|
-          command = "#{@binary_path} #{arguments(file).join(" ")}"
+          binary_path = Util.template(@binary_path, replacement: nil)
+          command = "#{binary_path} #{arguments(file).join(" ")}"
           puts "Runner command: #{command}" if ENV["VERBOSE"]?
 
           result = `#{command}`
@@ -46,6 +49,7 @@ module Bindgen
 
         Tempfile.open("bindgen") do |file|
           @config.files.each do |path|
+            path = Util.template(path, replacement: nil)
             file.puts %{#include #{path.inspect}}
           end
 
