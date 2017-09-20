@@ -127,7 +127,7 @@ module Bindgen
       private def type_reachable?(expr, base)
         if expr.type.builtin? # Built-ins are always reachable
           true
-        elsif Crystal::BUILTIN_TYPES.includes?(expr.type_name.sub(/\(.*/, ""))
+      elsif @db.try_or(expr.type, false, &.builtin)
           true # Crystal built-in
         else # Do a full look-up otherwise
           Graph::Path.from(expr.type_name).lookup(base) != nil
