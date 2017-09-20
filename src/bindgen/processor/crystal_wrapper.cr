@@ -17,6 +17,8 @@ module Bindgen
           add_to_unsafe_method(klass, unwrap)
         end
 
+        add_unwrap_initialize(klass)
+
         super
       end
 
@@ -40,14 +42,49 @@ module Bindgen
         to_unsafe = CallBuilder::CrystalToUnsafe.new(@db)
         call = to_unsafe.build(klass.origin, unwrap.pointer < 1)
 
-        host = Graph::PlatformSpecific.new(platform: PLATFORM, parent: klass)
+        host = klass.platform_specific(PLATFORM)
         graph = Graph::Method.new(origin: call.origin, name: call.name, parent: host)
         graph.calls[PLATFORM] = call
+      end
+
+      private def add_unwrap_initialize(klass)
+        unwrap_init = CallBuilder::CrystalUnwrapInitialize.new(@db)
+        origin = klass.origin
+
+        if parent = klass.wrapped_class
+          # If this is `Impl` class, use the pointer type of its parent.
+          origin = parent.origin
+        end
+
+        unwrap_arg = Parser::Argument.new("unwrap", origin.as_type)
+
+        method = Parser::Method.build(
+          type: Parser::Method::Type::Constructor,
+          name: "",
+          class_name: klass.name,
+          return_type: Parser::Type::VOID,
+          arguments: [ unwrap_arg ],
+        )
+
+        host = klass.platform_specific(PLATFORM)
+        graph = Graph::Method.new(origin: method, name: method.name, parent: host)
+        graph.set_tag(Graph::Method::UNWRAP_INITIALIZE_TAG)
+        graph.calls[PLATFORM] = unwrap_init.build(method)
       end
 
       def visit_method(method)
         return if method.calls[PLATFORM]?
 
+        if method.origin.pure?
+          call = build_abstract_call(method)
+        else
+          call = build_method_call(method)
+        end
+
+        method.calls[PLATFORM] = call
+      end
+
+      def build_method_call(method)
         klass_type = nil
         if (klass = method.parent).is_a?(Graph::Class)
           klass_type = klass.origin.as_type
@@ -56,7 +93,12 @@ module Bindgen
         call = CallBuilder::CrystalBinding.new(@db)
         wrapper = CallBuilder::CrystalWrapper.new(@db)
         target = call.build(method.origin, klass_type, CallBuilder::CrystalBinding::InvokeBody)
-        method.calls[PLATFORM] = wrapper.build(method.origin, target)
+        wrapper.build(method.origin, target)
+      end
+
+      def build_abstract_call(method)
+        builder = CallBuilder::CrystalAbstractDef.new(@db)
+        builder.build(method.origin)
       end
     end
   end
