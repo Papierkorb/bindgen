@@ -18,14 +18,6 @@ piece of software.  So, please follow these few rules in your PRs:
    low.  A good candidate is splitting a method doing a complex operation over a
    list on each element.
 
-Explanation of the method names in the generator classes:
-
-* `generate_` generates a `String` (Or array of `String`), and returns it.
-* `write_` writes data into the output, may return something.
-* `compute_` generates something that may not be a string.
-* `add_` is the only method that changes the state of the generator instance variables.
-* Any other prefix is free to use in a sensible manner.
-
 For the C++ part of the project, additionally:
 
 1. Mimic the style already in-place around your code.  That's it.
