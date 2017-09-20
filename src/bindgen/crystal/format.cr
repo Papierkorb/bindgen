@@ -60,15 +60,19 @@ module Bindgen
       # Returns the qualified name of *value* in the enum called *enum_name*.
       # Builds a `.flags(...)` list if the enum turns out to be a `@[Flags]`.
       def qualified_enum_name(type : Parser::Type, value : Int) : String?
-        enum_type = @db.enum?(type)
         rules = @db[type]?
-        return nil if enum_type.nil? || rules.nil?
+        return nil if rules.nil?
+
+        enum_node = rules.graph_node.as?(Graph::Enum)
+        return nil if enum_node.nil?
+
+        enumeration = enum_node.origin
 
         enum_name = rules.wrapper_type
-        if enum_type.flags?
-          "#{enum_name}#{format_flags_enum(enum_type.values, value)}"
+        if enumeration.flags?
+          "#{enum_name}#{format_flags_enum(enumeration.values, value)}"
         else
-          if key = enum_type.values.key?(value)
+          if key = enumeration.values.key?(value)
             "#{enum_name}::#{key}"
           else
             "#{enum_name}.from_value(#{value})"

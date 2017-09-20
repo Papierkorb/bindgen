@@ -161,9 +161,6 @@ module Bindgen
       ConfigReader.from_file(Configuration, BUILTIN_CONFIG_PATH)
     end
 
-    # Registered enumerations.
-    getter enums = { } of String => Parser::Enum
-
     @types : Configuration
 
     def initialize(config : Configuration, with_builtins = true)
@@ -192,16 +189,6 @@ module Bindgen
     def []?(type : Parser::Type | String, recursion_check = nil)
       type = type.base_name if type.is_a?(Parser::Type)
       check_for_alias @types[type]?, recursion_check
-    end
-
-    # Look-up an enumeration of name *type*
-    def enum?(type : Parser::Type) : Parser::Enum?
-      @enums[type.base_name]?
-    end
-
-    # Look-up an enumeration of *name*
-    def enum?(name : String) : Parser::Enum
-      @enums[name]?
     end
 
     # Adds a type *rules* as *name*.
