@@ -25,6 +25,7 @@ library: "%/ext/binding.a"
 processors:
   # Graph-refining processors:
   - filter_methods # Throw out filtered methods
+  - default_constructor # Create default constructors where possible
   - copy_structs # Copy structures as marked
   - auto_container_instantiation # Figure out which templates to instantiate
   - instantiate_containers # Actually instantiate containers
