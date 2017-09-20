@@ -18,7 +18,8 @@ module Bindgen
       # Regular expression matching the start of an absolute path
       ABSOLUTE_RX = /^(?:[\\\/]|[a-z0-9]+:)/i
 
-      # Loads the *dependency* required by *base_file*.
+      # Loads the *dependency* required by *base_file*.  Returns the read data,
+      # and the full path to the loaded file.
       def load(base_file : String, dependency : String)
         has_extension = dependency.ends_with?(".yml") || dependency.ends_with?(".yaml")
         dep = dependency.sub(/\.ya?ml$/, "")
@@ -29,7 +30,7 @@ module Bindgen
         base_path = File.dirname(base_file)
         target_path = "#{base_path}/#{dependency}"
 
-        File.read(target_path)
+        { File.read(target_path), target_path }
       end
 
       # Does a sanity check on the depdency path.  Absolute paths and paths

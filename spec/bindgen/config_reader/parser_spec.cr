@@ -6,7 +6,7 @@ private class MemoryLoader < Bindgen::ConfigReader::Loader
 
   def load(base_file : String, dependency : String)
     key = "#{File.dirname(base_file)}/#{dependency}"
-    @files[key]
+    { @files[key], key }
   end
 end
 
@@ -213,7 +213,7 @@ describe Bindgen::ConfigReader::Parser do
       <<: recurse-infinite
     ]
     files["./subdir/first"] = %[{ <<: second }]
-    files["subdir/second"] = %[{ string: three }]
+    files["./subdir/second"] = %[{ string: three }]
 
     describe "functionality" do
       it "injects into open mapping" do

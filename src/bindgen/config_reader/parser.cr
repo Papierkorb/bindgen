@@ -230,8 +230,8 @@ module Bindgen
         end
 
         base_path = @parsers.last.path
-        content = @loader.load(base_path, path)
-        child = InnerParser.new(@variables, content, path, self)
+        content, full_path = @loader.load(base_path, path)
+        child = InnerParser.new(@variables, content, full_path, self)
 
         @parsers << child # Set the new parser as active
         child.read_prelude
