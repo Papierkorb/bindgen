@@ -34,6 +34,7 @@ module Bindgen
         command = config.build
         return if command.nil?
 
+        command = Util.template(command, replacement: nil)
         Dir.cd(File.dirname config.output) do
           unless system(command)
             STDERR.puts "Build step failed!"

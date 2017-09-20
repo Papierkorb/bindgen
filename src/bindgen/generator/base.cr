@@ -40,8 +40,8 @@ module Bindgen
           @io = io
           @depth = depth
           single_file_config = true
-        elsif !@config.output.includes?('%')
-          open_output @config.output # Single-file configuration
+        elsif !@config.output.includes?('%') # Single-file configuration
+          open_output Util.template(@config.output, replacement: nil)
           single_file_config = true
         end
 
@@ -110,7 +110,7 @@ module Bindgen
         @io = File.open(full_path, "w")
 
         if text = @config.preamble
-          @io.puts text
+          @io.puts Util.template(text, replacement: nil)
         end
       end
 
