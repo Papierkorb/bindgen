@@ -3,6 +3,11 @@ module Bindgen
     # A `class` in Crystal, or a C++ `struct`.  We use a `struct` in C++ due to
     # it defaulting to `public` visibility.
     class Class < Container
+      # When this tag is set, `Processor::CrystalWrapper` will emit the
+      # `@unwrap` instance variable and the `#to_unsafe` method.  This overrides
+      # its default behaviour of deducing if these are required.
+      FORCE_UNWRAP_VARIABLE_TAG = "FORCE_UNWRAP_VARIABLE_TAG"
+
       # The origin class
       getter origin : Parser::Class
 

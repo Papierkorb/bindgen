@@ -12,7 +12,8 @@ module Bindgen
       end
 
       def visit_class(klass)
-        if klass.base_class.nil? # The parent class already has the `@unwrap`
+        # The parent class already has the `@unwrap`
+        if klass.base_class.nil? || klass.tag?(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
           unwrap = add_unwrap_variable(klass)
           add_to_unsafe_method(klass, unwrap)
         end

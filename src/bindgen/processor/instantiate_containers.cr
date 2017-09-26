@@ -49,10 +49,11 @@ module Bindgen
         var_type = Parser::Type.parse(instance.first)
         klass = build_sequential_class(container, var_type)
 
-        set_sequential_container_type_rules(klass.name, klass, var_type)
         add_cpp_typedef(root, klass, container, instance)
+        set_sequential_container_type_rules(klass.name, klass, var_type)
 
         graph = builder.build_class(klass, klass.name, root)
+        graph.set_tag(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
         graph.base_class = container_base_class(SEQUENTIAL_BASECLASS, var_type)
       end
 
@@ -68,7 +69,6 @@ module Bindgen
       # Adds a `tyepedef Container<T...> Container_T...` for C++.  Also stores
       # the alias in the type-database.
       private def add_cpp_typedef(root, klass, container, instance)
-        host = Graph::PlatformSpecific.new(platform: Graph::Platform::Cpp, parent: root)
         pass = Cpp::Pass.new(@db)
         type = Parser::Type.parse("#{container.class}<#{instance.join ", "}>")
 
@@ -77,8 +77,21 @@ module Bindgen
           @db.get_or_add(type.base_name).alias_for = klass.name
         end
 
+        # On top for C++!
+        host = Graph::PlatformSpecific.new(platform: Graph::Platform::Cpp)
+        root.nodes.unshift host
+        host.parent = root
+
+        origin = Call::Result.new(
+          type: type,
+          type_name: type.full_name,
+          reference: false,
+          pointer: 0,
+          conversion: nil,
+        )
+
         Graph::Alias.new( # Build the `typedef`.
-          origin: pass.to_cpp(type),
+          origin: origin,
           name: klass.name,
           parent: host,
         )
@@ -93,11 +106,15 @@ module Bindgen
         result = pass.to_wrapper(var_type)
 
         rules.builtin = true # `Void` is built-in!
+        rules.pass_by = TypeDatabase::PassBy::Pointer
+        rules.wrapper_pass_by = TypeDatabase::PassBy::Value
         rules.binding_type = "Void"
-        # rules.pass_by = TypeDatabase::PassBy::Value
         rules.crystal_type ||= "Enumerable(#{result.type_name})"
+        rules.cpp_type ||= cpp_type_name
         rules.to_crystal ||= "#{klass.name}.new(unwrap: %)"
         rules.from_crystal ||= "BindgenHelper.wrap_container(#{klass.name}, %).to_unsafe"
+        rules.from_cpp ||= "new (UseGC) #{klass.name} (%)"
+        rules.to_cpp ||= "(*%)"
       end
 
       # Name of *container* with *instance* for diagnostic purposes.
@@ -132,7 +149,8 @@ module Bindgen
       # generator, see `CrystalGenerator#container_baseclass`.
       private def container_class(container, instantiation : Enumerable(Parser::Type)) : Parser::Class
         suffix = instantiation.map(&.mangled_name).join("_")
-        name = "#{container.class}_#{suffix}"
+        klass_type = Parser::Type.parse(container.class)
+        name = "Container_#{klass_type.mangled_name}_#{suffix}"
 
         Parser::Class.new(name: name, hasDefaultConstructor: true)
       end
