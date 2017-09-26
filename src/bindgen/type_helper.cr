@@ -39,15 +39,15 @@ module Bindgen
     # Helper for `#pass_to_X`, configuring the type according to
     # user-specified rules.
     def reconfigure_pass_type(pass_by, is_ref, ptr)
-      if pass_by.reference? && !is_ref
+      if pass_by.reference?
         is_ref = true
-        ptr -= 1 if ptr > 0
+        ptr = 0
       elsif pass_by.pointer?
         is_ref = false
-        ptr += 1
+        ptr = { ptr, 1 }.max
       elsif pass_by.value?
-        ptr -= 1 if ptr > 0
         is_ref = false
+        ptr = 0
       end
 
       { is_ref, ptr }
