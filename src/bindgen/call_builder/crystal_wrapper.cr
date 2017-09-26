@@ -20,7 +20,7 @@ module Bindgen
           origin: method,
           name: method.crystal_name,
           arguments: arguments,
-          result: pass.from_wrapper(method.return_type),
+          result: pass.from_wrapper(method.return_type, method.any_constructor?),
           body: body,
         )
       end

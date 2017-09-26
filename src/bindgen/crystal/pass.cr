@@ -100,11 +100,14 @@ module Bindgen
       #
       # If *qualified* is `true`, the type is assumed to be used outside the
       # `lib Binding`, and will be qualified if required.
-      def from_binding(type : Parser::Type, qualified = false) : Call::Result
+      def from_binding(type : Parser::Type, qualified = false, is_constructor = false) : Call::Result
         from(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
-            template = type_template(rules.converter, rules.to_crystal, "unwrap")
             typename = Typename.new(@db)
+
+            unless is_constructor
+              template = type_template(rules.converter, rules.to_crystal, "unwrap")
+            end
 
             if qualified
               type_name = typename.qualified(*typename.binding(type))

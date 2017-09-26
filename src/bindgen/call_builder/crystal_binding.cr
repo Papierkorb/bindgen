@@ -17,7 +17,7 @@ module Bindgen
           arguments.unshift argument.self(klass_type)
         end
 
-        result = pass.from_binding(method.return_type)
+        result = pass.from_binding(method.return_type, is_constructor: method.any_constructor?)
 
         Call.new(
           origin: method,
