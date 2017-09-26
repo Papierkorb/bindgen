@@ -1,0 +1,23 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - instantiate_containers
+  - default_constructor
+  - cpp_wrapper
+  - crystal_binding
+  - crystal_wrapper
+  - sanity_check
+
+classes:
+  Containers: Containers
+
+types: { }
+
+containers:
+  - class: std::vector
+    type: Sequential
+    instantiations:
+      - [ "int" ]
+      - [ "double" ]
+      - [ "std::string" ]
