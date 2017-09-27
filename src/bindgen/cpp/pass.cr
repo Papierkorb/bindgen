@@ -16,6 +16,13 @@ module Bindgen
         end
       end
 
+      # ditto
+      def arguments_from_cpp(list : Enumerable(Parser::Argument))
+        list.map_with_index do |arg, idx|
+          passthrough_to_crystal(arg).to_argument(Argument.name(arg, idx))
+        end
+      end
+
       # Computes a result for passing *type* from Crystal to C++.
       #
       # The primary job of this method is to figure out how to pass something of
@@ -38,7 +45,9 @@ module Bindgen
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
+
         type_name = type.base_name
+        type_name = type.full_name if type.kind.function?
 
         # If the method expects a value, but we don't copy its structure, we pass
         # a reference to it instead.
@@ -99,7 +108,7 @@ module Bindgen
 
         if rules = @db[type]?
           # Support `from_cpp`.
-          generate_template = false unless rules.pass_by.original?
+          # generate_template = false unless rules.pass_by.original?
           template = rules.from_cpp
           type_name = rules.cpp_type || type_name
           is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
@@ -133,6 +142,8 @@ module Bindgen
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         type_name = type.base_name
+        type_name = type.full_name if type.kind.function?
+
         conversion_type_name = type_name
         generate_template = false
 
@@ -143,13 +154,13 @@ module Bindgen
         end
 
         if rules = @db[type]?
-          unless rules.pass_by.original?
-            template = nil
-            generate_template = false
-          end
+          # unless rules.pass_by.original?
+          #   template = nil
+          #   generate_template = false
+          # end
 
           # Support `from_cpp`.
-          template = rules.from_cpp || template
+          template = rules.from_cpp
 
           # We accept a C++ type here: The original one!  Don't let the user
           # overwrite this, as it would result in a compilation error anyway.
