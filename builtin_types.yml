@@ -89,14 +89,17 @@ qlonglong: { binding_type: Int64, kind: Struct, builtin: true }
 
 if_architecture_is_arm: # Only Float32 on ARM
   qreal: { binding_type: Float32, kind: Struct, builtin: true }
-if_architecture_is_armhf:
+elsif_architecture_is_armhf:
   qreal: { binding_type: Float32, kind: Struct, builtin: true }
 else: # Float64 on everything else
   qreal: { binding_type: Float64, kind: Struct, builtin: true }
 
 # Bindgen specific
 CrystalProc:
+  wrapper_type: Proc
   binding_type: CrystalProc
   kind: Struct
+  builtin: true # We don't want a binding alias for this.
   pass_by: Value
-  wrapper_pass_by: Reference
+  wrapper_pass_by: Value
+  from_crystal: "BindgenHelper.wrap_proc(%)"
