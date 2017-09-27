@@ -7,7 +7,7 @@ module Bindgen
       end
 
       # Calls the *method*, using the *proc_name* to call-through to Crystal.
-      def build(method : Parser::Method, proc_name : String) : Call
+      def build(method : Parser::Method, proc_name : String = "_proc_") : Call
         pass = Cpp::Pass.new(@db)
 
         arguments = method.arguments.map_with_index do |arg, idx|

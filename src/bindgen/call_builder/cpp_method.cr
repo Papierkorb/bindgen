@@ -10,11 +10,10 @@ module Bindgen
         pass = Cpp::Pass.new(@db)
         class_name ||= method.class_name
 
-        arguments = pass.arguments_to_cpp(method.arguments)
         Call.new(
           origin: method,
           name: method.name,
-          arguments: arguments,
+          arguments: pass.arguments_from_cpp(method.arguments),
           result: pass.to_cpp(method.return_type),
           body: Body.new(class_name, target, virtual_target),
         )
