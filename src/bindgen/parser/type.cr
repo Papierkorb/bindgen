@@ -11,6 +11,7 @@ module Bindgen
         Class
         Struct
         Enum
+        Function
       end
 
       # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`s mapping!!
@@ -125,6 +126,7 @@ module Bindgen
         )
 
         new( # Build the `Type`
+          kind: Kind::Function,
           isConst: false,
           isMove: false,
           isReference: false,

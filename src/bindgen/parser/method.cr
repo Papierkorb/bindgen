@@ -229,11 +229,6 @@ module Bindgen
         end
       end
 
-      # Returns the binding name of the signal-connect method.
-      def connect_name
-        "#{name}_CONNECT"
-      end
-
       # Returns if the method is const-qualified:
       #   `std::string getName() const;`
       def const?

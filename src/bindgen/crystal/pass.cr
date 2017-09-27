@@ -23,8 +23,17 @@ module Bindgen
         argument = Argument.new(@db)
 
         list.map_with_index do |arg, idx|
-          value = arg.value if arg.has_default?
-          to_wrapper(arg).to_argument(argument.name(arg, idx), value)
+          result = to_wrapper(arg)
+          name = argument.name(arg, idx)
+
+          if result.is_a?(Call::ProcResult)
+            # Treat as block if it's the last argument.
+            is_block = (idx + 1) == list.size
+            result.to_argument(name, block: is_block)
+          else
+            value = arg.value if arg.has_default?
+            result.to_argument(name, default: value)
+          end
         end
       end
 
@@ -48,14 +57,30 @@ module Bindgen
         end
       end
 
+      # Builds the type-name of a Crystal `Proc`, from the function *type*.
+      private def proc_to_wrapper(type)
+        args = type.template.not_nil!.arguments
+
+        # The order used to store is result type first, arguments second,
+        # mirroring C function prototypes.  Crystal Procs are formatted in the
+        # opposite direction, so we have to reverse it.
+        types = args[1..-1]
+        types << args.first
+        names = types.map{|t| to_wrapper(t).type_name.as(String)}.join(", ")
+
+        "Proc(#{names})"
+      end
+
       # Computes a result for passing *type* to the wrapper.
       def to_wrapper(type : Parser::Type) : Call::Result
         to(type) do |is_ref, ptr, type_name, nilable|
           if rules = @db[type]?
             typename = Typename.new(@db)
-            type_name = typename.qualified(*typename.wrapper(type))
 
-            if rules.kind.class?
+            type_name = typename.qualified(*typename.wrapper(type))
+            type_name = proc_to_wrapper(type) if type.kind.function?
+
+            if rules.kind.class? || rules.kind.function?
               ptr -= 1 # It's a Crystal `Reference`.
             end
 
@@ -86,7 +111,8 @@ module Bindgen
         # Hand-off
         is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
 
-        Call::Result.new(
+        klass = type.kind.function? ? Call::ProcResult : Call::Result
+        klass.new(
           type: type,
           type_name: type_name,
           reference: is_ref,

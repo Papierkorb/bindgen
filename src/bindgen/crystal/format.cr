@@ -21,7 +21,11 @@ module Bindgen
           default = " = #{stringified}" if stringified
         end
 
-        "#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
+        if arg.is_a?(Call::ProcArgument) && arg.block?
+          prefix = "&"
+        end
+
+        "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
       end
 
       # Formats *arguments* as `type name, ...`
