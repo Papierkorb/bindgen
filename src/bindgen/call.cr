@@ -65,14 +65,6 @@ module Bindgen
 
     # A result specifying a `Proc`.
     class ProcResult < Result
-      # The wrapped *method*
-      getter method : Parser::Method
-
-      def initialize(@method, @type_name, @reference = false, @pointer = 0, @conversion = nil)
-        @nilable = false
-        @type = @method.return_type
-      end
-
       # Converts the result into an argument of *name*.
       def to_argument(name : String, block = false) : Argument
         call = name
@@ -80,13 +72,14 @@ module Bindgen
         call = Util.template(templ, name) if templ
 
         ProcArgument.new(
-          method: @method,
           block: block,
+          type: @type,
           type_name: @type_name,
           name: name,
           call: call,
           reference: @reference,
           pointer: @pointer,
+          nilable: @nilable,
         )
       end
     end
@@ -102,7 +95,8 @@ module Bindgen
       # Default value for this argument.
       getter default_value : Parser::Argument::DefaultValueTypes?
 
-      def initialize(@type, @type_name, @name, @call, @reference = false, @pointer = 0, @default_value = nil, @nilable = false)
+      def initialize(@type, @type_name, @name, @call, @reference = false,
+        @pointer = 0, @default_value = nil, @nilable = false)
       end
     end
 
@@ -111,13 +105,8 @@ module Bindgen
       # Is this a block argument?
       getter? block : Bool
 
-      # The wrapped *method*
-      getter method : Parser::Method
-
-      def initialize(@method, @type_name, @name, @call, @reference, @pointer, @block = false)
-        @default_value = nil
-        @nilable = false
-        @type = @method.return_type
+      def initialize(@type, @type_name, @name, @call, @reference = false,
+        @pointer = 0, @default_value = nil, @nilable = false, @block = false)
       end
     end
 
