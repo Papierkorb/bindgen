@@ -6,7 +6,7 @@ module: Test
 generators:
   cpp:
     output: tmp/{SPEC_NAME}.cpp
-    build: g++ -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -Wall -Werror
+    build: "{CXX|c++} -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -Wall -Werror"
     preamble: |-
       #include <gc/gc_cpp.h>
       #include "bindgen_helper.hpp"
