@@ -1,0 +1,21 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - default_constructor
+  - qt
+  - cpp_wrapper
+  - crystal_binding
+  - crystal_wrapper
+  # - sanity_check
+
+classes:
+  "QMetaObject::Connection": SignalConnection
+  SomeObject: SomeObject
+  SomeGadget: SomeGadget
+
+types:
+  "QMetaObject::Connection":
+    crystal_type: SignalConnection
+    cpp_type: "QMetaObject::Connection"
+    binding_type: QMetaObjectConnection
