@@ -1,24 +1,6 @@
-#ifndef STRUCTURES_HPP
-#define STRUCTURES_HPP
-
+#include "structures.hpp"
 #include "helper.hpp"
 #include "json_stream.hpp"
-
-// Forward declare for `Type::templ`
-struct Template;
-
-struct Type {
-	bool isConst = false; // Constant?
-	bool isMove = false; // Move semantics?
-	int pointer = 0; // Pointer depth
-	bool isReference = false; // If this is a reference
-	bool isBuiltin = false; // If this is a C++ built-in type.
-	bool isVoid = false; // If the derefenced type is C++ `void`.
-	std::string baseName; // Base type. E.g., `const Foo *&` => `Foo`
-	std::string fullName; // Full name, for C++. E.g. `const Foo *&`
-
-	CopyPtr<Template> templ = nullptr;
-};
 
 static JsonStream &writeTypeJson(JsonStream &s, const Type &value) {
 	auto c = JsonStream::Comma;
@@ -42,12 +24,6 @@ JsonStream &operator<<(JsonStream &s, const Type &value) {
 	return s;
 }
 
-struct Template {
-	std::string fullName; // The template class, e.g. `std::vector<_Tp, _Alloc>` in `std::vector<std::string>`
-  std::string baseName; // The template class-name, e.g. `std::vector`
-	std::vector<Type> arguments; // Arguments, e.g. `std::string`
-};
-
 JsonStream &operator<<(JsonStream &s, const Template &value) {
 	auto c = JsonStream::Comma;
 	s << JsonStream::ObjectBegin
@@ -58,63 +34,32 @@ JsonStream &operator<<(JsonStream &s, const Template &value) {
 	return s;
 }
 
-struct LiteralData {
-	enum Kind {
-		None,
-		BoolKind,
-		IntKind,
-		UIntKind,
-		DoubleKind,
-		StringKind,
-		TerminalKind,
-	};
-
-	Kind kind;
-
-	union {
-		bool bool_value;
-		int64_t int_value;
-		uint64_t uint_value;
-		double double_value;
-		JsonStream::Terminal terminal_value;
-		std::string *string_value;
-	} container;
-
-	LiteralData() : kind(None) { }
-	LiteralData(const LiteralData &other)
+LiteralData::LiteralData() : kind(None) { }
+LiteralData::LiteralData(const LiteralData &other)
 		: kind(other.kind), container(other.container)
-	{
-		if (kind == StringKind)
-			this->container.string_value = new std::string(*other.container.string_value);
-	}
+{
+	if (kind == StringKind)
+		this->container.string_value = new std::string(*other.container.string_value);
+}
 
-	~LiteralData() {
-		if (kind == StringKind)
-			delete this->container.string_value;
-	}
+LiteralData::~LiteralData() {
+	if (kind == StringKind)
+		delete this->container.string_value;
+}
 
-	bool hasValue() const {
-		return (this->kind != None);
-	}
+bool LiteralData::hasValue() const {
+	return (this->kind != None);
+}
 
-	template<typename T>
-	LiteralData &operator=(const T &value) {
-		set(value);
-		return *this;
-	}
-
-	// Setters
-
-	void set(bool v) { this->kind = BoolKind; this->container.bool_value = v; }
-	void set(int64_t v) { this->kind = IntKind; this->container.int_value = v; }
-	void set(uint64_t v) { this->kind = UIntKind; this->container.uint_value = v; }
-	void set(double v) { this->kind = DoubleKind; this->container.double_value = v; }
-	void set(JsonStream::Terminal v) { this->kind = TerminalKind; this->container.terminal_value = v; }
-	void set(const std::string &v) {
-		this->kind = StringKind;
-		this->container.string_value = new std::string(v);
-	}
-};
+void LiteralData::set(bool v) { this->kind = BoolKind; this->container.bool_value = v; }
+void LiteralData::set(int64_t v) { this->kind = IntKind; this->container.int_value = v; }
+void LiteralData::set(uint64_t v) { this->kind = UIntKind; this->container.uint_value = v; }
+void LiteralData::set(double v) { this->kind = DoubleKind; this->container.double_value = v; }
+void LiteralData::set(JsonStream::Terminal v) { this->kind = TerminalKind; this->container.terminal_value = v; }
+void LiteralData::set(const std::string &v) {
+	this->kind = StringKind;
+	this->container.string_value = new std::string(v);
+}
 
 JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
 	// This will be much better with C++17 std::variant :)
@@ -141,15 +86,6 @@ JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
 	return s;
 }
 
-struct Argument : public Type {
-	bool hasDefault; // Does this argument have a default value?
-	std::string name; // Name of the argument
-
-	// Use this once C++17 compilers are widely used.
-	// std::variant< bool, int64_t, uint64_t, double, JsonStream::Terminal > value;
-	LiteralData value;
-};
-
 JsonStream &operator<<(JsonStream &s, const Argument &value) {
 	auto c = JsonStream::Comma;
 	s << JsonStream::ObjectBegin;
@@ -164,30 +100,6 @@ JsonStream &operator<<(JsonStream &s, const Argument &value) {
 	s << JsonStream::ObjectEnd;
 	return s;
 }
-
-struct Method {
-	enum MethodType {
-		Unknown, // Not exposed!
-		Constructor,
-		CopyConstructor,
-		// Destructor,
-		MemberMethod,
-		StaticMethod,
-		Operator, // Overloaded operator
-		Signal, // Qt signal
-	};
-
-	MethodType type = Unknown; // Method type
-	std::string name; // Name of the method.  Empty for de-/constructors.
-	clang::AccessSpecifier access; // Access level
-	bool isConst = false; // Is this method const qualified?
-	bool isVirtual = false; // Is this method virtual?
-	bool isPure = false; // Pure virtual?
-	std::string className; // Name of the class.
-	std::vector<Argument> arguments; // Arguments
-	int firstDefaultArgument = -1;
-	Type returnType; // Return type.  Not filled for a constructor.
-};
 
 JsonStream &operator<<(JsonStream &s, Method::MethodType value) {
 	switch (value) {
@@ -225,13 +137,6 @@ JsonStream &operator<<(JsonStream &s, const Method &value) {
 	return s;
 }
 
-struct BaseClass {
-	bool isVirtual; // Is this a virtual inheritance?
-	bool inheritedConstructor; // Do we inherit a constructor from this class?
-	std::string name; // Name of the class
-	clang::AccessSpecifier access; // Access level
-};
-
 JsonStream &operator<<(JsonStream &s, clang::AccessSpecifier value) {
 	switch (value) {
 		case clang::AS_public: return s << "Public";
@@ -252,12 +157,6 @@ JsonStream &operator<<(JsonStream &s, const BaseClass &value) {
 		<< JsonStream::ObjectEnd;
 }
 
-struct Field : public Type {
-	clang::AccessSpecifier access;
-	std::string name;
-	int bitField = -1;
-};
-
 JsonStream &operator<<(JsonStream &s, const Field &value) {
 	auto c = JsonStream::Comma;
 	s << JsonStream::ObjectBegin;
@@ -272,19 +171,6 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 
 	return s << JsonStream::ObjectEnd;
 }
-
-struct Class {
-	bool isClass; // Class or struct?
-	bool hasDefaultConstructor;
-	bool hasCopyConstructor;
-	bool isDestructible = true; // Does this class have a public or protected destructor?
-	bool isAbstract; // Does the class have pure virtual methods?
-	int byteSize; // Size of an instance in memory.
-	std::string name; // Fully::qualified::class::name
-	std::vector<BaseClass> bases; // Names of base classes
-	std::vector<Method> methods; // Methods
-	std::vector<Field> fields; // Accessible fields
-};
 
 JsonStream &operator<<(JsonStream &s, const Class &value) {
 	auto c = JsonStream::Comma;
@@ -302,13 +188,6 @@ JsonStream &operator<<(JsonStream &s, const Class &value) {
 		<< std::make_pair("methods", value.methods)
 		<< JsonStream::ObjectEnd;
 }
-
-struct Enum {
-	std::string name;
-	std::string type;
-	bool isFlags = false;
-	std::vector<std::pair<std::string, int64_t>> values;
-};
 
 JsonStream &operator<<(JsonStream &s, const Enum &value) {
 	auto c = JsonStream::Comma;
@@ -328,5 +207,3 @@ JsonStream &operator<<(JsonStream &s, const Enum &value) {
 	s << JsonStream::ObjectEnd << JsonStream::ObjectEnd;
 	return s;
 }
-
-#endif // STRUCTURES_HPP

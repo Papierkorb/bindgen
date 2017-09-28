@@ -2,6 +2,8 @@
 #define JSON_STREAM_HPP
 
 #include "helper.hpp"
+#include <ostream>
+#include <vector>
 
 /* Simple stream writer for JSON data. */
 class JsonStream {
@@ -16,11 +18,7 @@ public:
 		Null, // null
 	};
 
-	JsonStream(std::ostream &out)
-		: m_out(out)
-	{
-		//
-	}
+	JsonStream(std::ostream &out);
 
 	// Any integer type
 	template<typename T, class = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -29,36 +27,11 @@ public:
 		return *this;
 	}
 
-	JsonStream &operator<<(bool value) {
-		if (value)
-			this->m_out << "true";
-		else
-			this->m_out << "false";
+	JsonStream &operator<<(bool value);
 
-		return *this;
-	}
+	JsonStream &operator<<(const char *value);
 
-	JsonStream &operator<<(const char *value) {
-		this->m_out << '"';
-
-		while (*value) {
-			printChar(*value);
-			value++;
-		}
-
-		this->m_out << '"';
-		return *this;
-	}
-
-	JsonStream &operator<<(const std::string &value) {
-		this->m_out << '"';
-
-		for (char c : value)
-			printChar(c);
-
-		this->m_out << '"';
-		return *this;
-	}
+	JsonStream &operator<<(const std::string &value);
 
 	template< typename T >
 	JsonStream &operator<<(const std::vector<T> &vec) {
@@ -102,30 +75,10 @@ public:
 	}
 	*/
 
-	JsonStream &operator<<(Terminal terminal) {
-		switch (terminal) {
-			case ObjectBegin: this->m_out << "{"; break;
-			case ObjectEnd: this->m_out << "}"; break;
-			case ArrayBegin: this->m_out << "["; break;
-			case ArrayEnd: this->m_out << "]"; break;
-			case Comma: this->m_out << ", "; break;
-			case Separator: this->m_out << ": "; break;
-			case Null: this->m_out << "null"; break;
-		}
-
-		return *this;
-	}
+	JsonStream &operator<<(Terminal terminal);
 
 private:
-	void printChar(char c) {
-		switch (c) {
-			case '\\': this->m_out << "\\\\"; break;
-			case '"': this->m_out << "\\\""; break;
-			case '\n': this->m_out << "\\n"; break;
-			case '\t': this->m_out << "\\t"; break;
-			default: this->m_out << c; break;
-		}
-	}
+	void printChar(char c);
 
 	std::ostream &m_out;
 };
