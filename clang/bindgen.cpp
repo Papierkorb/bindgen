@@ -19,6 +19,7 @@
 #include "helper.hpp"
 #include "json_stream.hpp"
 #include "structures.hpp"
+#include "generated.hpp"
 
 static llvm::cl::OptionCategory BindgenCategory("bindgen options");
 static std::unique_ptr<llvm::opt::OptTable> Options(clang::driver::createDriverOptTable());
@@ -40,7 +41,7 @@ public:
 		return type;
 	}
 
-	void qualTypeToType(Type &target, const clang::QualType& qt, clang::ASTContext &ctx) {
+	void qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx) {
 		if (target.fullName.empty()) {
 			target.fullName = clang::TypeName::getFullyQualifiedName(qt, ctx);
 		}
@@ -54,7 +55,7 @@ public:
 
 		if (const auto *record = qt->getAsCXXRecordDecl()) {
 			if (const auto *tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(qt->getAsCXXRecordDecl())) {
-			target.templ = handleTemplate(tmpl);
+				target.templ = handleTemplate(tmpl);
 			}
 		}
 
@@ -471,6 +472,17 @@ private:
 class BindgenFrontendAction : public clang::ASTFrontendAction {
 public:
 	void EndSourceFileAction() override {
+	}
+
+	bool BeginInvocation(clang::CompilerInstance &ci) override {
+		clang::HeaderSearchOptions &headerOpts = ci.getHeaderSearchOpts();
+
+		// Add built-in system include paths.
+		for (const char *path : BG_SYSTEM_INCLUDES) {
+			headerOpts.AddPath(llvm::StringRef(path), clang::frontend::System, false, false);
+		}
+
+		return true;
 	}
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance &ci, llvm::StringRef file) override {
