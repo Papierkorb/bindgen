@@ -5,7 +5,6 @@
 #include "enum_match_handler.hpp"
 #include "bindgen_ast_consumer.hpp"
 #include "bindgen_frontend_action.hpp"
-#include "preprocessor_handler.hpp"
 
 static llvm::cl::OptionCategory BindgenCategory("bindgen options");
 static std::unique_ptr<llvm::opt::OptTable> Options(clang::driver::createDriverOptTable());
