@@ -16,11 +16,14 @@ module Bindgen
       # Illegal constants in a flag enumeration
       ILLEGAL_FLAG_ENUM = { "All", "None" }
 
-      # Regular expression describing a constant name
-      CONSTANT_RX = /^[A-Z_][A-Za-z0-9_]*$/
+      # Regular expression for a CONSTANT
+      CONSTANT_RX = /^[A-Z_][A-Z0-9_]*$/
 
-      # Regular expression describing a non-constant name
-      NON_CONSTANT_RX = /^[a-z_][A-Za-z0-9_]*$/
+      # Regular expression for a camel-cased symbol
+      CAMEL_CASE_RX = /^[A-Z_][A-Za-z0-9_]*$/
+
+      # Regular expression describing a method name
+      METHOD_NAME_RX = /^[a-z_][A-Za-z0-9_]*$/
 
       # A binding error
       struct Error
@@ -92,7 +95,7 @@ module Bindgen
 
         # 2. Check constant naming
         e.values.each do |name, _|
-          unless CONSTANT_RX.match(name)
+          unless CAMEL_CASE_RX.match(name)
             add_error(enumeration, "Invalid enum constant name #{name.inspect}")
           end
         end
@@ -136,10 +139,19 @@ module Bindgen
 
       # Checks the naming scheme of *node* for errors.
       private def check_node_name!(node)
-        if node.constant?
+        if node.is_a?(Graph::Constant)
           check_valid_constant_name!(node)
+        elsif node.constant?
+          check_valid_camel_case_name!(node)
         else
           check_method_name!(node.as(Graph::Method))
+        end
+      end
+
+      # Checks if *node* has a valid camel-case name.  If not, adds an error.
+      private def check_valid_camel_case_name!(node)
+        unless CAMEL_CASE_RX.match(node.name)
+          add_error(node, "Invalid #{node.kind_name.downcase} name #{node.name.inspect}")
         end
       end
 
@@ -154,7 +166,7 @@ module Bindgen
       private def check_method_name!(node)
         return if node.name.empty? # Accept initializers
 
-        unless NON_CONSTANT_RX.match(node.origin.crystal_name)
+        unless METHOD_NAME_RX.match(node.origin.crystal_name)
           add_error(node, "Invalid #{node.kind_name.downcase} name #{node.name.inspect}")
         end
       end
