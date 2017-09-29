@@ -364,6 +364,26 @@ return instances to the (otherwise) abstract class.
 
 Adds the container instantiation classes and wrappers.
 
+### `Macros`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Maps `#define` macros into the graph.  The mapping is configured by the user in
+the `macros:` list.  Only value-macros ("object-like macros") are supported,
+function-like macros are silently skipped.
+
+```c++
+// Okay:
+#define SOME_INT 1
+#define SOME_STRING "Hello"
+#define SOME_BOOL true
+
+// Not mapped:
+#define SOME_FUNCTION(x) (x + 1)
+```
+
 ### `Qt`
 
 * **Kind**: Refining
