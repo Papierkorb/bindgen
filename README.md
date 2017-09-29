@@ -61,7 +61,9 @@ See `TEMPLATE.yml` for configuration documentation.
 |  +- QObject signals                              | **YES** |
 |  +- QFlags types                                 | **YES** |
 |  +- QMetaObject generation (mimic `moc`)         |   TBD   |
-| `#define` fake enumerations                      |   TBD   |
+| `#define` macro support                          |         |
+|  +- Mapping as enumeration                       | **YES** |
+|  +- Mapping as constant (Including strings)      | **YES** |
 | Global functions                                 |   TBD   |
 | Custom (de-)allocators                           |   TBD   |
 | Copying in-source docs                           |   TBD   |
