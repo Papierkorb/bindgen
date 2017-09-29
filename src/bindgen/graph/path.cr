@@ -11,11 +11,42 @@ module Bindgen
       def initialize(@nodes = [ ] of String)
       end
 
+      # Returns the path parts in *range*.  If `#nodes` is nil, the returneed
+      # path will also have a nil-`#nodes`.
+      def [](range : Range) : Path
+        if nodes = @nodes
+          self.class.new(nodes[range])
+        else
+          self
+        end
+      end
+
+      # Returns the `Path` excluding the last element in `#nodes`, thus pointing
+      # to the parent of this path.
+      def parent
+        self[0..-2]
+      end
+
+      # Returns the `Path` with only the last element in `#nodes`, thus pointing
+      # at the child in `#parent`.
+      def last
+        self[-1..-1]
+      end
+
+      # Returns the last element of `#nodes` itself.  If `#nodes` is `nil`, raises.
+      def last_part
+        if nodes = @nodes
+          nodes.last
+        else
+          raise IndexError.new("last_part called on self-path")
+        end
+      end
+
       # Is this a global path?
       def global?
         nodes = @nodes
 
-        if nodes.first?.try(&.empty)
+        if nodes && nodes.first?.try(&.empty?)
           true
         else
           false

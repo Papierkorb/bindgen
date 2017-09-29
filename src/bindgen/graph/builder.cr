@@ -72,21 +72,23 @@ module Bindgen
 
       # Splits the qualified *path*, and returns the parent of the target
       # and the name of the *path* local to the parent.
-      def parent_and_local_name(root : Graph::Container, path : String)
-        path_parts = path_name(path)
-        parent = get_or_create_path_parent(root, path_parts)
-        local_name = path_parts.last
+      def parent_and_local_name(root : Graph::Container, path_name : String)
+        parent_and_local_name(root, Path.from(path_name))
+      end
 
-        { parent, local_name }
+      # ditto
+      def parent_and_local_name(root : Graph::Container, path : Path)
+        parent = get_or_create_path_parent(root, path)
+        { parent, path.last_part }
       end
 
       # Gets the parent of *path*, starting at *root*.  Makes sure it is a
       # `Graph::Container`.  Also see `#get_or_create_path`
-      def get_or_create_path_parent(root : Graph::Container, path : Enumerable(String)) : Graph::Container
-        parent = get_or_create_path(root, path[0..-2])
+      def get_or_create_path_parent(root : Graph::Container, path : Path) : Graph::Container
+        parent = get_or_create_path(root, path.parent)
 
         unless parent.is_a?(Graph::Container)
-          raise "Expected a container (module or class) at #{path.join "::"}, but got a #{parent.class} instead"
+          raise "Expected a container (module or class) at #{path}, but got a #{parent.class} instead"
         end
 
         parent
@@ -94,8 +96,12 @@ module Bindgen
 
       # Iterates over the *path*, descending from *root* onwards.  If a part of
       # the path does not exist yet, it'll be created as `Namespace`.
-      def get_or_create_path(root : Graph::Container, path : Enumerable(String)) : Graph::Node
-        path.reduce(root) do |ctr, name|
+      def get_or_create_path(root : Graph::Container, path : Path) : Graph::Node
+        if path.global?
+          return root
+        end
+
+        path.nodes.not_nil!.reduce(root) do |ctr, name|
           unless ctr.is_a?(Graph::Container)
             raise "Path #{path.inspect} is illegal, as #{name.inspect} is not a container"
           end
@@ -107,12 +113,6 @@ module Bindgen
 
           parent
         end
-      end
-
-      # Splits up the path in *crystal_name*.
-      def path_name(crystal_name : String)
-        # Nothing special here, just to have this logic in one place only.
-        crystal_name.split("::")
       end
     end
   end
