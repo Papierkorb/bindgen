@@ -80,6 +80,11 @@ macros:
   "FOO_BAR_(.*)":
     # How to map matching macros:  Either put all into an enum, or as constant.
     map_as: Enum | Constant
+    # Only if mapping as enum:  Treat as @[Flags] enum?
+    # Defaults to `false`.
+    flags: true | false
+    # Only if mapping as enum:  C++ type to map as.  Defaults to "int".
+    type: int
     # How the enum constants, or constants, name should end up.  Access to
     # capture groups in the regular expression is done using `\\n` to access the
     # n-th capture group.  The name will be post-processed automatically.

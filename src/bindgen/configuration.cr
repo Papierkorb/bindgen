@@ -92,6 +92,18 @@ module Bindgen
 
         # Destination Crystal-path
         destination: String,
+
+        # Only used if mapping as enum:  C++ mapping type
+        type: {
+          type: String,
+          default: "int",
+        },
+
+        # Only used if mapping as enum:  Treat as flags enum?
+        flags: {
+          type: Bool,
+          default: false,
+        },
       )
     end
 
