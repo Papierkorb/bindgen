@@ -80,7 +80,14 @@ module Bindgen
     # Generates a `Parser::Document` from the given configuration and C/C++
     # header files.
     private def parse_cpp_sources
-      parser = Parser::Runner.new(@config.classes.keys, @config.enums.keys, @config.parser, @root_path)
+      parser = Parser::Runner.new(
+        classes: @config.classes.keys,
+        enums: @config.enums.keys,
+        macros: @config.macros.keys,
+        config: @config.parser,
+        project_root: @root_path,
+      )
+
       parser.run_and_parse
     end
 

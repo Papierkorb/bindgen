@@ -10,7 +10,7 @@ module Bindgen
 
       # *project_root* must be a path to the directory the configuration YAML
       # resides.
-      def initialize(@classes : Array(String), @enums : Array(String), @config : Configuration, @project_root : String)
+      def initialize(@classes : Array(String), @enums : Array(String), @macros : Array(String), @config : Configuration, @project_root : String)
         @binary_path = ENV["BINDGEN_BIN"]? || @config.binary || BINARY_PATH
       end
 
@@ -21,8 +21,9 @@ module Bindgen
         flags = @config.flags
         defines = @config.defines.map{|x| "-D#{x}"}
         includes = template_include_paths.map{|x| "-I#{x}"}
+        macros = [ "-m", @macros.join('|').inspect ]
 
-        [ input_file ] + classes + enums + [ "--" ] + flags + defines + includes
+        [ input_file ] + classes + enums + macros + [ "--" ] + flags + defines + includes
       end
 
       # Calls the clang tool and returns its output as string.

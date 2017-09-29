@@ -5,6 +5,7 @@ module Bindgen
       JSON.mapping(
         enums: Enum::Collection,
         classes: Class::Collection,
+        macros: Macro::Collection,
       )
     end
   end

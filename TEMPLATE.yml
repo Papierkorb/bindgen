@@ -72,6 +72,25 @@ enums:
   # `CrystalEnumName` can reside in a wrapped class.
   CppEnumName: CrystalEnumName
 
+# Map of macros (`#define`s) to copy.
+macros:
+  # Maps from a *regular expression*.  Rules are tried in the order they're
+  # defined in the configuration file.  The expression must match the whole name
+  # of the macro case-sensitively to be copied.
+  "FOO_BAR_(.*)":
+    # How to map matching macros:  Either put all into an enum, or as constant.
+    map_as: Enum | Constant
+    # How the enum constants, or constants, name should end up.  Access to
+    # capture groups in the regular expression is done using `\\n` to access the
+    # n-th capture group.  The name will be post-processed automatically.
+    #
+    # If left out, the first capture group will be used.
+    name: "\\1"
+    # Where to store the matching constants.  For a enum, this is the path to
+    # the enum itself (So, including the enums name).  For a constant, this is
+    # the path to the class (or module) it will be stored in.
+    destination: Foo::Bar
+
 # List of container-types to wrap.  (Keyword: C++ Templates)
 containers:
   - class: Name of the C++ class

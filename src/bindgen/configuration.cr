@@ -73,6 +73,28 @@ module Bindgen
       )
     end
 
+    # Configuration for a macro
+    class Macro
+      enum MapAs
+        Enum
+        Constant
+      end
+
+      YAML.mapping(
+        # How to map the macro
+        map_as: MapAs,
+
+        # The name mapping.  Can be left out.
+        name: {
+          type: String,
+          nilable: true,
+        },
+
+        # Destination Crystal-path
+        destination: String,
+      )
+    end
+
     YAML.mapping(
       # Target Crystal module
       module: String, # TODO: Keep this?  Or move into `Generator`?
@@ -99,6 +121,12 @@ module Bindgen
       classes: {
         type: Hash(String, String),
         default: Hash(String, String).new,
+      },
+
+      # Which macros to wrap
+      macros: {
+        type: Hash(String, Macro),
+        default: Hash(String, Macro).new,
       },
 
       # Which templates to instantiate
