@@ -21,7 +21,6 @@ parser:
   files: [ "{SPEC_NAME}.cpp" ]
   includes:
     - "%"
-    - /usr/lib/clang/4.0.1/include/
   defines:
     - __STDC_CONSTANT_MACROS
     - __STDC_LIMIT_MACROS
