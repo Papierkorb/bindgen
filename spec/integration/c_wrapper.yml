@@ -1,0 +1,29 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - macros
+  - default_constructor
+  - cpp_wrapper
+  - crystal_binding
+  - crystal_wrapper
+  - sanity_check
+
+macros:
+  "CONSTANT_(.*)":
+    map_as: Constant
+    destination: "::" # Map into the target module
+  "ANOTHER_(.*)":
+    map_as: Constant
+    destination: Foo # Map into a new module
+  "ENUM_(.*)":
+    map_as: Enum
+    name: "Thing_\\1"
+    destination: Things
+  "FLAGS_(.*)":
+    map_as: Enum
+    flags: true
+    type: unsigned int
+    destination: Foo::Bar
+
+types: { }
