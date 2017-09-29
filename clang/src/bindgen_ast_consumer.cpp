@@ -7,7 +7,9 @@
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
-BindgenASTConsumer::BindgenASTConsumer() {
+BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros)
+	: m_macros(macros)
+{
 	using namespace clang::ast_matchers;
 
 	for (const std::string &className : ClassList) {
@@ -39,13 +41,15 @@ void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
 	this->m_matchFinder.matchAST(ctx);
 
 	JsonStream stream(std::cout);
-	stream << JsonStream::ObjectBegin;
-	stream << "enums" << JsonStream::Separator;
-	serializeEnumerations(stream);
-	stream << JsonStream::Comma;
-	stream << "classes" << JsonStream::Separator;
-	serializeClasses(stream);
-	stream << JsonStream::ObjectEnd;
+	stream << JsonStream::ObjectBegin; // {
+	stream << "enums" << JsonStream::Separator; // "enums":
+	serializeEnumerations(stream); // { ... }
+	stream << JsonStream::Comma; // ,
+	stream << "classes" << JsonStream::Separator; // "classes":
+	serializeClasses(stream); // { ... }
+	stream << JsonStream::Comma; // ,
+	stream << "macros" << JsonStream::Separator << this->m_macros;  // "macros": [ ... ]
+	stream << JsonStream::ObjectEnd; // }
 }
 
 void BindgenASTConsumer::serializeEnumerations(JsonStream &stream) {

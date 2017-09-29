@@ -3,6 +3,7 @@
 
 #include "bindgen_frontend_action.hpp"
 #include "bindgen_ast_consumer.hpp"
+#include "preprocessor_handler.hpp"
 
 bool BindgenFrontendAction::BeginInvocation(clang::CompilerInstance &ci) {
 	clang::HeaderSearchOptions &headerOpts = ci.getHeaderSearchOpts();
@@ -15,6 +16,12 @@ bool BindgenFrontendAction::BeginInvocation(clang::CompilerInstance &ci) {
 	return true;
 }
 
+bool BindgenFrontendAction::BeginSourceFileAction(clang::CompilerInstance &ci) {
+	clang::Preprocessor &preprocessor = ci.getPreprocessor();
+	preprocessor.addPPCallbacks(llvm::make_unique<PreprocessorHandler>(this->m_macros, preprocessor));
+	return true;
+}
+
 std::unique_ptr<clang::ASTConsumer> BindgenFrontendAction::CreateASTConsumer(clang::CompilerInstance &ci, llvm::StringRef file) {
-	return llvm::make_unique<BindgenASTConsumer>();
+	return llvm::make_unique<BindgenASTConsumer>(this->m_macros);
 }

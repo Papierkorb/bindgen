@@ -160,4 +160,14 @@ struct Enum {
 
 JsonStream &operator<<(JsonStream &s, const Enum &value);
 
+struct Macro {
+	std::string name; // Name of the macro
+	bool isFunction; // Is this macro function like?
+	std::vector<std::string> arguments; // Arguments for a function-like macro
+	bool isVarArg; // Does it end in a variable argument list?
+	std::string value; // The unparsed macro body
+};
+
+JsonStream &operator<<(JsonStream &s, const Macro &value);
+
 #endif // STRUCTURES_HPP
