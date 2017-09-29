@@ -35,6 +35,12 @@ module Bindgen
         end
       end
 
+      def visit_constant(constant)
+        formatter = Bindgen::Crystal::Format.new(@db)
+        value = formatter.literal(constant.value.class.name, constant.value)
+        puts "#{constant.name} = #{value}"
+      end
+
       # Writes the instance *variables* into the current open scope.
       def write_instance_variables(variables)
         typer = Bindgen::Crystal::Typename.new(@db)

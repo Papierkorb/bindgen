@@ -38,6 +38,8 @@ module Bindgen
           visit_alias(node.as(Graph::Alias))
         when Graph::Class
           visit_class(node.as(Graph::Class))
+        when Graph::Constant
+          visit_constant(node.as(Graph::Constant))
         when Graph::Enum
           visit_enum(node.as(Graph::Enum))
         when Graph::Library
@@ -70,6 +72,10 @@ module Bindgen
       # `#visit_children` to visit all child nodes.
       def visit_class(klass)
         visit_children(klass)
+      end
+
+      # Visits a `Graph::Constant`.
+      def visit_constant(constant)
       end
 
       # Visits a `Graph::Enum`.
