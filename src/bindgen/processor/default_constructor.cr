@@ -5,6 +5,7 @@ module Bindgen
     class DefaultConstructor < Base
       def visit_class(klass : Graph::Class)
         return unless klass.origin.has_default_constructor?
+        return if klass.wrapped_class # Skip `Impl` classes.
         return if find_default_initialize(klass)
 
         ctor = build_default_constructor(klass.origin)
