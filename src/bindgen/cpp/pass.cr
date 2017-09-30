@@ -23,6 +23,13 @@ module Bindgen
         end
       end
 
+      # ditto
+      def through_arguments(list : Enumerable(Parser::Argument))
+        list.map_with_index do |arg, idx|
+          through(arg).to_argument(Argument.name(arg, idx))
+        end
+      end
+
       # Returns the type name of *proc_type*.
       def crystal_proc_name(proc_type : Parser::Type) : String
         typer = Typename.new
@@ -167,11 +174,6 @@ module Bindgen
         end
 
         if rules = @db[type]?
-          # unless rules.pass_by.original?
-          #   template = nil
-          #   generate_template = false
-          # end
-
           # Support `from_cpp`.
           template = rules.from_cpp
 
@@ -193,7 +195,19 @@ module Bindgen
         )
       end
 
+      # Passes the *type* through without changes.
+      def through(type : Parser::Type)
+        type_name = type.base_name
+        type_name = crystal_proc_name(type) if type.kind.function?
 
+        Call::Result.new(
+          type: type,
+          type_name: type_name,
+          reference: type.reference?,
+          pointer: type_pointer_depth(type),
+          conversion: nil,
+        )
+      end
     end
   end
 end
