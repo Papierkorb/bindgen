@@ -1,0 +1,12 @@
+digraph architecture {
+  node [shape=box]
+  rankdir=LR
+
+  a [label="Read config"]
+  b [label="Parse C++"]
+  c [label="Build graph"]
+  d [label="Processors"]
+  e [label="Generators"]
+
+  a -> b -> c -> d -> e
+}

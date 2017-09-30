@@ -1,0 +1,21 @@
+digraph bindgen_graph {
+  node [shape=box]
+
+  root [label="module GreetLib"]
+  greeter [label="class Greeter"]
+  listener [label="class Listener"]
+  type [label="enum Type"]
+  greetings [label="enum Greetings"]
+  port [label="PORT = 80"]
+  greet [label="def greet(...)"]
+
+  {rank=same root}
+  {rank=same greeter listener greetings}
+  {rank=same type port}
+  root -> greeter;
+  root -> listener;
+  root -> greetings;
+  greeter -> type;
+  greeter -> greet;
+  listener -> port;
+}

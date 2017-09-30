@@ -1,0 +1,10 @@
+digraph logo {
+  cpp [shape=none label="C++"]
+  crystal [shape=none label="Crystal"]
+
+  nodesep=1
+  {rank=same cpp crystal}
+
+  cpp -> crystal
+  crystal -> cpp
+}
