@@ -3,6 +3,7 @@
 
 #define signals public
 #define Q_GADGET void qt_check_for_QGADGET_macro();
+#define Q_OBJECT class QPrivateSignal { };
 
 struct QMetaObject {
   struct Connection {
@@ -23,11 +24,16 @@ struct QObject {
 
 // Tests signal/slots connection wrapping
 class SomeObject {
+  Q_OBJECT
 public:
   int normalMethod() { return 1; }
 
 signals:
   void stuffHappened() {
+    // Empty.
+  }
+
+  void privateSignal(QPrivateSignal) {
     // Empty.
   }
 };
