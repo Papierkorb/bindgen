@@ -41,9 +41,11 @@ module Bindgen
       # *to_unsafe* is `true`, and the type is not built-in, the result will
       # be wrapped in a call to `to_unsafe` - Except if a user-defined
       # conversion is set.
-      def to_binding(type : Parser::Type, to_unsafe = false) : Call::Result
+      def to_binding(type : Parser::Type, to_unsafe = false, qualified = false) : Call::Result
         to(type) do |is_ref, ptr, type_name, nilable|
-          type_name, _ = Typename.new(@db).binding(type)
+          typer = Typename.new(@db)
+          type_name, in_lib = typer.binding(type)
+          type_name = typer.qualified(type_name, in_lib) if qualified
 
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")

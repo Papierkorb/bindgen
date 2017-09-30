@@ -11,15 +11,15 @@ module Bindgen
         argument = Crystal::Argument.new(@db)
 
         arguments = method.arguments.map_with_index do |arg, idx|
-          caller = pass.from_binding(arg, false)
+          caller = pass.from_binding(arg, qualified: true)
           callee = pass.from_wrapper(arg)
           result = combine_result(caller, callee)
           result.to_argument(argument.name(arg, idx))
         end
 
         callee = pass.to_wrapper(method.return_type)
-        caller = pass.to_binding(method.return_type, to_unsafe: true)
-        result = combine_result(callee, caller)
+        caller = pass.to_binding(method.return_type, to_unsafe: true, qualified: true)
+        result = combine_result(caller, callee)
 
         Call.new(
           origin: method,
@@ -64,9 +64,15 @@ module Bindgen
 
           pass_args = call.arguments.map(&.call).join(", ")
           proc_args = func_args.join(", ")
-          block_args = "|#{pass_args}|" unless pass_args.empty?
+          block_arg_names = call.arguments.map(&.name).join(", ")
+          block_args = "|#{block_arg_names}|" unless pass_args.empty?
 
-          %[Proc(#{proc_args}).new{#{block_args} #{@receiver}.#{call.name}(#{pass_args}) }]
+          body = "#{@receiver}.#{call.name}(#{pass_args})"
+          if templ = call.result.conversion
+            body = Util.template(templ, body)
+          end
+
+          %[Proc(#{proc_args}).new{#{block_args} #{body} }]
         end
       end
     end
