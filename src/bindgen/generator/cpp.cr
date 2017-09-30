@@ -44,6 +44,7 @@ module Bindgen
       end
 
       def visit_class(klass)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
         begin_section klass.name
         super
       end

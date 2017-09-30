@@ -19,6 +19,11 @@ module Bindgen
         puts "end"
       end
 
+      def visit_class(klass)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        super
+      end
+
       def visit_method(method)
         call = method.calls[PLATFORM]?
         return if call.nil? # Ignore non-bound methods

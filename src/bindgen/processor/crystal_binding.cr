@@ -51,6 +51,11 @@ module Bindgen
         nil # We're already in a `lib`, so ignore inner libraries.
       end
 
+      def visit_class(klass)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        super
+      end
+
       def visit_method(method)
         # Allow previous processors to supply custom calls instead.
         call = method.calls[PLATFORM]?

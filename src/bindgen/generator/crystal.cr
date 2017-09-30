@@ -26,6 +26,8 @@ module Bindgen
       end
 
       def visit_class(klass)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+
         prefix = "abstract" if klass.abstract?
         suffix = "< #{klass.base_class}" if klass.base_class
 
