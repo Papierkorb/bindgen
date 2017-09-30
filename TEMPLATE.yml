@@ -32,9 +32,10 @@ processors:
   - instantiate_containers # Actually instantiate containers
   - virtual_override # Allow overriding virtual methods
   # Preliminary generation processors:
-  - cpp # Create C++ <-> C wrappers
+  - crystal_wrapper # Create Crystal wrappers
+  - virtual_override # Allow overriding C++ virtual methods
+  - cpp_wrapper # Create C++ <-> C wrappers
   - crystal_binding # Create `lib` bindings for the C wrapper
-  - crystal # Create Crystal wrappers
   - sanity_check # Shows issues, if any
 
 # Generator configuration.  These write the actual output to disk.
