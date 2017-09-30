@@ -1,5 +1,5 @@
 name: bindgen
-version: 0.1.0
+version: 0.5.0
 crystal: 0.23.1
 
 description: C/C++ binding and wrapper generator
