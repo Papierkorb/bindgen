@@ -72,6 +72,17 @@ module Bindgen
         "::"
       end
 
+      # Finds the parent node which is not a `PlatformSpecific`.
+      def unspecific_parent : Node?
+        p = @parent
+
+        while p && p.is_a?(PlatformSpecific)
+          p = p.parent
+        end
+
+        p
+      end
+
       # Returns the qualified path name to this node, starting in the global
       # scope.
       #
@@ -82,8 +93,7 @@ module Bindgen
 
       # Gives a humanly-readable path string, formatted for Crystal.
       def diagnostics_path : String
-        p = parent # Skip direct parent if it's a platform specific
-        p = p.parent if p.is_a?(PlatformSpecific)
+        p = unspecific_parent # Skip direct parent if it's a platform specific
 
         parent_path = p.try(&.path_name).to_s
         parent_path + crystal_prefix + @name

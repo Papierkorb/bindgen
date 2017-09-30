@@ -44,6 +44,16 @@ module Bindgen
         false
       end
 
+      def diagnostics_path : String
+        args = @origin.arguments.map(&.name).join(", ")
+
+        if @origin.name.empty?
+          name = "initialize"
+        end
+
+        "#{super}#{name}(#{args})"
+      end
+
       delegate mangled_name, to: @origin
     end
   end
