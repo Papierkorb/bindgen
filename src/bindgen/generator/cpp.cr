@@ -25,6 +25,16 @@ module Bindgen
         visit_children(node)
       end
 
+      # Add additional includes
+      protected def enter_section(section)
+        @user_config.parser.files.each do |path|
+          templated = Util.template(path, replacement: nil)
+          puts "#include <#{templated}>"
+        end
+
+        puts ""
+      end
+
       def visit_platform_specific(specific)
         super if specific.platforms.includes? PLATFORM
       end
