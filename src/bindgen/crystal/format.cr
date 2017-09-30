@@ -30,7 +30,7 @@ module Bindgen
 
       # Formats *arguments* as `type name, ...`
       def argument_list(arguments : Enumerable(Call::Argument)) : String
-        first_optional = arguments.rindex(&.default_value.nil?) || arguments.size
+        first_optional = arguments.rindex(&.default_value.nil?) || -1
 
         arguments.map_with_index do |arg, idx|
           argument(arg, idx, expose_default: idx > first_optional)
