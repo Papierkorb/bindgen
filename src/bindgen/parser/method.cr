@@ -31,7 +31,11 @@ module Bindgen
       # For hard-wiring a methods final wrapper name.
       @crystal_name : String? = nil
 
-      def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false)
+      # The method this method is based on.  Used by `#variants` to indicate
+      # the methods origin when splitting occurs.
+      getter origin : Method?
+
+      def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false, @origin = nil)
       end
 
       # Utility method to easily build a `Method` using a more Crystal-style
@@ -93,6 +97,11 @@ module Bindgen
           first = first_default
           first = nil if first >= idx
 
+          if idx == @arguments.size
+            yield self
+            next
+          end
+
           args = @arguments[0...idx]
           if without_until = args.rindex{|arg| !arg.has_exposed_default?}
             args.map_with_index! do |arg, idx|
@@ -114,7 +123,8 @@ module Bindgen
             returnType: @returnType,
             isConst: @isConst,
             isVirtual: @isVirtual,
-            isPure: @isPure
+            isPure: @isPure,
+            origin: self,
           )
 
           variant.crystal_name = @crystal_name
