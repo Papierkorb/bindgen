@@ -11,7 +11,7 @@ public:
 
 	void qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx);
 
-	CopyPtr<Template> handleTemplate(const clang::ClassTemplateSpecializationDecl *decl);
+	CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record, const clang::ClassTemplateSpecializationDecl *decl);
 
 	virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 

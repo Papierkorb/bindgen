@@ -28,8 +28,8 @@ void RecordMatchHandler::qualTypeToType(Type &target, const clang::QualType &qt,
 	}
 
 	if (const auto *record = qt->getAsCXXRecordDecl()) {
-		if (const auto *tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(qt->getAsCXXRecordDecl())) {
-			target.templ = handleTemplate(tmpl);
+		if (const auto *tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record)) {
+			target.templ = handleTemplate(record, tmpl);
 		}
 	}
 
@@ -40,10 +40,9 @@ void RecordMatchHandler::qualTypeToType(Type &target, const clang::QualType &qt,
 	target.baseName = clang::TypeName::getFullyQualifiedName(qt.getUnqualifiedType(), ctx);
 }
 
-CopyPtr<Template> RecordMatchHandler::handleTemplate(const clang::ClassTemplateSpecializationDecl *decl) {
+CopyPtr<Template> RecordMatchHandler::handleTemplate(const clang::CXXRecordDecl *record, const clang::ClassTemplateSpecializationDecl *decl) {
 	Template t;
 	clang::ASTContext &ctx = decl->getASTContext();
-	const clang::CXXRecordDecl *record = decl->getTemplateInstantiationPattern();
 
 	if (!record) return CopyPtr<Template>();
 

@@ -28,11 +28,14 @@ module Bindgen
         container = @config.containers.find(&.class.== templ.base_name)
         return if container.nil? # Not a configured container type
 
-        # Check for the correct amount of template arguments
-        return if templ.arguments.size != container_type_arguments(container.type)
+        # Check for the correct amount of template arguments.  There may be more
+        # than those arguments, which are usually allocators.
+        arg_count = container_type_arguments(container.type)
+        return if templ.arguments.size < arg_count
 
         # Add if we don't already know of this instantiation
-        instantiation = templ.arguments.map(&.full_name)
+        instantiation = templ.arguments[0, arg_count].map(&.full_name)
+
         unless container.instantiations.includes?(instantiation)
           container.instantiations << instantiation
         end
