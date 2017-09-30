@@ -30,7 +30,7 @@ module Bindgen
         elsif name = rules.binding_type
           { name, is_copied }
         else
-          { type.base_name, is_copied }
+          { type.base_name, true }
         end
       end
 

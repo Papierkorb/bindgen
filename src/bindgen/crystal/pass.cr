@@ -43,11 +43,12 @@ module Bindgen
       # conversion is set.
       def to_binding(type : Parser::Type, to_unsafe = false) : Call::Result
         to(type) do |is_ref, ptr, type_name, nilable|
+          type_name, _ = Typename.new(@db).binding(type)
+
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
             template ||= "%.to_unsafe" if to_unsafe && !rules.builtin && !type.builtin?
 
-            type_name, _ = Typename.new(@db).binding(type)
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
@@ -74,12 +75,11 @@ module Bindgen
       # Computes a result for passing *type* to the wrapper.
       def to_wrapper(type : Parser::Type) : Call::Result
         to(type) do |is_ref, ptr, type_name, nilable|
+          typename = Typename.new(@db)
+          type_name = typename.qualified(*typename.wrapper(type))
+          type_name = proc_to_wrapper(type) if type.kind.function?
+
           if rules = @db[type]?
-            typename = Typename.new(@db)
-
-            type_name = typename.qualified(*typename.wrapper(type))
-            type_name = proc_to_wrapper(type) if type.kind.function?
-
             if rules.kind.class? || rules.kind.function?
               ptr -= 1 # It's a Crystal `Reference`.
             end
@@ -128,17 +128,17 @@ module Bindgen
       # `lib Binding`, and will be qualified if required.
       def from_binding(type : Parser::Type, qualified = false, is_constructor = false) : Call::Result
         from(type) do |is_ref, ptr, type_name, nilable|
-          if rules = @db[type]?
-            typename = Typename.new(@db)
+          typer = Typename.new(@db)
 
+          if qualified
+            type_name = typer.qualified(*typer.binding(type))
+          else
+            type_name, _ = typer.binding(type)
+          end
+
+          if rules = @db[type]?
             unless is_constructor
               template = type_template(rules.converter, rules.to_crystal, "unwrap")
-            end
-
-            if qualified
-              type_name = typename.qualified(*typename.binding(type))
-            else
-              type_name, _ = typename.binding(type)
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
@@ -151,11 +151,11 @@ module Bindgen
       # Computes a result for passing *type* from the wrapper to the user.
       def from_wrapper(type : Parser::Type, is_constructor = false) : Call::Result
         from(type) do |is_ref, ptr, type_name, nilable|
-          if rules = @db[type]?
-            typename = Typename.new(@db)
-            type_name, in_lib = typename.wrapper(type)
-            type_name = typename.qualified(type_name, in_lib)
+          typer = Typename.new(@db)
+          local_type_name, in_lib = typer.wrapper(type)
+          type_name = typer.qualified(local_type_name, in_lib)
 
+          if rules = @db[type]?
             if rules.kind.class?
               ptr -= 1
             end
@@ -169,6 +169,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
+
           { is_ref, ptr, type_name, template, nilable }
         end
       end
