@@ -117,8 +117,6 @@ module Bindgen
         base = "CrystalProc"
 
         template_args = [ return_type ] + arguments.to_a
-        cpp_type = "#{base}<#{template_args.map(&.full_name).join(", ")}>"
-
         template = Template.new(
           fullName: base,
           baseName: base,
@@ -134,7 +132,7 @@ module Bindgen
           isVoid: false,
           pointer: 0,
           baseName: base,
-          fullName: cpp_type,
+          fullName: base,
           template: template,
           nilable: false,
         )
@@ -196,7 +194,11 @@ module Bindgen
 
       # The mangled type name for C++ bindings.
       def mangled_name
-        Util.mangle_type_name @fullName
+        if @kind.function? && (templ = @template)
+          Util.mangle_type_name(@fullName) + "_" + templ.mangled_name
+        else
+          Util.mangle_type_name @fullName
+        end
       end
     end
   end

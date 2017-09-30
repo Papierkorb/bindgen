@@ -20,21 +20,57 @@ module Bindgen
         # Mark abstract classes
         klass.abstract = klass.origin.abstract?
 
-        # Abstract classes can't be directly instantiated.
-        add_abstract_impl_class(klass) if klass.abstract?
-
         # Find all non-private, wrapped bases.
         bases = klass.origin.bases.reject{|b| b.private? || b.virtual?}
         wrapped = wrapped_classes(bases)
 
-        return if wrapped.empty? # Nothing to do.
+        unless wrapped.empty?
+          # We inherit the first wrapped base-class in Crystal.
+          klass.base_class = Graph::Path.local(klass, wrapped.first).to_s
 
-        # We inherit the first wrapped base-class in Crystal.
-        klass.base_class = Graph::Path.local(klass, wrapped.first).to_s
+          # For all other base-classes, we provide `#as_X` methods.
+          if wrapped.size > 1
+            add_conversion_methods(klass, wrapped[1..-1])
+          end
 
-        # For all other base-classes, we provide `#as_X` methods.
-        if wrapped.size > 1
-          add_conversion_methods(klass, wrapped[1..-1])
+          copy_virtual_methods(klass, wrapped)
+        end
+
+        # Abstract classes can't be directly instantiated.
+        add_abstract_impl_class(klass) if klass.abstract?
+      end
+
+      # Copies all virtual methods, that are not already in *klass*, from
+      # *wrapped*.  This makes `Processor::VirtualOverride`s job much easier,
+      # and allows us to generate a proper abstract `Impl` class.
+      private def copy_virtual_methods(klass : Graph::Class, wrapped)
+        additional_methods = base_virtual_methods(klass.origin, wrapped)
+
+        additional_methods.each do |method|
+          if !klass.abstract? && method.pure?
+            method = unabstract_method(method)
+          end
+
+          Graph::Method.new(
+            origin: method,
+            name: method.name,
+            parent: klass,
+          )
+        end
+      end
+
+      # Finds all virtual methods in the *wrapped* bases of *klass*, which are
+      # not implemented in *klass*.
+      private def base_virtual_methods(klass, wrapped) : Array(Parser::Method)
+        known_virtuals = klass.wrappable_methods.select(&.virtual?)
+
+        wrapped.flat_map do |base|
+          base.origin.wrappable_methods.select do |method|
+            next unless method.virtual?
+            next if known_virtuals.any?{|known| known.equals_virtually?(method)}
+
+            true
+          end
         end
       end
 

@@ -97,6 +97,20 @@ module Bindgen
         list = [ ] of Method
 
         # Collect all method variants
+        each_wrappable_method do |method|
+          method.variants{|m| list << m}
+        end
+
+        # And make sure there are no duplicates.
+        Util.uniq_by(list){|a, b| a.equals_except_const?(b) || a.equals_virtually?(b)}
+      end
+
+      # Yields each wrappable method without any further processing.
+      #
+      # **Note**: This method hard-codes which methods to ignore.  If you're
+      # wondering why a method doesn't even reach the graph in the first place,
+      # look in here.
+      def each_wrappable_method
         @methods.each do |method|
           next if method.private?
           next if method.operator? # TODO: Support Operators!
@@ -106,11 +120,15 @@ module Bindgen
           # Don't try to wrap copy-constructors in an abstract class.
           next if @isAbstract && method.copy_constructor?
 
-          method.variants{|m| list << m}
+          yield method
         end
+      end
 
-        # And make sure there are no duplicates.
-        Util.uniq_by(list){|a, b| a.equals_except_const?(b) || a.equals_virtually?(b)}
+      # Non-yielding version of `#each_wrappable_method`
+      def wrappable_methods
+        list = [ ] of Method
+        each_wrappable_method{|m| list << m}
+        list
       end
 
       # Assumes that *method* exists in a class inheriting from this class.

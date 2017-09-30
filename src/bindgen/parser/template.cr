@@ -27,6 +27,11 @@ module Bindgen
       def base_name : String
         @baseName
       end
+
+      # Returns the mangled name of the template arguments.
+      def mangled_name : String
+        @arguments.map(&.mangled_name).join("_")
+      end
     end
   end
 end
