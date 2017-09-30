@@ -1,4 +1,4 @@
-# Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/tree/master/images/logo.png)
+# Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png)
 
 A (as of now) C++/Qt centric binding generator.
 
@@ -422,7 +422,7 @@ similar to what most compilers use.
 The code-flow is basically `Parser::Runner` to `Graph::Builder` to
 `Processor::Runner` to `Generator::Runner`.
 
-![Architecture flow diagram](https://raw.githubusercontent.com/Papierkorb/bindgen/tree/master/images/architecture.png)
+![Architecture flow diagram](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/architecture.png)
 
 ## The Graph
 
@@ -449,7 +449,7 @@ enums: # But map the enums differently
 
 Which will generate a graph looking like this:
 
-![Graph example](https://raw.githubusercontent.com/Papierkorb/bindgen/tree/master/images/graph.png)
+![Graph example](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/graph.png)
 
 **Note**: The concept is really similar to ASTs used by compilers.
 
