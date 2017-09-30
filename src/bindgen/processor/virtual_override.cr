@@ -103,11 +103,13 @@ module Bindgen
         wrapper = CallBuilder::CppMethod.new(@db)
         to_crystal = CallBuilder::CppToCrystalProc.new(@db)
         proc_name = "_self_->bgJump.#{method.mangled_name}"
+        parent_target = "#{method.class_name}::#{method.name}"
+        target = original.build(method, name: parent_target) unless method.pure?
 
         wrapper.build(
           method: method,
           class_name: class_name,
-          target: original.build(method),
+          target: target,
           virtual_target: to_crystal.build(method, proc_name),
         )
       end
@@ -149,10 +151,11 @@ module Bindgen
       private def cpp_jumptable_field(method) : Call::Result
         m = method.origin
         proc_type = Parser::Type.proc(m.return_type, m.arguments)
+        pass = Cpp::Pass.new(@db)
 
         Call::Result.new(
           type: proc_type,
-          type_name: proc_type.full_name,
+          type_name: pass.crystal_proc_name(proc_type),
           reference: false,
           pointer: 0,
           conversion: nil,
@@ -187,19 +190,12 @@ module Bindgen
           class_name: cpp_subclass.name,
         )
 
-        cpp = Graph::Method.new( # Add C++ method
+        platforms = Graph::Platforms.flags(CrystalBinding, Cpp)
+        Graph::Method.new( # Add C++ method
           origin: method,
           name: method.name,
-          parent: klass.platform_specific(Graph::Platform::Cpp),
+          parent: klass.platform_specific(platforms),
         )
-
-        lib_fun = Graph::Method.new( # Add Crystal binding method
-          origin: method,
-          name: method.name,
-          parent: binding,
-        )
-
-        cpp
       end
 
       # Builds the C++ wrapper call to set `bgJump`.
