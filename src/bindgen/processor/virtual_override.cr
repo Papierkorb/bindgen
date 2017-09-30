@@ -88,23 +88,38 @@ module Bindgen
           next unless node.is_a?(Graph::Method)
           next unless node.origin.virtual?
 
+          # Virtual methods could be split due to default values.  We only want
+          # to forward the original method.
+          next unless node.origin.origin.nil?
+          next if private_override?(klass.origin, node.origin)
+
           method = Graph::Method.new(
             name: node.name,
             origin: node.origin,
             parent: subclass,
           )
 
-          method.calls[Graph::Platform::Cpp] = build_cpp_forwarder(node.origin, subclass.name)
+          method.calls[Graph::Platform::Cpp] = build_cpp_forwarder(node.origin, subclass.name, klass.origin.name)
         end
       end
 
-      def build_cpp_forwarder(method : Parser::Method, class_name) : Call
-        original = CallBuilder::CppCall.new(@db)
+      # Checks if *method* was overriden by *klass* privately.  In this case, we
+      # don't allow overriding this method, nor calling it.
+      private def private_override?(klass, method)
+        if found = klass.find_parent_method(method)
+          found.private?
+        else
+          false
+        end
+      end
+
+      def build_cpp_forwarder(method : Parser::Method, class_name, parent_class) : Call
+        original = CallBuilder::CppMethodCall.new(@db)
         wrapper = CallBuilder::CppMethod.new(@db)
         to_crystal = CallBuilder::CppToCrystalProc.new(@db)
         proc_name = "_self_->bgJump.#{method.mangled_name}"
-        parent_target = "#{method.class_name}::#{method.name}"
-        target = original.build(method, name: parent_target) unless method.pure?
+        parent_target = "#{parent_class}::#{method.name}"
+        target = original.build(method, name: parent_target) unless method.pure? || method.private?
 
         wrapper.build(
           method: method,

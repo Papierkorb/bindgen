@@ -20,6 +20,7 @@ module Bindgen
         )
       end
 
+      # Body used by `CppCall` and `CppMethodCall`.
       class Body < Call::Body
         def to_code(call : Call, _platform : Graph::Platform) : String
           pass_args = call.arguments.map(&.call).join(", ")

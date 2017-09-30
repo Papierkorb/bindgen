@@ -20,7 +20,7 @@ module Bindgen
           origin: method,
           name: method.name,
           arguments: pass.arguments_from_cpp(method.arguments),
-          result: pass.to_cpp(method.return_type),
+          result: pass.through(method.return_type),
           body: body,
         )
       end
