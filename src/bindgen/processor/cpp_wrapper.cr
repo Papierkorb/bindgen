@@ -6,12 +6,22 @@ module Bindgen
     class CppWrapper < Base
       PLATFORM = Graph::Platform::Cpp
 
+      def initialize(*args)
+        super
+
+        @wrapped_methods = Set(String).new
+      end
+
       def visit_platform_specific(specific)
         super if specific.platforms.includes? PLATFORM
       end
 
       def visit_method(method)
         return if method.calls[PLATFORM]?
+
+        mangled = method.mangled_name
+        return if @wrapped_methods.includes?(mangled)
+        @wrapped_methods << mangled
 
         klass = method.parent_class # Skip constructors on abstract class without shadow-subclass.
         return if klass.try(&.origin.abstract?) && method.origin.any_constructor? && !klass.try(&.cpp_sub_class)
