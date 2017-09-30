@@ -350,7 +350,7 @@ of the pipeline.
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
-* **Run before**: `VirtualOverride`
+* **Run before**: `FilterMethods` and `VirtualOverride`
 
 Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
 Also handles abstract classes in that it adds an `Impl` class, so code can

@@ -24,13 +24,13 @@ library: "%/ext/binding.a"
 # The following pipeline is what you probably want to use for C++.
 processors:
   # Graph-refining processors:
-  - filter_methods # Throw out filtered methods
   - default_constructor # Create default constructors where possible
+  - inheritance # Mirror inheritance hierarchy from C++
+  - filter_methods # Throw out filtered methods
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - auto_container_instantiation # Figure out which templates to instantiate
   - instantiate_containers # Actually instantiate containers
-  - virtual_override # Allow overriding virtual methods
   # Preliminary generation processors:
   - crystal_wrapper # Create Crystal wrappers
   - virtual_override # Allow overriding C++ virtual methods
