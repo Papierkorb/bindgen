@@ -48,12 +48,13 @@ double: { binding_type: Float64, kind: Struct, builtin: true }
   builtin: true
   kind: Struct
   opaque: true
+  pass_by: Value
   wrapper_pass_by: Value
   crystal_type: String
   cpp_type: CrystalString
   binding_type: CrystalString
-  to_cpp: "(%.toStdString())"
-  from_cpp: "CrystalString::create(%)"
+  to_cpp: "bindgen_crystal_to_stdstring(%)"
+  from_cpp: "bindgen_stdstring_to_crystal(%)"
   from_crystal: "Binding::CrystalString.new(ptr: %.to_unsafe, size: %.bytesize)"
   to_crystal: "String.new(%.ptr, %.size)"
 
