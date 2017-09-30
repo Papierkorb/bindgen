@@ -104,6 +104,7 @@ module Bindgen
           return if rules.builtin
           return if rules.ignore
           return if rules.copy_structure
+          return if rules.kind.enum?
           return if rules.graph_node.is_a?(Graph::Enum)
         end
 

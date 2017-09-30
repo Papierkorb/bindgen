@@ -23,7 +23,7 @@ module Bindgen
       CAMEL_CASE_RX = /^[A-Z_][A-Za-z0-9_]*$/
 
       # Regular expression describing a method name
-      METHOD_NAME_RX = /^[a-z_][A-Za-z0-9_]*$/
+      METHOD_NAME_RX = /^[a-z_][A-Za-z0-9_]*[?!=]?$/
 
       # A binding error
       struct Error
@@ -93,14 +93,7 @@ module Bindgen
           add_error(enumeration, "Enum doesn't have any constants")
         end
 
-        # 2. Check constant naming
-        e.values.each do |name, _|
-          unless CAMEL_CASE_RX.match(name)
-            add_error(enumeration, "Invalid enum constant name #{name.inspect}")
-          end
-        end
-
-        # 3. Check flags-enum
+        # 2. Check flags-enum
         if e.flags?
           ILLEGAL_FLAG_ENUM.each do |name|
             if e.values.has_key?(name)
