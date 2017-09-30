@@ -8,7 +8,7 @@ module Bindgen
       PLATFORM = Graph::Platform::Crystal
 
       def visit_platform_specific(specific)
-        super if specific.platform == PLATFORM
+        super if specific.platforms.includes?(PLATFORM)
       end
 
       def visit_class(klass)

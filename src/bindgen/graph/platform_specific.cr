@@ -6,10 +6,11 @@ module Bindgen
     # See also `Container#platform_specific`.
     class PlatformSpecific < Container
       # The target platform
-      getter platform : Platform
+      getter platforms : Platforms
 
-      def initialize(@platform, parent = nil)
-        super("Specific to #{@platform}", parent)
+      def initialize(platform : Platform | Platforms, parent = nil)
+        @platforms = platform.as_flag
+        super("Specific to #{@platforms}", parent)
       end
     end
   end

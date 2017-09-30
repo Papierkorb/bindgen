@@ -16,7 +16,7 @@ module Bindgen
       end
 
       # Finds a `PlatformSpecific` for *platform*.  If none found, creates one.
-      def platform_specific(platform : Platform)
+      def platform_specific(platform : Platform | Platforms)
         node = platform_specific?(platform)
 
         if node.nil?
@@ -27,10 +27,12 @@ module Bindgen
       end
 
       # Finds a `PlatformSpecific` for *platform*.  Returns `nil` if not found.
-      def platform_specific?(platform : Platform)
+      def platform_specific?(platform : Platform | Platforms)
+        platform = platform.as_flag
+
         @nodes.each do |node|
           next unless node.is_a?(Graph::PlatformSpecific)
-          return node if node.platform == platform
+          return node if node.platforms == platform
         end
 
         nil # Not found

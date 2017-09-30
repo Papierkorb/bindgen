@@ -72,7 +72,7 @@ module Bindgen
 
       # Only visit non-C++ specifics
       def visit_platform_specific(specific)
-        super unless specific.platform.cpp?
+        super unless specific.platforms.cpp?
       end
 
       # Temporarily switch the platform.

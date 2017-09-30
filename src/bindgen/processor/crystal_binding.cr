@@ -42,6 +42,11 @@ module Bindgen
         end
       end
 
+      def visit_platform_specific(specific)
+        return unless specific.platforms.includes? PLATFORM
+        super
+      end
+
       def visit_library(library)
         nil # We're already in a `lib`, so ignore inner libraries.
       end

@@ -7,7 +7,7 @@ module Bindgen
       PLATFORM = Graph::Platform::Cpp
 
       def visit_platform_specific(specific)
-        super if specific.platform == PLATFORM
+        super if specific.platforms.includes? PLATFORM
       end
 
       def visit_method(method)
