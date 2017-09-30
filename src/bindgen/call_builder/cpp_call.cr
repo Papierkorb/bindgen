@@ -5,11 +5,11 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      def build(method : Parser::Method, self_var = "_self_", body : Call::Body? = nil)
+      def build(method : Parser::Method, self_var = "_self_", body : Call::Body? = nil, name : String? = nil)
         pass = Cpp::Pass.new(@db)
-        method_name = Cpp::MethodName.new(@db)
 
-        name = method_name.generate(method, self_var)
+        method_name = Cpp::MethodName.new(@db)
+        name ||= method_name.generate(method, self_var)
 
         Call.new(
           origin: method,

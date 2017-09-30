@@ -42,12 +42,22 @@
 
 #include <gc/gc.h> // Boehm GC
 #include <string.h>
+#include <stdlib.h> // abort()
+#include <stdio.h> // fprintf()
 
 // Helper structure to transfer a `String` between C/C++ and Crystal.
 typedef struct CrystalString { // C compatibility
   const char *ptr;
   int size;
 } CrystalString;
+
+// Compiler branching hint
+#define bindgen_likely(x) __builtin_expect(!!(x), 1)
+
+static __attribute__((noreturn)) void bindgen_fatal_panic(const char *message) {
+  fprintf(stderr, "Fatal error in bindings: %s\n", message);
+  abort();
+}
 
 #ifdef __cplusplus
 #include <gc/gc_cpp.h>
