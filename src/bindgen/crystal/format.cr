@@ -6,13 +6,13 @@ module Bindgen
       end
 
       # Formats *arg* as `type name`
-      def argument(arg : Call::Argument, idx) : String
+      def argument(arg : Call::Argument, idx, expose_default = true) : String
         argument = Argument.new(@db)
         typer = Typename.new(@db)
 
         value = arg.default_value
-        unless value.nil?
-          stringified = literal arg.type_name, value
+        if value != nil && expose_default
+          stringified = literal(arg.type_name, value)
 
           if stringified.nil? && value.is_a?(Number)
             stringified = qualified_enum_name arg.type, value.to_i
@@ -30,7 +30,11 @@ module Bindgen
 
       # Formats *arguments* as `type name, ...`
       def argument_list(arguments : Enumerable(Call::Argument)) : String
-        arguments.map_with_index{|arg, idx| argument(arg, idx)}.join(", ")
+        first_optional = arguments.rindex(&.default_value.nil?) || arguments.size
+
+        arguments.map_with_index do |arg, idx|
+          argument(arg, idx, expose_default: idx > first_optional)
+        end.join(", ")
       end
 
       # Generates a literal value suitable for Crystal code, using the *value*
