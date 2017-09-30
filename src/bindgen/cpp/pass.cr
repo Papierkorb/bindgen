@@ -23,6 +23,19 @@ module Bindgen
         end
       end
 
+      # Returns the type name of *proc_type*.
+      def crystal_proc_name(proc_type : Parser::Type) : String
+        typer = Typename.new
+        inner_args = proc_type.template.not_nil!.arguments
+
+        # Arguments go C++ -> Crystal, but the result goes Crystal -> C++!
+        proc_types = inner_args[1..-1].map{|t| to_crystal(t)}
+        proc_types.unshift to_cpp(inner_args.first)
+
+        proc_args = typer.full(proc_types).join(", ")
+        "CrystalProc<#{proc_args}>"
+      end
+
       # Computes a result for passing *type* from Crystal to C++.
       #
       # The primary job of this method is to figure out how to pass something of
@@ -47,7 +60,7 @@ module Bindgen
         ptr = type_pointer_depth(type)
 
         type_name = type.base_name
-        type_name = type.full_name if type.kind.function?
+        type_name = crystal_proc_name(type) if type.kind.function?
 
         # If the method expects a value, but we don't copy its structure, we pass
         # a reference to it instead.
@@ -103,7 +116,7 @@ module Bindgen
           is_ref = false
           ptr = 1
 
-          generate_template = true
+          generate_template = !is_copied
         end
 
         if rules = @db[type]?
@@ -142,13 +155,13 @@ module Bindgen
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         type_name = type.base_name
-        type_name = type.full_name if type.kind.function?
+        type_name = crystal_proc_name(type) if type.kind.function?
 
         conversion_type_name = type_name
         generate_template = false
 
         # TODO: Check for copy-constructor.
-        if is_ref || (is_val && !is_copied)
+        if !is_copied && (is_ref || is_val)
           # Don't change the external type (is_ref, ptr)!
           generate_template = true
         end
@@ -179,6 +192,8 @@ module Bindgen
           conversion: template,
         )
       end
+
+
     end
   end
 end

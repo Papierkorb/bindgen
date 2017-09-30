@@ -24,10 +24,10 @@ module Bindgen
         def to_code(call : Call, platform : Graph::Platform) : String
           formatter = Cpp::Format.new
           ptr = formatter.function_pointer(@proc)
-          pass_args = call.arguments.map(&.call).join(", ")
+          lambda_args = formatter.argument_list(call.arguments)
 
           inner = @proc.body.to_code(@proc, platform)
-          code = %[QObject::connect(_self_, (#{ptr})&#{call.name}, [_proc_](#{pass_args}){ #{inner}; })]
+          code = %[QObject::connect(_self_, (#{ptr})&#{call.name}, [_proc_](#{lambda_args}){ #{inner}; })]
 
           if templ = call.result.conversion
             code = Util.template(templ, code)

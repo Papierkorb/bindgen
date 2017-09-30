@@ -10,10 +10,7 @@ module Bindgen
       def build(method : Parser::Method, proc_name : String = "_proc_") : Call
         pass = Cpp::Pass.new(@db)
 
-        arguments = method.arguments.map_with_index do |arg, idx|
-          pass.to_crystal(arg).to_argument(Cpp::Argument.name(arg, idx))
-        end
-
+        arguments = pass.arguments_from_cpp(method.arguments)
         result = pass.to_cpp(method.return_type)
 
         Call.new(

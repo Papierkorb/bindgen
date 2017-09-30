@@ -38,8 +38,6 @@ module Bindgen
           func_result = typer.full(call.result)
           func_args = formatter.argument_list(call.arguments)
 
-          # Can we do better than this?
-          func_result = "const #{func_result}" if call.result.type.const?
           # Returning a `void` from a void method generates a warning.
           prefix = "return " unless call.result.type.void?
           const = "const " if call.origin.const?
