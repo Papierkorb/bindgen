@@ -53,6 +53,11 @@ module Bindgen
 
       def visit_class(klass)
         return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+
+        # We want a Void alias for *all* classes.
+        pass = Crystal::Pass.new(@db)
+        add_type_alias pass.to_binding(klass.origin.as_type, qualified: false)
+
         super
       end
 
