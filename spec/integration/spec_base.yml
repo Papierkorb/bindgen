@@ -6,11 +6,11 @@ module: Test
 generators:
   cpp:
     output: tmp/{SPEC_NAME}.cpp
-    build: "{CXX|c++} -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -Wall -Werror"
+    # Don't barf on unused functions.  Everything else: Error.
+    build: "{CXX|c++} -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function"
     preamble: |-
       #include <gc/gc_cpp.h>
       #include "bindgen_helper.hpp"
-      #include "../{SPEC_NAME}.cpp"
   crystal:
     output: tmp/{SPEC_NAME}.cr
 
