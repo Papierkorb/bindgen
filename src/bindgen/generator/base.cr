@@ -9,6 +9,9 @@ module Bindgen
       # Name of the section in a single-file setup.
       SINGLE_FILE_SECTION = ""
 
+      # Complete configuration document
+      getter user_config : Configuration
+
       # Configuration of this generator.
       getter config : Configuration::Generator
 
@@ -21,7 +24,7 @@ module Bindgen
       # Name of the current output section
       @current_section : String?
 
-      def initialize(@config : Configuration::Generator, @db : TypeDatabase)
+      def initialize(@user_config : Configuration, @config : Configuration::Generator, @db : TypeDatabase)
         @io = IO::Memory.new # Dummy IO
       end
 

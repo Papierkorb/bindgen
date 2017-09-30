@@ -21,7 +21,7 @@ module Bindgen
       end
 
       def visit_library(library)
-        lib_gen = CrystalLib.new(Configuration::Generator.dummy, @db)
+        lib_gen = CrystalLib.new(@user_config, Configuration::Generator.dummy, @db)
         lib_gen.write_all library, @io, @depth
       end
 
