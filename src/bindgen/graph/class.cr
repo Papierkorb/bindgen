@@ -40,7 +40,7 @@ module Bindgen
       # paths.
       getter instance_variables = { } of String => Call::Result
 
-      def initialize(@origin, name, parent)
+      def initialize(@origin, name, parent = nil)
         super(name, parent)
       end
 
