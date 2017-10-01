@@ -42,6 +42,11 @@ module Bindgen
         end
       end
 
+      # Does this path point to itself?
+      def self?
+        @nodes.nil?
+      end
+
       # Is this a global path?
       def global?
         nodes = @nodes
@@ -53,14 +58,18 @@ module Bindgen
         end
       end
 
-      # Is this a local path?
+      # Is this a local path?  Also `true` if this is a `#self?` path.
       def local?
         !global?
       end
 
       # Returns a global path from this local path, starting look-up at *base*.
       # Does a full look-up under the hood, thus, the path has to be valid.
+      #
+      # If this is already a `#global?` path, it is returned without further
+      # checks.
       def to_global(base : Node) : Path
+        return self if global?
         target = lookup(base)
 
         if target.nil?
@@ -68,9 +77,9 @@ module Bindgen
         end
 
         if target.parent
-          "::" + target.path_name
+          Path.new([ "" ] + target.full_path.map(&.name))
         else # Self-path lookup on the root.
-          "::"
+          Path.new([ ] of String)
         end
       end
 
@@ -100,7 +109,11 @@ module Bindgen
       #
       # BUG: Doesn't support nested generics, like `Foo(Bar(Baz))::Quux`.
       def self.from(path : String) : Path
-        new path.gsub(/\([^)]+\)/, "").split("::")
+        if path == "::"
+          new([ "" ])
+        else
+          new(path.gsub(/\([^)]+\)/, "").split("::"))
+        end
       end
 
       # ditto
@@ -139,14 +152,22 @@ module Bindgen
         end
       end
 
+      # Returns the global path to *node*.
+      def self.global(node : Graph::Node) : Path
+        new([ "" ] + node.full_path.map(&.name))
+      end
+
       # Does a local look-up starting at *base* for *path*.  The look-up will
       # begin in *base* itself.  If not found, it'll try to find the path by
       # going up to the parent(s).
       #
       # If the *path* starts with `::` (An empty element), the look-up will
-      # always start at the global scope.
+      # always start at the global scope.  If `::` is given, the root node
+      # is returned.  Otherwise, the first part of the path must be the name
+      # of the root node: `::RootNameHere::And::So::On` instead of
+      # `::And::So::On`.
       #
-      # If not found, returns `nil`.
+      # If not found, returns `nil`.  This method does *not* raise.
       def lookup(base : Node) : Node?
         nodes = @nodes
         if nodes.nil? # Handle self lookup.
@@ -162,6 +183,7 @@ module Bindgen
       private def do_lookup(base, path) : Node?
         root = base.find_root
         base, path = lookup_global_check(root, base, path)
+        return base if path.nil?
 
         # Try lookup of the path, going up to the parent once if not found.
         while base
@@ -212,7 +234,9 @@ module Bindgen
         if path.first.empty? # Force start at the root?
           base = root
 
-          if path[1] != base.name # Make sure we go into our namespace
+          if path.size < 2
+            return { root, nil }
+          elsif path[1] != base.name # Make sure we go into our namespace
             return { nil, path }
           end
 
