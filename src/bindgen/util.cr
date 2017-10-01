@@ -63,5 +63,22 @@ module Bindgen
     def self.mangle_type_names(full_type_names : String)
       full_type_names.map{|x| mangle_type_name x}.join("_")
     end
+
+    # Formats the *bytes* amount as nice string.
+    def self.format_bytes(bytes : Int, explicit_sign = false) : String
+      if bytes < 0
+        prefix = "-"
+      elsif explicit_sign && bytes > 0
+        prefix = "+"
+      end
+
+      if bytes < 1024
+        "#{prefix}#{bytes} B"
+      elsif bytes < 1024 * 1024
+        "#{prefix}#{bytes / 1024} KiB"
+      else
+        "#{prefix}#{bytes / (1024 * 1024)} MiB"
+      end
+    end
   end
 end

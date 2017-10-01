@@ -39,15 +39,19 @@ module Bindgen
     def run! : Int32
       stats = run_steps
 
-      if @show_stats
-        puts "Timing statistics:"
-        puts stats.to_s(depth: 1)
-        puts "  Total time: #{stats.total_duration}"
-      end
+      print_stats(stats) if @show_stats
 
       0 # Success!
     rescue err : ExitError
       err.code # Failure
+    end
+
+    private def print_stats(stats)
+      gc = GC.stats
+
+      puts stats.to_s(depth: 1)
+      puts "  Total time: #{stats.total_duration}"
+      puts "  Heap size : #{Util.format_bytes gc.heap_size}"
     end
 
     # Runs all steps in the tool, measuring each steps timings.
@@ -60,7 +64,7 @@ module Bindgen
       stats.measure("Processors"){ @processors.process(graph, document) }
       stats.measure("Generators"){ @generators.process(graph) }
 
-      stats
+      stats.finish!
     end
 
     private def build_graph(document)
