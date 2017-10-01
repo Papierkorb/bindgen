@@ -19,14 +19,7 @@ module Bindgen
 
       # Returns the class containing this method.
       def parent_class : Graph::Class?
-        p = @parent
-
-        while p
-          return p if p.is_a?(Graph::Class)
-          p = p.parent
-        end
-
-        nil
+        unspecific_parent.as?(Graph::Class)
       end
 
       # Returns a dot (`.`) if the origin method is static.  Returns a number
