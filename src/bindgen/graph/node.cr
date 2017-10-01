@@ -32,7 +32,7 @@ module Bindgen
       # name is already set.
       def set_tag(name : String, value : String = "")
         if @tags.has_key?(name)
-          raise IndexError.new("Tag #{name.inspect} is already set")
+          raise KeyError.new("Tag #{name.inspect} is already set")
         end
 
         @tags[name] = value
