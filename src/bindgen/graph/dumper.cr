@@ -27,6 +27,10 @@ module Bindgen
         puts "#{node_header(alias_name)} -> #{alias_name.origin.type_name}"
       end
 
+      def visit_constant(constant)
+        puts "#{node_header(constant)} = #{constant.value.inspect}"
+      end
+
       def visit_class(klass)
         puts node_header(klass)
         indented{ super }
