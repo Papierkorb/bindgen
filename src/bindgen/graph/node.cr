@@ -1,9 +1,12 @@
 module Bindgen
   module Graph
     # A node in the method graph.  Base class of all elements in the graph.
+    #
+    # To add a `Node` into a `Container` pass the container instance as *parent*
+    # to `#initialize`.  This lets you quickly build hierarchies.
     abstract class Node
-      # Parent node, or `nil` if it's this node has no parent.
-      property parent : Node?
+      # Parent node, or `nil` if it's tKeyErrorhis node has no parent.
+      property parent : Container?
 
       # Name of this node.
       getter name : String
@@ -15,12 +18,9 @@ module Bindgen
       # on some other way, e.g. infer through other existing properties.
       getter tags = { } of String => String
 
-      def initialize(@name, parent = nil)
+      def initialize(@name, parent : Container? = nil)
         @parent = parent
-
-        if parent.is_a?(Container)
-          parent.nodes << self
-        end
+        parent.nodes << self if parent
       end
 
       # Is this node kind a constant in Crystal?
@@ -73,7 +73,7 @@ module Bindgen
       end
 
       # Finds the parent node which is not a `PlatformSpecific`.
-      def unspecific_parent : Node?
+      def unspecific_parent : Container?
         p = @parent
 
         while p && p.is_a?(PlatformSpecific)
@@ -84,9 +84,9 @@ module Bindgen
       end
 
       # Returns the qualified path name to this node, starting in the global
-      # scope.
+      # scope.  `PlatformSpecific`s are omitted.
       #
-      # See also `#full_path`.
+      # See also `#full_path` and `#diagnostics_path`.
       def path_name : String
         full_path.each.map(&.name).join("::")
       end

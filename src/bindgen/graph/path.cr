@@ -34,7 +34,7 @@ module Bindgen
       end
 
       # Returns the last element of `#nodes` itself.  If `#nodes` is `nil`, raises.
-      def last_part
+      def last_part : String
         if nodes = @nodes
           nodes.last
         else

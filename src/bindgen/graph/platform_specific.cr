@@ -10,7 +10,7 @@ module Bindgen
 
       def initialize(platform : Platform | Platforms, parent = nil)
         @platforms = platform.as_flag
-        super("Specific to #{@platforms}", parent)
+        super("(Specific to #{@platforms})", parent)
       end
     end
   end
