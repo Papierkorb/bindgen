@@ -2,7 +2,6 @@
 #define COMMON_HPP
 
 #include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Core/QualTypeNames.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
