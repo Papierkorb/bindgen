@@ -107,6 +107,29 @@ module Bindgen
       )
     end
 
+    # Configuration for a function-class wrapper, see `Function#wrapper`
+    class FunctionClass
+      YAML.mapping(
+        # Backing structure
+        structure: String,
+
+        # Crystal type to inherit from
+        inherit_from: {
+          type: String,
+          nilable: true,
+        },
+
+        # Constructor function names
+        constructors: Array(String),
+
+        # Destructor function name
+        destructor: {
+          type: String,
+          nilable: true,
+        },
+      )
+    end
+
     # Configuration for function wrapping
     class Function
       YAML.mapping(
@@ -118,9 +141,16 @@ module Bindgen
 
         # Qualified name of the destination module/class
         destination: String,
+
+        # `class:` in the YAML!
+        wrapper: {
+          key: "class",
+          type: FunctionClass,
+          nilable: true,
+        }
       )
 
-      def initialize(@destination, @name = nil)
+      def initialize(@destination, @name = nil, @wrapper = nil)
       end
     end
 
