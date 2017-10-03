@@ -43,6 +43,38 @@ describe "C-specific functionality" do
           typeof(Test::Foo::Bar::One.value).should eq(UInt32)
         end
       end
+
+      context "simple functions" do
+        it "maps short-hand" do
+          Test::Funcs.one.should eq(1)
+        end
+
+        it "maps through full name" do
+          Test::Funcs.two.should eq(2)
+        end
+
+        it "maps short-hand with one capture group" do
+          Test::Funcs::Thr.ee.should eq(3)
+        end
+
+        it "maps with one capture group" do
+          Test::Funcs.four.should eq(4)
+        end
+      end
+
+      context "multiple function matches" do
+        it "maps with short-hand" do
+          Test::Funcs::Calc.add(4, 3).should eq(7)
+          Test::Funcs::Calc.sub(4, 3).should eq(1)
+        end
+      end
+
+      context "functions with individual nesting" do
+        it "maps them accordingly" do
+          Test::Funcs::Increment.one(5).should eq(6)
+          Test::Funcs::Decrement.one(5).should eq(4)
+        end
+      end
     end
   end
 end

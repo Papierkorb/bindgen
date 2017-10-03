@@ -4,10 +4,11 @@ processors:
   - filter_methods
   - macros
   - default_constructor
+  - functions
   - cpp_wrapper
   - crystal_binding
   - crystal_wrapper
-  - sanity_check
+  # - sanity_check
 
 macros:
   "CONSTANT_(.*)":
@@ -25,5 +26,13 @@ macros:
     flags: true
     type: unsigned int
     destination: Foo::Bar
+
+functions:
+  one: Funcs
+  two: { destination: "Funcs", name: "two" }
+  "thr(ee)": Funcs::Thr
+  "fou(r)": { destination: "Funcs", name: "fou\\1" }
+  "mycalc_(.*)": Funcs::Calc
+  "thing_([^_]+)_(.*)": { destination: "Funcs", name: "\\1::\\2" }
 
 types: { }
