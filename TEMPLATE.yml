@@ -25,6 +25,7 @@ library: "%/ext/binding.a"
 processors:
   # Graph-refining processors:
   - default_constructor # Create default constructors where possible
+  - function_class # Turn OOP-y C APIs into real classes
   - inheritance # Mirror inheritance hierarchy from C++
   - filter_methods # Throw out filtered methods
   - copy_structs # Copy structures as marked
@@ -100,7 +101,8 @@ macros:
     destination: Foo::Bar
 
 # Map functions outside of classes.  Useful to map C functions and C++
-# namespaced functions as well.  Requires the `functions` processor.
+# namespaced functions as well.  Requires the `functions` (and `function_class`)
+# processor.
 functions:
   # Matches all functions whose fully-qualified name matches the key.
   # The qualified name of functions in the global scope is the function name
@@ -116,10 +118,31 @@ functions:
     # Set a custom name for the function.  You can access capture groups from
     # the regular expression above.  You can omit this option.
     name: "string_\\1" # E.g., transform `strlen()` to `string_len()`
-    # Names also support further nesting:
+    # Names also support further nesting, if you don't use `class:`:
     #   name: "\1::\2"
-    # Destination module or class the functions should be put into.
+    # Destination module or class the functions should be put into.  If using
+    # `class:`, the name of the class itself.
     destination: Util::StringBuffer
+    # You can also map all matched functions as class: With a little help,
+    # bindgen can generate full wrapper classes!  If you don't want this,
+    # leave the whole `class:` option out.
+    # This feature requires the `function_class` processor.
+    class:
+      # Name of the backing structure.  The non-static functions take a pointer
+      # to the structure as first argument.  Other functions are treated as
+      # being static.
+      structure: string_buffer
+      # If this C library supports "inheritance", and you're also wrapping the
+      # base class, put the name here.  Else, leave this out.
+      inherit_from: Crystal::Type::Name
+      # Name of constructor functions.  They're expected to *return* a pointer
+      # to a new `structure:`.
+      constructors:
+        - string_new_empty
+        - string_new_from_string
+      # Name of the destructor (The "free" function).  The generated wrapper
+      # will call this function in `#finalize`.
+      destructor: string_free
 
 # List of container-types to wrap.  (Keyword: C++ Templates)
 # Requires the `instantiate_containers` processor.  Optionally, you can also use
