@@ -1,6 +1,8 @@
 <<: spec_base.yml
 
 processors:
+  - function_class
+  - inheritance
   - filter_methods
   - macros
   - default_constructor
@@ -28,11 +30,21 @@ macros:
     destination: Foo::Bar
 
 functions:
+  # For `Processor::Functions`
   one: Funcs
   two: { destination: "Funcs", name: "two" }
   "thr(ee)": Funcs::Thr
   "fou(r)": { destination: "Funcs", name: "fou\\1" }
   "mycalc_(.*)": Funcs::Calc
   "thing_([^_]+)_(.*)": { destination: "Funcs", name: "\\1::\\2" }
+  # For `Processor::FunctionClass`
+  "buffer_(.*)": # Simple class
+    destination: Buffer
+    class:
+      structure: string_buffer
+      constructors:
+        - buffer_new
+        - buffer_new_string
+      destructor: buffer_free
 
 types: { }

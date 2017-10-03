@@ -75,6 +75,47 @@ describe "C-specific functionality" do
           Test::Funcs::Decrement.one(5).should eq(4)
         end
       end
+
+      context "function classes" do
+        it "wraps functions as methods" do
+          instance_methods = {{ Test::Buffer.methods.map(&.name.stringify) }}
+          static_methods = {{ Test::Buffer.class.methods.map(&.name.stringify) }}
+
+          # Constructors
+          ctor_arguments = {{
+            Test::Buffer.methods.select(&.name.== "initialize").map do |meth|
+              (meth.args.map(&.name.stringify).stringify + " of String").id
+            end
+          }}
+          ctor_arguments.includes?([ ] of String).should be_true # Default one
+          ctor_arguments.includes?([ "string" ]).should be_true # One with arguments
+
+          # Member methods
+          instance_methods.includes?("size").should be_true
+          instance_methods.includes?("string").should be_true
+          instance_methods.includes?("append").should be_true
+
+          # Destructor
+          instance_methods.includes?("finalize").should be_true
+
+          # Static method detection
+          static_methods.includes?("version").should be_true
+        end
+
+        it "can call a static method" do
+          Test::Buffer.version.should eq(123)
+        end
+
+        it "can interact with an instance" do
+          buffer = Test::Buffer.new("Hello".to_unsafe)
+          buffer.append ", ".to_unsafe
+          buffer.append "Crystal!".to_unsafe
+
+          string = String.new(buffer.string)
+          string.should eq("Hello, Crystal!")
+          buffer.size.should eq(string.size)
+        end
+      end
     end
   end
 end
