@@ -38,6 +38,7 @@ static std::string getFunctionParentName(const std::string &fullName, const std:
 }
 
 static Method buildMethod(const clang::FunctionDecl *func, const std::string &fullName) {
+
 	Method m;
 	m.name = func->getNameAsString();
 	m.className = getFunctionParentName(fullName, m.name);
@@ -48,6 +49,8 @@ static Method buildMethod(const clang::FunctionDecl *func, const std::string &fu
 	m.isExternC = func->isExternC();
 	m.access = clang::AS_public; // Global functions are always public
 
+	clang::ASTContext &ctx = func->getASTContext();
+	m.returnType = TypeHelper::qualTypeToType(func->getReturnType(), ctx);
 	TypeHelper::addFunctionParameters(func, m);
 	return m;
 }
