@@ -298,7 +298,7 @@ module Bindgen
 
       # The return type of this method
       def return_type : Parser::Type
-        if any_constructor?
+        if any_constructor? && @returnType.void?
           Parser::Type.new(
             isConst: false,
             isReference: false,
@@ -374,11 +374,11 @@ module Bindgen
         name = Util.mangle_type_name(@name)
 
         case self
-        when .constructor? then "CONSTRUCT"
-        when .copy_constructor? then "COPY"
+        when .constructor? then "#{name}_CONSTRUCT"
+        when .copy_constructor? then "#{name}_COPY"
         when .operator? then operator_name
         when .static_method? then "#{name}_STATIC"
-        when .destructor? then "DESTROY"
+        when .destructor? then "#{name}_DESTROY"
         else name
         end
       end
