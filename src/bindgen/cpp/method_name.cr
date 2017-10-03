@@ -2,6 +2,8 @@ module Bindgen
   module Cpp
     # Generator for calling methods by their name.
     struct MethodName
+      GLOBAL_SCOPE = "::"
+
       include TypeHelper
 
       def initialize(@db : TypeDatabase)
@@ -27,7 +29,11 @@ module Bindgen
         when .member_method?, .signal?, .operator?
           "#{self_var}->#{method.name}"
         when .static_method?
-          "#{method.class_name}::#{method.name}"
+          if method.class_name == GLOBAL_SCOPE
+            "::#{method.name}"
+          else
+            "#{method.class_name}::#{method.name}"
+          end
         else
           raise "BUG: Missing case for method type #{method.type.inspect}"
         end
