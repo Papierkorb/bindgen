@@ -75,6 +75,8 @@ module Bindgen
       end
     end
 
+    # Returns the maximum length of all names recursively.  Used to justify the
+    # output table correctly.
     protected def max_name_length(depth)
       @stages.max_of do |name, timing|
         name_size = depth * DEPTH_MULTIPLIER + name.size
@@ -88,6 +90,7 @@ module Bindgen
       end
     end
 
+    # Generates the table header
     private def table_header(justification, indent)
       header = {
         indent,
