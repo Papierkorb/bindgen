@@ -35,7 +35,7 @@ module Bindgen
         end
       end
 
-      private def default_constructor?(method : Parser::Method)
+      private def default_constructor?(method : Parser::Method) : Bool
         return false unless method.any_constructor?
 
         # We also accept a constructor where all arguments have an exposed

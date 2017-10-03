@@ -25,7 +25,7 @@ module Bindgen
       end
 
       private def add_function(parent, config, method, match)
-        sub_path, name = function_path_and_name(parent, config, match)
+        sub_path, name = function_path_and_name(parent, config.name, match)
 
         if sub_path
           builder = Graph::Builder.new(@db)
@@ -42,8 +42,8 @@ module Bindgen
         )
       end
 
-      private def function_path_and_name(base, config, match)
-        name = Util.pattern_rewrite(config.name, match)
+      private def function_path_and_name(base, pattern, match)
+        name = Util.pattern_rewrite(pattern, match)
         path = nil
 
         if name.includes?("::") # Support further nesting
