@@ -88,7 +88,7 @@ module Bindgen
         classes: @config.classes.keys,
         enums: @config.enums.keys,
         macros: @config.macros.keys,
-        functions: [ ] of String,
+        functions: @config.functions.keys,
         config: @config.parser,
         project_root: @root_path,
       )

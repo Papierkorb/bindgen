@@ -22,7 +22,7 @@ module Bindgen
         defines = @config.defines.map{|x| "-D#{x}"}
         includes = template_include_paths.map{|x| "-I#{x}"}
         macros = [ "-m", @macros.join('|').inspect ]
-        functions = [ "-f", @macros.join('|').inspect ]
+        functions = [ "-f", @functions.join('|').inspect ]
 
         [ input_file ] + classes + enums + macros + functions + [ "--" ] + flags + defines + includes
       end

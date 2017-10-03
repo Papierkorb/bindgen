@@ -21,7 +21,7 @@ module: MyStuff
 library: "%/ext/binding.a"
 
 # Processors pipeline.  See `README.md` for details.
-# The following pipeline is what you probably want to use for C++.
+# The following pipeline should just work for you :)
 processors:
   # Graph-refining processors:
   - default_constructor # Create default constructors where possible
@@ -29,6 +29,7 @@ processors:
   - filter_methods # Throw out filtered methods
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
+  - functions # Add non-class functions
   - auto_container_instantiation # Figure out which templates to instantiate
   - instantiate_containers # Actually instantiate containers
   # Preliminary generation processors:
@@ -52,7 +53,7 @@ generators:
     # If the command signals failure, bindgen will halt too.
     build: make
     # Small-ish bindings may get away without a custom Makefile:
-    # build: "{CXX|g++} -std=c++11 -c -o binding.o -lMyLib my_bindings.cpp"
+    # build: "{CXX|c++} -std=c++11 -c -o binding.o -lMyLib my_bindings.cpp"
     # Do you have complex dependencies?  Use a conditional!
     # if_os_is_windows: # Read the `YAML configuration` section in README.md
     #   build: mingw-make
@@ -74,7 +75,7 @@ enums:
   # `CrystalEnumName` can reside in a wrapped class.
   CppEnumName: CrystalEnumName
 
-# Map of macros (`#define`s) to copy.
+# Map of macros (`#define`s) to copy.  Requires the `macros` processor.
 macros:
   # Maps from a *regular expression*.  Rules are tried in the order they're
   # defined in the configuration file.  The expression must match the whole name
@@ -98,7 +99,31 @@ macros:
     # the path to the class (or module) it will be stored in.
     destination: Foo::Bar
 
+# Map functions outside of classes.  Useful to map C functions and C++
+# namespaced functions as well.  Requires the `functions` processor.
+functions:
+  # Matches all functions whose fully-qualified name matches the key.
+  # The qualified name of functions in the global scope is the function name
+  # itself: The qualified name of `void foo();` is `foo`.  For C++ namespaced
+  # methods, the qualified name includes the complete namespace path: The
+  # qualified name of `namespace foo { void bar(); }` is thus `foo::bar`.
+  #
+  # Just like macros, the first capture group defaults to be the resulting
+  # function name.  Without a capture group, the function name is copied.
+  "net_(.*)": Util::Net # Equal to: `"net_(.*)": { destination: "Util::Net" }`
+  # If you want more control:
+  "string_(.*)":
+    # Set a custom name for the function.  You can access capture groups from
+    # the regular expression above.  You can omit this option.
+    name: "string_\\1" # E.g., transform `strlen()` to `string_len()`
+    # Names also support further nesting:
+    #   name: "\1::\2"
+    # Destination module or class the functions should be put into.
+    destination: Util::StringBuffer
+
 # List of container-types to wrap.  (Keyword: C++ Templates)
+# Requires the `instantiate_containers` processor.  Optionally, you can also use
+# the `auto_container_instantiation` processor before.
 containers:
   - class: Name of the C++ class
     type: "Sequential" or "Associative"
@@ -106,7 +131,8 @@ containers:
     # size_method: C++ container size method.  Defaults to `size`.
     # push_method: C++ item append method.  Defaults to `push_back`.
     instantiations: # All wanted instantiations of this container
-      # You may like the `AutoContainerInstantiation` processor, too!
+      # If using the `auto_container_instantiation` processor, this whole map
+      # can be omitted.  It's still required to define the container classes.
       - [ "C++ type name" ]
       # - [ "..." ]
 
@@ -115,16 +141,13 @@ parser:
   # Path to the `bindgen-clang` binary.  (Optional!)
   binary: path/to/bindgen-clang
   # Additional Clang flags.  Example for C++11:
-  flags:
-    - -x
-    - c++
-    - -std=c++11
+  flags: [ "-x", "c++", "-std=c++11" ]
   # List of files to include.  Can be relative to search-paths.
   files:
     - my_lib.h
-  # List of incldue search-paths.  Example points to Clangs standard library.
+  # List of include search-paths.
   includes:
-    - /usr/lib/clang/4.0.1/include/
+    - %/ext/include # `%` expands to the absolute project root path.
   # Additional "#define"s passed to Clang.
   defines:
     - __STDC_CONSTANT_MACROS

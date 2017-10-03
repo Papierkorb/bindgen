@@ -107,6 +107,39 @@ module Bindgen
       )
     end
 
+    # Configuration for function wrapping
+    class Function
+      YAML.mapping(
+        # Mapping name of the function
+        name: {
+          type: String,
+          nilable: true,
+        },
+
+        # Qualified name of the destination module/class
+        destination: String,
+      )
+
+      def initialize(@destination, @name = nil)
+      end
+    end
+
+    # Converter to accept `Hash(String, String | Function)` and turn it into
+    # `Hash(String, Function)`
+    module FunctionConverter
+      def self.from_yaml(pull)
+        hsh = Hash(String, String | Function).new(pull)
+
+        hsh.map do |key, value|
+          if value.is_a?(String)
+            { key, Function.new(value) }
+          else
+            { key, value }
+          end
+        end.to_h
+      end
+    end
+
     YAML.mapping(
       # Target Crystal module
       module: String, # TODO: Keep this?  Or move into `Generator`?
@@ -139,6 +172,13 @@ module Bindgen
       macros: {
         type: Hash(String, Macro),
         default: Hash(String, Macro).new,
+      },
+
+      # Which functions to wrap
+      functions: {
+        type: Hash(String, Function),
+        default: Hash(String, Function).new,
+        converter: FunctionConverter,
       },
 
       # Which templates to instantiate
