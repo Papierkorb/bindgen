@@ -15,6 +15,7 @@ A (as of now) C++/Qt centric binding generator.
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
 | Mapping C functions                              | **YES** |
+| Mapping OOP-like C APIs as Crystal classes       | **YES** |
 | Overloaded methods (Also default arguments)      | **YES** |
 | Copying default argument values                  |         |
 |  +- Integer, float, boolean types                | **YES** |
@@ -187,15 +188,24 @@ of the pipeline.
 ### `Functions`
 
 * **Kind**: Refining
-* **Run after**: No specific dependency
+* **Run after**: `FunctionClass`
 * **Run before**: No specific dependency
 
 Maps C functions, configured through the `functions:` map in the configuration.
 
-### `Inheritance`
+### `FunctionClass`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
+* **Run before**: `Inheritance` and `Functions`
+
+Generates wrapper classes from OOP-like C APIs, using guidance from the user
+through configuration in the `functions:` map.
+
+### `Inheritance`
+
+* **Kind**: Refining
+* **Run after**: `FunctionClass`
 * **Run before**: `FilterMethods` and `VirtualOverride`
 
 Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
