@@ -17,8 +17,9 @@ module Bindgen
       # If the *method* is any constructor, and the type is copied, the
       # constructor will be called without `new`, effectively returning a value.
       # Otherwise, a normal `new` is used to return a pointer.
-      def generate(method : Parser::Method, self_var : String)
-        case method
+      def generate(method : Parser::Method, self_var : String, type : Parser::Method::Type? = nil)
+        type ||= method.type
+        case type
         when .copy_constructor?, .constructor?
           if is_type_copied?(method.class_name)
             method.class_name
