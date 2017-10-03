@@ -1,5 +1,5 @@
 digraph logo {
-  cpp [shape=none label="C++"]
+  cpp [shape=none label="C/C++"]
   crystal [shape=none label="Crystal"]
 
   nodesep=1
