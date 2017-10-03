@@ -1,5 +1,7 @@
 require "./crystal"
 require "./processor/base"
+require "./util/*"
+require "./parser/*"
 require "./processor/*"
 
 module Bindgen

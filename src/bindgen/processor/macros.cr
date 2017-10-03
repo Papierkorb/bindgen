@@ -2,12 +2,11 @@ module Bindgen
   module Processor
     # A processor setting up copied macro definitions.
     class Macros < Base
-      # Finds back-references
-      BACKREF_RX = /\\(\d)/
+      include Util::FindMatching(Parser::Macro)
 
       def process(graph : Graph::Node, doc : Parser::Document)
         @config.macros.each do |regex, config|
-          list = find_matching_macros(regex, doc.macros)
+          list = find_matching(regex, doc.macros)
           handle_macros(graph, config, list)
         end
       end
@@ -48,7 +47,7 @@ module Bindgen
         host = parent.platform_specific(Graph::Platform::Crystal)
 
         macros.each do |define, match|
-          name = define_name(config, match).underscore.upcase
+          name = Util.pattern_rewrite(config.name, match).underscore.upcase
           value = parser.parse(define.value)
 
           Graph::Constant.new(
@@ -65,7 +64,7 @@ module Bindgen
         values = { } of String => Int64
 
         macros.each do |define, match|
-          name = define_name(config, match).downcase.camelcase
+          name = Util.pattern_rewrite(config.name, match).downcase.camelcase
           value = parser.parse(define.value)
 
           unless value.is_a? Int
@@ -81,34 +80,6 @@ module Bindgen
           type: config.type,
           isFlags: config.flags,
         )
-      end
-
-      # Builds the name for *config* and its *match*.  The name is unprocessed
-      # otherwise.
-      private def define_name(config, match) : String
-        if name = config.name
-          name.gsub(BACKREF_RX) do |_, m| # Replace `FOO_\\1` to `FOO_BAR`
-            match[m[1].to_i]
-          end
-        else # Default: Prefer first explicit capture-group, fall back to whole match
-          match[1]? || match[0]
-        end
-      end
-
-      # Finds all elements in *macros* matching the *regex*.
-      private def find_matching_macros(regex, macros)
-        rx = /^#{regex}$/
-
-        matching = [ ] of { Parser::Macro, Regex::MatchData }
-        macros.each do |define|
-          next if define.function?
-
-          if match = rx.match(define.name)
-            matching << { define, match }
-          end
-        end
-
-        matching
       end
     end
   end

@@ -1,5 +1,8 @@
 module Bindgen
   module Util
+    # Matches back-references in strings.
+    BACKREFERENCE_RX = /\\(\d)/
+
     # Mimics Rubys `Enumerable#uniq_by`.  Takes a *list*, and makes all values
     # in it unique by yielding all pairs, keeping only those items where the
     # block returned a falsy value.
@@ -78,6 +81,25 @@ module Bindgen
         "#{prefix}#{bytes / 1024} KiB"
       else
         "#{prefix}#{bytes / (1024 * 1024)} MiB"
+      end
+    end
+
+    # Replaces back-references in strings with captures from an existing
+    # `Array(String)` or `Regex::MatchData`.
+    def self.replace_backreferences(string : String, captures) : String
+      string.gsub(BACKREFERENCE_RX) do |_, m|
+        captures[m[1].to_i]
+      end
+    end
+
+    # Using the rewrite *pattern*, containing back-references, builds a new
+    # string.  If *pattern* is `nil`, then `groups[1]`, then `groups[0]` is
+    # returned (Whichever is non-nil first).
+    def self.pattern_rewrite(pattern : String?, groups) : String
+      if pattern
+        replace_backreferences(pattern, groups)
+      else
+        groups[1]? || groups[0]
       end
     end
   end
