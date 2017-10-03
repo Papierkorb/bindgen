@@ -161,3 +161,14 @@ static void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt
 		arg.value = result.Val.getFloat().convertToDouble();
 	}
 }
+
+void TypeHelper::addFunctionParameters(const clang::FunctionDecl *func, Method &m) {
+	for (int i = 0; i < func->getNumParams(); i++) {
+		Argument arg = TypeHelper::processFunctionParameter(func->parameters()[i]);
+
+		if (arg.hasDefault && m.firstDefaultArgument < 0)
+			m.firstDefaultArgument = i;
+
+		m.arguments.push_back(arg);
+	}
+}

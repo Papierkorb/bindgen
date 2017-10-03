@@ -15,17 +15,6 @@ void RecordMatchHandler::run(const clang::ast_matchers::MatchFinder::MatchResult
 	if (record) runOnRecord(record);
 }
 
-static void addFunctionParameters(const clang::FunctionDecl *func, Method &m) {
-	for (int i = 0; i < func->getNumParams(); i++) {
-		Argument arg = TypeHelper::processFunctionParameter(func->parameters()[i]);
-
-		if (arg.hasDefault && m.firstDefaultArgument < 0)
-			m.firstDefaultArgument = i;
-
-		m.arguments.push_back(arg);
-	}
-}
-
 void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool isSignal) {
 	Method m;
 	m.className = method->getParent()->getQualifiedNameAsString();
@@ -66,7 +55,7 @@ void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool is
 		}
 	}
 
-	addFunctionParameters(method, m);
+	TypeHelper::addFunctionParameters(method, m);
 	this->m_class.methods.push_back(m);
 }
 

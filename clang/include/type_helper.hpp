@@ -15,6 +15,8 @@ namespace TypeHelper {
 	void qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx);
 
 	Argument processFunctionParameter(const clang::ParmVarDecl *decl);
+
+	void addFunctionParameters(const clang::FunctionDecl *func, Method &m);
 };
 
 #endif // RECORD_MATCH_HANDLER_HPP

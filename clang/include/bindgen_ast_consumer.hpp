@@ -3,6 +3,7 @@
 
 class RecordMatchHandler;
 class EnumMatchHandler;
+class FunctionMatchHandler;
 
 class BindgenASTConsumer : public clang::ASTConsumer {
 public:
@@ -19,6 +20,7 @@ private:
 
 	std::vector<RecordMatchHandler *> m_classHandlers;
 	std::vector<EnumMatchHandler *> m_enumHandlers;
+	FunctionMatchHandler *m_functionHandler;
 	clang::ast_matchers::MatchFinder m_matchFinder;
 	std::vector<Macro> &m_macros;
 };

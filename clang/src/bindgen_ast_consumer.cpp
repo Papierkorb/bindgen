@@ -1,6 +1,7 @@
 #include "common.hpp"
 #include "bindgen_ast_consumer.hpp"
 
+#include "function_match_handler.hpp"
 #include "record_match_handler.hpp"
 #include "enum_match_handler.hpp"
 
@@ -8,7 +9,7 @@ static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to ins
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
 BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros)
-	: m_macros(macros)
+	: m_functionHandler(nullptr), m_macros(macros)
 {
 	using namespace clang::ast_matchers;
 
@@ -18,6 +19,13 @@ BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros)
 		RecordMatchHandler *handler = new RecordMatchHandler(className);
 		this->m_matchFinder.addMatcher(classMatcher, handler);
 		this->m_classHandlers.push_back(handler);
+	}
+
+	if (FunctionMatchHandler::isActive()) {
+		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
+		FunctionMatchHandler *handler = new FunctionMatchHandler();
+		this->m_matchFinder.addMatcher(funcMatcher, handler);
+		this->m_functionHandler = handler;
 	}
 
 	for (const std::string &enumName : EnumList) {
@@ -48,6 +56,14 @@ void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
 	stream << "classes" << JsonStream::Separator; // "classes":
 	serializeClasses(stream); // { ... }
 	stream << JsonStream::Comma; // ,
+
+	if (this->m_functionHandler) { // "functions": [ ... ],
+		stream
+			<< "functions" << JsonStream::Separator
+			<< this->m_functionHandler->functions()
+			<< JsonStream::Comma;
+	}
+
 	stream << "macros" << JsonStream::Separator << this->m_macros;  // "macros": [ ... ]
 	stream << JsonStream::ObjectEnd; // }
 }
