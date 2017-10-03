@@ -6,6 +6,10 @@ module Bindgen
         enums: Enum::Collection,
         classes: Class::Collection,
         macros: Macro::Collection,
+        functions: {
+          type: Method::Collection,
+          default: Method::Collection.new,
+        },
       )
     end
   end

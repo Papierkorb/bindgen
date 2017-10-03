@@ -2,6 +2,9 @@ module Bindgen
   module Parser
     # Describes a method as found by the clang tool.
     class Method
+      # Collection of methods
+      alias Collection = Array(Method)
+
       # Method types
       enum Type
         Constructor
