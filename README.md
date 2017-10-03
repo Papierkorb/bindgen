@@ -8,13 +8,13 @@ A (as of now) C++/Qt centric binding generator.
 |--------------------------------------------------|---------|
 | Automatic Crystal binding generation             | **YES** |
 | Automatic Crystal wrapper generation             | **YES** |
-| Mapping classes                                  | **YES** |
+| Mapping C++ classes                              | **YES** |
 |  +- Member methods                               | **YES** |
 |  +- Static methods                               | **YES** |
 |  +- Constructors                                 | **YES** |
-|  +- Destructor                                   | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
+| Mapping C functions                              | **YES** |
 | Overloaded methods (Also default arguments)      | **YES** |
 | Copying default argument values                  |         |
 |  +- Integer, float, boolean types                | **YES** |
@@ -175,7 +175,7 @@ Debugging processor dumping the current graph onto `STDERR`.
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
-* **Run before**: Any other processor
+* **Run before**: No specific dependency
 
 Removes all methods using an argument, or returning something, which is
 configured as `ignore: true`.  Also removes methods that show up in the
@@ -183,6 +183,14 @@ configured as `ignore: true`.  Also removes methods that show up in the
 
 This processor can be run at any time in theory, but should be run as first part
 of the pipeline.
+
+### `Functions`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Maps C functions, configured through the `functions:` map in the configuration.
 
 ### `Inheritance`
 
