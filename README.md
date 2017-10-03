@@ -1,6 +1,6 @@
 # Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png)
 
-A (as of now) C++/Qt centric binding generator.
+A C/C++/Qt binding and wrapper generator.
 
 ## Features
 

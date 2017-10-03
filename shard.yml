@@ -2,7 +2,7 @@ name: bindgen
 version: 0.5.0
 crystal: 0.23.1
 
-description: C/C++ binding and wrapper generator
+description: C/C++/Qt binding and wrapper generator
 
 authors:
   - Stefan Merettig <stefan-merettig@nuriaproject.org>
