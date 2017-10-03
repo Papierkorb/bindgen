@@ -32,6 +32,7 @@ void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool is
 	m.isConst = method->isConst();
 	m.isVirtual = method->isVirtual();
 	m.isPure = method->isPure();
+	m.isExternC = method->isExternC();
 	m.access = method->getAccess();
 
 	clang::ASTContext &ctx = method->getASTContext();

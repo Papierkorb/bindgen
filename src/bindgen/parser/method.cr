@@ -22,6 +22,7 @@ module Bindgen
         isConst: Bool,
         isVirtual: Bool,
         isPure: Bool,
+        isExternC: Bool,
         className: String,
         arguments: Array(Argument),
         firstDefaultArgument: Int32?,
@@ -35,7 +36,7 @@ module Bindgen
       # the methods origin when splitting occurs.
       getter origin : Method?
 
-      def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false, @origin = nil)
+      def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false, @origin = nil)
       end
 
       # Utility method to easily build a `Method` using a more Crystal-style
@@ -59,7 +60,7 @@ module Bindgen
       delegate constructor?, copy_constructor?, member_method?, static_method?, signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
-      def_equals_and_hash @type, @name, @className, @access, @arguments, @firstDefaultArgument, @returnType, @isConst, @isVirtual, @isPure
+      def_equals_and_hash @type, @name, @className, @access, @arguments, @firstDefaultArgument, @returnType, @isConst, @isVirtual, @isPure, @isExternC
 
       # Is this a virtual function?
       def virtual? : Bool
@@ -69,6 +70,11 @@ module Bindgen
       # Is this a pure virtual function?
       def pure? : Bool
         @isPure
+      end
+
+      # Does this function use the C ABI?
+      def extern_c? : Bool
+        @isExternC
       end
 
       # Is this a `Type::Constructor` or a `Type::CopyConstructor`?

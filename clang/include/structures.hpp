@@ -107,6 +107,7 @@ struct Method {
 	bool isConst = false; // Is this method const qualified?
 	bool isVirtual = false; // Is this method virtual?
 	bool isPure = false; // Pure virtual?
+	bool isExternC = false; // Does the function use C ABI?
 	std::string className; // Name of the class.
 	std::vector<Argument> arguments; // Arguments
 	int firstDefaultArgument = -1;

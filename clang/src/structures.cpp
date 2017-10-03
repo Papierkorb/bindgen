@@ -122,6 +122,7 @@ JsonStream &operator<<(JsonStream &s, const Method &value) {
 		<< std::make_pair("isConst", value.isConst) << c
 		<< std::make_pair("isVirtual", value.isVirtual) << c
 		<< std::make_pair("isPure", value.isPure) << c
+		<< std::make_pair("isExternC", value.isExternC) << c
 		<< std::make_pair("className", value.className) << c;
 
 	if (value.firstDefaultArgument < 0) {
