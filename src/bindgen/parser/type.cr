@@ -54,6 +54,21 @@ module Bindgen
         nilable: false,
       )
 
+      # Empty type, as is returned by the parser for constructors.  Only valid
+      # as a return type of a constructor method.
+      EMPTY = new(
+        isConst: false,
+        isMove: false,
+        isReference: false,
+        isBuiltin: true,
+        isVoid: false,
+        pointer: 0,
+        baseName: "",
+        fullName: "",
+        template: nil,
+        nilable: false,
+      )
+
       # Returns a `Type` of a C++ built-in type *cpp_name*.
       def self.builtin_type(cpp_name : String, pointer = 0, reference = false)
         new(

@@ -298,7 +298,7 @@ module Bindgen
 
       # The return type of this method
       def return_type : Parser::Type
-        if any_constructor? && @returnType.void?
+        if any_constructor? && @returnType.base_name.empty?
           Parser::Type.new(
             isConst: false,
             isReference: false,

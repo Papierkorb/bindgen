@@ -65,7 +65,7 @@ module Bindgen
           type: Parser::Method::Type::Constructor,
           name: "",
           class_name: klass.name,
-          return_type: Parser::Type::VOID,
+          return_type: Parser::Type::EMPTY,
           arguments: [ unwrap_arg ],
         )
 

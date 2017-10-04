@@ -24,7 +24,7 @@ module Bindgen
           name: "",
           class_name: klass.name,
           arguments: [ ] of Parser::Argument,
-          return_type: Parser::Type::VOID,
+          return_type: Parser::Type::EMPTY,
         )
       end
 
