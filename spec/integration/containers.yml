@@ -12,8 +12,6 @@ processors:
 classes:
   Containers: Containers
 
-types: { }
-
 containers:
   - class: std::vector
     type: Sequential

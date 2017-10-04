@@ -7,7 +7,7 @@ processors:
   - cpp_wrapper
   - crystal_binding
   - crystal_wrapper
-  # - sanity_check
+  - sanity_check
 
 classes:
   "QMetaObject::Connection": SignalConnection

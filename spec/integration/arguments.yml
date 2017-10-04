@@ -1,17 +1,9 @@
 <<: spec_base.yml
 
-processors:
-  - filter_methods
-  - default_constructor
-  - cpp_wrapper
-  - crystal_binding
-  - crystal_wrapper
-  - sanity_check
+# Uses the default processor pipeline.
 
 classes:
   Defaults: Defaults
 
 enums:
   Numeral: Numeral
-
-types: { }

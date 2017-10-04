@@ -17,10 +17,5 @@ generators:
 library: "%/tmp/{SPEC_NAME}.o -lstdc++"
 
 parser:
-  flags: [ "-x", "c++", "-std=c++11" ]
   files: [ "{SPEC_NAME}.cpp" ]
-  includes:
-    - "%"
-  defines:
-    - __STDC_CONSTANT_MACROS
-    - __STDC_LIMIT_MACROS
+  includes: [ "%" ]

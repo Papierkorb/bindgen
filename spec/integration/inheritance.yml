@@ -13,5 +13,3 @@ classes:
   Base: Base
   AbstractThing: AbstractThing
   Subclass: Subclass
-
-types: { }
