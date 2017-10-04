@@ -175,7 +175,10 @@ module Bindgen
       module: String, # TODO: Keep this?  Or move into `Generator`?
 
       # Used processors
-      processors: Array(String),
+      processors: {
+        type: Array(String),
+        default: Processor::DEFAULT_CHAIN,
+      },
 
       # Used generators
       generators: Hash(String, Generator),
@@ -218,7 +221,10 @@ module Bindgen
       },
 
       # Type database configuration
-      types: TypeDatabase::Configuration,
+      types: {
+        type: TypeDatabase::Configuration,
+        default: TypeDatabase::Configuration.new,
+      },
 
       # Parser configuration
       parser: Parser::Configuration,
