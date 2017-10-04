@@ -20,17 +20,17 @@ module: MyStuff
 # relative to the path of the generated `.cr` file.
 library: "%/ext/binding.a"
 
-# Processors pipeline.  See `README.md` for details.
-# The following pipeline should just work for you :)
+# Processors pipeline.  See `README.md` for details on each.
+# Defaults to the following:
 processors:
   # Graph-refining processors:
   - default_constructor # Create default constructors where possible
   - function_class # Turn OOP-y C APIs into real classes
   - inheritance # Mirror inheritance hierarchy from C++
-  - filter_methods # Throw out filtered methods
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - functions # Add non-class functions
+  - filter_methods # Throw out filtered methods
   - auto_container_instantiation # Figure out which templates to instantiate
   - instantiate_containers # Actually instantiate containers
   # Preliminary generation processors:
@@ -161,17 +161,21 @@ containers:
 
 # Configuration for the C++ parser.
 parser:
-  # Path to the `bindgen-clang` binary.  (Optional!)
-  binary: path/to/bindgen-clang
-  # Additional Clang flags.  Example for C++11:
-  flags: [ "-x", "c++", "-std=c++11" ]
   # List of files to include.  Can be relative to search-paths.
+  # This is the only required option:
   files:
     - my_lib.h
-  # List of include search-paths.
+  # All of the following are optional:
+  #
+  # List of include search-paths.  If omitted, only the systems default paths
+  # will be searched.
   includes:
     - %/ext/include # `%` expands to the absolute project root path.
-  # Additional "#define"s passed to Clang.
+  # Path to the `bindgen-clang` binary.
+  binary: path/to/bindgen-clang
+  # Additional Clang flags.  Defaults to C++11:
+  flags: [ "-x", "c++", "-std=c++11" ]
+  # Additional "#define"s passed to Clang.  Defaults to the following:
   defines:
     - __STDC_CONSTANT_MACROS
     - __STDC_LIMIT_MACROS
