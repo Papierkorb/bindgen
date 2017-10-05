@@ -41,3 +41,8 @@ running an integration test:
 * `tmp/NAME.o` the compiled C++ wrapper
 * `tmp/NAME.cr` the generated Crystal wrapper code
 * `tmp/NAME_test.cr` the Crystal test code for those bindings
+
+## Clang tool tests
+
+Tests for behaviour of the clang tool are stored in `clang/`.  These mostly
+concern the tool giving the expected output for a given input.
