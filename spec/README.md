@@ -46,3 +46,6 @@ running an integration test:
 
 Tests for behaviour of the clang tool are stored in `clang/`.  These mostly
 concern the tool giving the expected output for a given input.
+
+To force the clang tool path set the `BINDGEN_BIN` environment variable.
+If not set, the default `clang/bindgen` will be used.
