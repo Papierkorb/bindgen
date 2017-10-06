@@ -153,6 +153,48 @@ module Bindgen
         )
       end
 
+      # Decays the type.  This means that a single "layer" of information is
+      # removed from this type.  Each rule is tried in the following order.
+      # The first winning rule returns a new type.
+      #
+      # 1. If `#const?`, remove const (`const int &` -> `int &`)
+      # 2. If `#reference?`, pointer-ize (`int &` -> `int *`)
+      # 3. If `#pointer > 0`, remove one (`int *` -> `int`)
+      # 4. Else, it's the base-type already.  Return `nil`.
+      def decayed : Type?
+        is_const = @isConst
+        is_ref = @isReference
+        ptr = @pointer
+
+        if is_const # 1.
+          is_const = false
+        elsif is_ref # 2.
+          is_ref = false
+        elsif ptr > 0 # 3.
+          ptr -= 1
+        else # 4.
+          return nil
+        end
+
+        typer = Cpp::Typename.new
+        type_ptr = ptr
+        type_ptr -= 1 if is_ref
+
+        Type.new(
+          kind: @kind,
+          isConst: is_const,
+          isReference: is_ref,
+          isMove: false,
+          isBuiltin: @isBuiltin,
+          isVoid: @isVoid,
+          pointer: ptr,
+          baseName: @baseName,
+          fullName: typer.full(@baseName, is_const, type_ptr, is_ref),
+          template: @template,
+          nilable: @nilable,
+        )
+      end
+
       def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
 
       def initialize(@baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Kind::Class, @template = nil, @nilable = false)

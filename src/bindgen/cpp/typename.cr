@@ -4,10 +4,23 @@ module Bindgen
     struct Typename
       # Formats the type in *result* in C++ style.
       def full(result : Call::Expression) : String
-        stars = "*" * result.pointer
-        ref = "&" if result.reference
-        const = "const " if result.type.const?
-        "#{const}#{result.type_name}#{stars}#{ref}"
+        full(result.type_name, result.type.const?, result.pointer, result.reference)
+      end
+
+      # ditto
+      def full(base_name : String, const, pointer, is_reference) : String
+        stars = "*" * pointer
+        ref = "&" if is_reference
+
+        String.build do |b|
+          b << "const " if const
+          b << base_name
+          
+          if pointer > 0 || is_reference
+            b << ' ' << ("*" * pointer)
+            b << '&' if is_reference
+          end
+        end
       end
 
       # Formats many *results*.
