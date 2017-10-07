@@ -115,6 +115,7 @@ module Bindgen
       def initialize(
         @crystal_type = nil, @cpp_type = nil, @binding_type = nil,
         @from_cpp = nil, @to_cpp = nil, @converter = nil,
+        @from_crystal = nil, @to_crystal = nil,
         @kind = Parser::Type::Kind::Class, @ignore = false,
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
@@ -146,6 +147,23 @@ module Bindgen
       # value, and falls back to `#pass_by`.
       def crystal_pass_by : PassBy
         @wrapper_pass_by || @pass_by
+      end
+
+      # Merges the *other* rules with these rules.  If a rule is set in both
+      # rule-sets, the value from *other* wins.
+      def merge(other : self) : self
+        {% begin %}
+          {% for name in @type.instance_vars %}
+            var_{{name}} = other.{{ name }}
+            var_{{name}} = @{{ name }} if var_{{name}}.nil?
+          {% end %}
+
+          self.class.new(
+            {% for name in @type.instance_vars %}
+              {{ name }}: var_{{name}},
+            {% end %}
+          )
+        {% end %}
       end
     end
 
@@ -203,11 +221,16 @@ module Bindgen
     # to write rules for `int *` and `int` without clashes.
     def []?(type : Parser::Type, recursion_check = nil)
       while type
+        decayed_type = type.decayed
         if found = check_for_alias(@types[type.full_name]?, recursion_check)
+          if decayed_type && (parent = self[decayed_type]?)
+            found = parent.merge(found)
+          end
+
           return found
         end
 
-        type = type.decayed
+        type = decayed_type
       end
     end
 
