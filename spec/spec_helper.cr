@@ -51,27 +51,3 @@ module Parser
     method(name, class_name, result, [ ] of Bindgen::Parser::Argument, type)
   end
 end
-
-def create_type_database : Bindgen::TypeDatabase
-  config_data = File.read("#{__DIR__}/type_database_fixture.yml")
-  config = Bindgen::TypeDatabase::Configuration.from_yaml config_data
-  db = Bindgen::TypeDatabase.new(config)
-
-  db.enums["CppWrappedEnum"] = Bindgen::Parser::Enum.new(
-    name: "CppWrappedEnum",
-    values: { "One" => 1i64, "Two" => 2i64, "Three" => 3i64 },
-    isFlags: false,
-  )
-
-  db.enums["CppWrappedFlags"] = Bindgen::Parser::Enum.new(
-    name: "CppWrappedFlags",
-    values: { "One" => 1i64, "Two" => 2i64, "Four" => 4i64 },
-    isFlags: true,
-  )
-
-  enum_kind = Bindgen::Parser::Type::Kind::Enum
-  db.add_sparse_type "CppWrappedEnum", "CrWrappedEnum", enum_kind
-  db.add_sparse_type "CppWrappedFlags", "CrWrappedFlags", enum_kind
-
-  db
-end
