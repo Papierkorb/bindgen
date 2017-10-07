@@ -14,8 +14,9 @@ A C/C++/Qt binding and wrapper generator.
 |  +- Constructors                                 | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
-| Mapping C functions                              | **YES** |
-| Mapping OOP-like C APIs as Crystal classes       | **YES** |
+| Mapping C/C++ global functions                   |         |
+|  +- Mapping global functions                     | **YES** |
+|  +- Wrapping as Crystal class                    | **YES** |
 | Overloaded methods (Also default arguments)      | **YES** |
 | Copying default argument values                  |         |
 |  +- Integer, float, boolean types                | **YES** |
@@ -37,8 +38,6 @@ A C/C++/Qt binding and wrapper generator.
 | `#define` macro support                          |         |
 |  +- Mapping as enumeration                       | **YES** |
 |  +- Mapping as constant (Including strings)      | **YES** |
-| Global functions                                 |   TBD   |
-| Custom (de-)allocators                           |   TBD   |
 | Copying in-source docs                           |   TBD   |
 | Platform specific type binding rules             | **YES** |
 
