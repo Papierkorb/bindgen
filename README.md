@@ -175,8 +175,8 @@ Debugging processor dumping the current graph onto `STDERR`.
 ### `ExternC`
 
 * **Kind**: Refining
-* **Run after**: No specific dependency
-* **Run before**: `Functions` and `FunctionClass`
+* **Run after**: `Functions` and `FunctionClass`
+* **Run before**: No specific dependency
 
 Checks if a method require a C/C++ wrapper.  If not, marks the method to
 bind directly to the target method instead of writing a "trampoline"
