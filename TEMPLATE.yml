@@ -31,13 +31,13 @@ library: "%/ext/binding.a"
 processors:
   # Graph-refining processors:
   - default_constructor # Create default constructors where possible
+  - extern_c # Directly bind to pure C functions
   - function_class # Turn OOP-y C APIs into real classes
   - inheritance # Mirror inheritance hierarchy from C++
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - functions # Add non-class functions
   - filter_methods # Throw out filtered methods
-  - auto_container_instantiation # Figure out which templates to instantiate
   - instantiate_containers # Actually instantiate containers
   # Preliminary generation processors:
   - crystal_wrapper # Create Crystal wrappers

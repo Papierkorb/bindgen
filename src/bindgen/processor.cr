@@ -19,6 +19,7 @@ module Bindgen
     DEFAULT_CHAIN = [
       # Graph-refining processors:
       "default_constructor",
+      "extern_c",
       "function_class",
       "inheritance",
       "copy_structs",
