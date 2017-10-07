@@ -3,6 +3,20 @@ require "../src/bindgen_lib"
 
 ### Helpers
 
+def watchdog(deadline = 10.seconds)
+  # alarm() / SIGALRM doesn't trigger reliably :(
+  watcher = Process.fork do
+    sleep deadline
+    STDERR.puts "WATCHDOG: Deadline reached after #{deadline.seconds}s"
+    STDERR.puts "Aborting."
+    Process.kill(Signal::ABRT, Process.ppid)
+  end
+
+  yield
+ensure
+  watcher.try(&.kill)
+end
+
 # Short-hand functions
 module Parser
   include Bindgen::Parser

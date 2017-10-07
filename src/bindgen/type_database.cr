@@ -119,7 +119,7 @@ module Bindgen
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
         @generate_binding = true, @builtin = false, @ignore_methods = [ ] of String,
-        @graph_node = nil,
+        @graph_node = nil, @alias_for = nil,
       )
       end
 
@@ -174,31 +174,60 @@ module Bindgen
 
     delegate each, to: @types
 
-    # Look up *type* in the database.
-    def [](type : Parser::Type | String)
-      type = type.base_name if type.is_a?(Parser::Type)
-
-      if found = check_for_alias(@types[type], nil)
+    # Look up *type* in the database.  If *type* is a `Parser::Type`, the best
+    # match will be found by gradually decaying the *type* (See
+    # `Parser::Type#decayed`).
+    #
+    # **Prefer** passing a `Parser::Type` over passing a `String`.
+    #
+    # Also see `#[]?`.
+    def [](type : String | Parser::Type)
+      if found = self[type]?
         found
       else
-        raise IndexError.new("No rules for type #{type.inspect}")
+        raise KeyError.new("No rules for type #{type.inspect}")
       end
     end
 
-    # Look up *type* in the database.
-    def []?(type : Parser::Type | String, recursion_check = nil)
-      type = type.base_name if type.is_a?(Parser::Type)
-      check_for_alias @types[type]?, recursion_check
+    # Look up *type* in the database.  *type* is expected to be the base name of
+    # a C++ type.  If you actually have a full type-name instead, use
+    # `Parser::Type.parse` first, and pass that instead.
+    #
+    # **Prefer** passing a `Parser::Type` over passing a `String`.
+    def []?(type : String, recursion_check = nil)
+      check_for_alias(@types[type]?, recursion_check)
+    end
+
+    # Look up *type* in the database.  The best match will be found by gradually
+    # decaying the *type* (See `Parser::Type#decayed`).  This enables the user
+    # to write rules for `int *` and `int` without clashes.
+    def []?(type : Parser::Type, recursion_check = nil)
+      while type
+        if found = check_for_alias(@types[type.full_name]?, recursion_check)
+          return found
+        end
+
+        type = type.decayed
+      end
     end
 
     # Adds a type *rules* as *name*.
+    #
+    # Also see `#get_or_add` to add rules from processors.
     def add(name : String, rules : TypeConfig)
       @types[name] = rules
     end
 
+    # Quickly adds the *rules* to *name*.  Used for **testing** purposes.
+    #
+    # Also see `#get_or_add` to add rules from processors.
+    def add(name : String, **rules)
+      @types[name] = TypeConfig.new(**rules)
+    end
+
     # Helper, equivalent to calling `#[type]?.try(&.x) || default`
     def try_or(type : Parser::Type | String, default)
-      result = check_for_alias(self[type]?, nil).try{|x| yield x}
+      result = self[type]?.try{|x| yield x}
 
       if result.nil?
         default
@@ -209,6 +238,13 @@ module Bindgen
 
     # Returns the rules for *type*.  If none are found, a new `TypeConfig` is
     # inserted, and returned.
+    #
+    # This is the method you want to use to add or change rules from within
+    # processors.
+    #
+    # **Important**: If *type* is a `Parser::Type`, then its `#base_name` is
+    # used - **not** the `#full_name`.  If you want to provide configuration for
+    # a specific type, pass the `#full_name` as string.
     def get_or_add(type : Parser::Type | String) : TypeConfig
       type = type.base_name if type.is_a?(Parser::Type)
 
