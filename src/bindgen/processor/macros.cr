@@ -40,7 +40,6 @@ module Bindgen
 
       # Adds all *macros* into the graph.
       private def create_constants(root, config, macros)
-        parser = Cpp::LiteralParser.new
         builder = Graph::Builder.new(@db)
         path = Graph::Path.from(config.destination)
         parent = builder.get_or_create_path(root, path).as(Graph::Container)
@@ -48,7 +47,9 @@ module Bindgen
 
         macros.each do |define, match|
           name = Util.pattern_rewrite(config.name, match).underscore.upcase
-          value = parser.parse(define.value)
+          value = define.evaluated
+
+          next if value.nil?
 
           Graph::Constant.new(
             name: name,
@@ -60,12 +61,11 @@ module Bindgen
 
       # Builds an enumeration type out of *config* and *macros*.
       private def build_enum(config, macros, name) : Parser::Enum
-        parser = Cpp::LiteralParser.new
         values = { } of String => Int64
 
         macros.each do |define, match|
           name = Util.pattern_rewrite(config.name, match).downcase.camelcase
-          value = parser.parse(define.value)
+          value = define.evaluated
 
           unless value.is_a? Int
             raise "Macro enum #{config.destination}: Value for #define #{define.name} is non-Int: #{value.inspect}"
