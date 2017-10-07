@@ -43,13 +43,15 @@ module Bindgen
         @name, @className, @returnType, @arguments, @firstDefaultArgument = nil,
         @access = AccessSpecifier::Public, @type = Type::MemberMethod,
         @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false,
-        @origin = nil
+        @origin = nil, @crystal_name = nil
       )
       end
 
       # Utility method to easily build a `Method` using a more Crystal-style
       # syntax.
-      def self.build(name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String, type = Parser::Method::Type::MemberMethod, crystal_name = nil) : self
+      def self.build(
+        name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String,
+        type = Parser::Method::Type::MemberMethod, crystal_name = nil) : self
         method = Parser::Method.new(
           type: type,
           access: Parser::AccessSpecifier::Public,

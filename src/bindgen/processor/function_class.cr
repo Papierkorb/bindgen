@@ -50,13 +50,14 @@ module Bindgen
           arguments.shift # Remove self type, this'll be added later again.
         end
 
-        Parser::Method.build(
+        Parser::Method.new(
           type: type,
           name: method.name,
           crystal_name: crystal_name,
-          class_name: method.class_name,
-          return_type: method.return_type,
+          className: method.class_name,
+          returnType: method.return_type,
           arguments: arguments,
+          isExternC: method.extern_c?,
         )
       end
 
