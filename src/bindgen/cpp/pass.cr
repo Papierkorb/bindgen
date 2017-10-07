@@ -36,7 +36,7 @@ module Bindgen
         inner_args = proc_type.template.not_nil!.arguments
 
         # Arguments go C++ -> Crystal, but the result goes Crystal -> C++!
-        proc_types = inner_args[1..-1].map{|t| to_crystal(t)}
+        proc_types = inner_args[1..-1].map{|t| to_crystal(t).as(Call::Result)}
         proc_types.unshift to_cpp(inner_args.first)
 
         proc_args = typer.full(proc_types).join(", ")
@@ -50,7 +50,7 @@ module Bindgen
       # or an argument for this.  It also signals how a value of this type shall
       # be handled by the receiver, e.g., if conversions apply (Which?).
       #
-      # The method responsible for the opposite direction is `#pass_to_crystal`.
+      # The method responsible for the opposite direction is `#to_crystal`.
       #
       # Pass rules:
       # 1. The type is a value-type and passed by-value
@@ -65,6 +65,7 @@ module Bindgen
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
+        pass_by = TypeDatabase::PassBy::Original
 
         type_name = type.base_name
         type_name = crystal_proc_name(type) if type.kind.function?
@@ -79,7 +80,13 @@ module Bindgen
         if rules = @db[type]?
           template = rules.to_cpp
           type_name = rules.cpp_type || type_name
-          is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
+          pass_by = rules.pass_by unless rules.pass_by.original?
+          is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
+        end
+
+        if template.nil?
+          pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
+          template = conversion_template(pass_by, type, type_name)
         end
 
         Call::Result.new(
@@ -112,9 +119,11 @@ module Bindgen
         is_ref = type.reference?
         ptr = type_pointer_depth(type)
         is_val = type.pointer < 1
-        type_name = type.base_name
         generate_template = false
         pass_by = TypeDatabase::PassBy::Original
+
+        type_name = type.base_name
+        type_name = crystal_proc_name(type) if type.kind.function?
 
         # TODO: Check for copy-constructor.
         if (is_constructor || is_val) && is_copied
@@ -133,13 +142,13 @@ module Bindgen
         if rules = @db[type]?
           template = rules.from_cpp
           type_name = rules.cpp_type || type_name
-          pass_by = rules.pass_by
+          pass_by = rules.pass_by unless rules.pass_by.original?
           is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
-        if generate_template && template.nil?
-          pass_by = type_config_to_pass_by(is_ref, ptr)
-          template = template = conversion_template(pass_by, type, type_name)
+        if template.nil?
+          pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
+          template = conversion_template(pass_by, type, type_name)
         end
 
         Call::Result.new(
