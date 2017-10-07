@@ -197,7 +197,7 @@ module Bindgen
 
       def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
 
-      def initialize(@baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Kind::Class, @template = nil, @nilable = false)
+      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false, @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template = nil, @nilable = false)
       end
 
       # Is this type nilable?  For compatibility with `Argument`.

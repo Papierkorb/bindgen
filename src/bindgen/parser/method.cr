@@ -39,7 +39,12 @@ module Bindgen
       # the methods origin when splitting occurs.
       getter origin : Method?
 
-      def initialize(@type, @access, @name, @className, @arguments, @firstDefaultArgument, @returnType, @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false, @origin = nil)
+      def initialize(
+        @name, @className, @returnType, @arguments, @firstDefaultArgument = nil,
+        @access = AccessSpecifier::Public, @type = Type::MemberMethod,
+        @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false,
+        @origin = nil
+      )
       end
 
       # Utility method to easily build a `Method` using a more Crystal-style

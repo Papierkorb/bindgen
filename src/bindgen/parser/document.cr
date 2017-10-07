@@ -11,6 +11,13 @@ module Bindgen
           default: Method::Collection.new,
         },
       )
+
+      # For testing purposes.
+      def initialize(
+        @enums = Enum::Collection.new, @classes = Class::Collection.new,
+        @macros = Macro::Collection.new, @functions = Method::Collection.new,
+      )
+      end
     end
   end
 end
