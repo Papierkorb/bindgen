@@ -1,15 +1,18 @@
 #include "common.hpp"
 #include "bindgen_ast_consumer.hpp"
 
+#include "clang/Parse/ParseAST.h"
+
 #include "function_match_handler.hpp"
 #include "record_match_handler.hpp"
 #include "enum_match_handler.hpp"
+#include "macro_ast_consumer.hpp"
 
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
-BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros)
-	: m_functionHandler(nullptr), m_macros(macros)
+BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler)
+	: m_functionHandler(nullptr), m_compiler(compiler), m_macros(macros)
 {
 	using namespace clang::ast_matchers;
 
@@ -47,8 +50,37 @@ BindgenASTConsumer::~BindgenASTConsumer() {
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
 	this->m_matchFinder.matchAST(ctx);
+	this->evaluateMacros(ctx);
+	this->serializeAndOutput();
+}
 
+static std::string buildMacroEvaluationFile(const std::vector<Macro> &macros) {
+	std::string backBuffer;
+	llvm::raw_string_ostream stream(backBuffer);
+
+	for (const Macro &macro : macros) {
+		if (!macro.isFunction) {
+			stream << "auto bg_macro_val_" << macro.name << " = (" << macro.name << ");\n";
+		}
+	}
+
+	return stream.str();
+}
+
+void BindgenASTConsumer::evaluateMacros(clang::ASTContext &ctx) {
+	clang::SourceManager &sourceMgr = this->m_compiler.getSourceManager();
+	MacroAstConsumer *consumer = new MacroAstConsumer(this->m_macros);
+	std::string evalFile = buildMacroEvaluationFile(this->m_macros);
+
+	clang::FileID macroFile = sourceMgr.createFileID(llvm::MemoryBuffer::getMemBuffer(evalFile));
+	sourceMgr.setMainFileID(macroFile);
+
+	clang::ParseAST(this->m_compiler.getPreprocessor(), consumer, ctx);
+}
+
+void BindgenASTConsumer::serializeAndOutput() {
 	JsonStream stream(std::cout);
+
 	stream << JsonStream::ObjectBegin; // {
 	stream << "enums" << JsonStream::Separator; // "enums":
 	serializeEnumerations(stream); // { ... }

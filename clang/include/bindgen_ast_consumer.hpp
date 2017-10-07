@@ -7,7 +7,7 @@ class FunctionMatchHandler;
 
 class BindgenASTConsumer : public clang::ASTConsumer {
 public:
-	BindgenASTConsumer(std::vector<Macro> &macros);
+	BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler);
 
 	~BindgenASTConsumer() override;
 
@@ -15,9 +15,12 @@ public:
 
 private:
 
+	void evaluateMacros(clang::ASTContext &ctx);
+	void serializeAndOutput();
 	void serializeEnumerations(JsonStream &stream);
 	void serializeClasses(JsonStream &stream);
 
+	clang::CompilerInstance &m_compiler;
 	std::vector<RecordMatchHandler *> m_classHandlers;
 	std::vector<EnumMatchHandler *> m_enumHandlers;
 	FunctionMatchHandler *m_functionHandler;

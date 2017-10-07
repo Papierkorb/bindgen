@@ -167,6 +167,8 @@ struct Macro {
 	std::vector<std::string> arguments; // Arguments for a function-like macro
 	bool isVarArg; // Does it end in a variable argument list?
 	std::string value; // The unparsed macro body
+	LiteralData evaluated; // The evaluated macro value
+	CopyPtr<Type> type; // The type of the evaluated macro value
 };
 
 JsonStream &operator<<(JsonStream &s, const Macro &value);

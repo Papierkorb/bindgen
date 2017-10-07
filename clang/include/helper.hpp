@@ -36,6 +36,10 @@ struct CopyPtr {
 		return other;
 	}
 
+	operator bool() const {
+		return this->ptr != nullptr;
+	}
+
 	CopyPtr<T> &operator=(CopyPtr<T> &&other) {
 		delete this->ptr;
 		this->ptr = other.ptr;
@@ -47,9 +51,11 @@ struct CopyPtr {
 		delete this->ptr;
 	}
 
-	T *operator->() {
-		return this->ptr;
-	}
+	T *operator->() { return this->ptr; }
+	const T *operator->() const { return this->ptr; }
+
+	T &operator*() { return *this->ptr; }
+	const T &operator*() const { return *this->ptr; }
 };
 
 #endif // HELPER_HPP

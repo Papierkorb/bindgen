@@ -1,5 +1,5 @@
 #ifndef BINDGEN_FRONTEND_ACTION_HPP
-#define BINDGEN_FRONTEND_ACTION_HPPd
+#define BINDGEN_FRONTEND_ACTION_HPP
 
 class BindgenFrontendAction : public clang::ASTFrontendAction {
 public:

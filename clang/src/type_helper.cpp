@@ -10,9 +10,7 @@
 
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
 	const clang::ClassTemplateSpecializationDecl *decl);
-static void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt,
-  clang::ASTContext &ctx, const clang::Expr *expr);
-static bool tryReadStringConstructor(Argument &arg, const clang::CXXConstructExpr *expr);
+static bool tryReadStringConstructor(LiteralData &literal, const clang::CXXConstructExpr *expr);
 
 Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ctx) {
 	Type type;
@@ -83,7 +81,7 @@ Argument TypeHelper::processFunctionParameter(const clang::ParmVarDecl *decl) {
 	// fail if e.g. the call has side-effects (Like calling another method).  Will
 	// work for constant expressions though, like `true` or `3 + 5`.
 	if (arg.hasDefault) {
-		tryReadDefaultArgumentValue(arg, qt, ctx, decl->getDefaultArg());
+		TypeHelper::readValue(arg.value, qt, ctx, decl->getDefaultArg());
 	}
 
 	return arg;
@@ -98,69 +96,82 @@ static bool describesStringClass(const clang::CXXConstructorDecl *ctorDecl) {
 	}
 }
 
-static bool stringLiteralFromExpression(Argument &arg, const clang::Expr *expr) {
+static bool stringLiteralFromExpression(LiteralData &literal, const clang::Expr *expr) {
 	if (const clang::MaterializeTemporaryExpr *argExpr = llvm::dyn_cast<clang::MaterializeTemporaryExpr>(expr)) {
-		return stringLiteralFromExpression(arg, argExpr->GetTemporaryExpr());
+		return stringLiteralFromExpression(literal, argExpr->GetTemporaryExpr());
 	} else if (const clang::CXXBindTemporaryExpr *bindExpr = llvm::dyn_cast<clang::CXXBindTemporaryExpr>(expr)) {
-		return stringLiteralFromExpression(arg, bindExpr->getSubExpr());
+		return stringLiteralFromExpression(literal, bindExpr->getSubExpr());
 	} else if (const clang::CastExpr *castExpr = llvm::dyn_cast<clang::CastExpr>(expr)) {
-		return stringLiteralFromExpression(arg, castExpr->getSubExprAsWritten());
+		return stringLiteralFromExpression(literal, castExpr->getSubExprAsWritten());
 	} else if (const clang::CXXConstructExpr *ctorExpr = llvm::dyn_cast<clang::CXXConstructExpr>(expr)) {
-		return tryReadStringConstructor(arg, ctorExpr);
+		return tryReadStringConstructor(literal, ctorExpr);
+	} else if (const clang::ParenExpr *parenExpr = llvm::dyn_cast<clang::ParenExpr>(expr)) {
+		return stringLiteralFromExpression(literal, parenExpr->getSubExpr());
 	} else if (const clang::StringLiteral *strExpr = llvm::dyn_cast<clang::StringLiteral>(expr)) {
 		// We found it!
-		arg.value = strExpr->getString().str();
+		literal = strExpr->getString().str();
 		return true;
 	} else { // Failed to destructure.
 		return false;
 	}
 }
 
-static bool tryReadStringConstructor(Argument &arg, const clang::CXXConstructExpr *expr) {
+static bool tryReadStringConstructor(LiteralData &literal, const clang::CXXConstructExpr *expr) {
 	if (!describesStringClass(expr->getConstructor())) {
 		return false;
 	}
 
 	// The constructor call needs to have no (= empty) or a single argument.
 	if (expr->getNumArgs() == 0) { // This is an empty string!
-		arg.value = std::string();
+		literal = std::string();
 		return true;
 	} else if (expr->getNumArgs() == 1) {
-		return stringLiteralFromExpression(arg, expr->getArg(0));
+		return stringLiteralFromExpression(literal, expr->getArg(0));
 	} else { // No rules for more than one argument.
 		return false;
 	}
 }
 
-static void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt,
+bool TypeHelper::valueFromApValue(LiteralData &value, const clang::APValue &apValue, const clang::QualType &qt) {
+	if (qt->isPointerType()) {
+		// For a pointer-type, just store if it was `nullptr` (== true).
+		value = apValue.isNullPointer();
+	} else if (qt->isBooleanType()) {
+		value = apValue.getInt().getBoolValue();
+	} else if (qt->isIntegerType()) {
+		const llvm::APSInt &v = apValue.getInt();
+		int64_t i64 = v.getExtValue();
+
+		if (qt->isSignedIntegerType())
+			value = i64;
+		else // Is there better way?
+			value = static_cast<uint64_t>(i64);
+	} else if (qt->isFloatingType()) {
+		value = apValue.getFloat().convertToDouble();
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+bool TypeHelper::readValue(LiteralData &literal, const clang::QualType &qt,
   clang::ASTContext &ctx, const clang::Expr *expr) {
 	clang::Expr::EvalResult result;
 
 	if (!expr->EvaluateAsRValue(result, ctx)) {
 		// Failed to evaluate - Try to unpack this expression
-		stringLiteralFromExpression(arg, expr);
-		return;
+		return stringLiteralFromExpression(literal, expr);
 	}
 
 	if (result.HasSideEffects || result.HasUndefinedBehavior) {
-		return; // Don't accept if there are side-effects or undefined behaviour.
+		return false; // Don't accept if there are side-effects or undefined behaviour.
 	}
 
-	if (qt->isPointerType()) {
-		// For a pointer-type, just store if it was `nullptr` (== true).
-		arg.value = result.Val.isNullPointer();
-	} else if (qt->isBooleanType()) {
-		arg.value = result.Val.getInt().getBoolValue();
-	} else if (qt->isIntegerType()) {
-		const llvm::APSInt &v = result.Val.getInt();
-		int64_t i64 = v.getExtValue();
-
-		if (qt->isSignedIntegerType())
-			arg.value = i64;
-		else // Is there better way?
-			arg.value = static_cast<uint64_t>(i64);
-	} else if (qt->isFloatingType()) {
-		arg.value = result.Val.getFloat().convertToDouble();
+	if (qt->isPointerType() && qt->getPointeeType()->isCharType()) {
+		return stringLiteralFromExpression(literal, expr);
+	} else {
+		return TypeHelper::valueFromApValue(literal, result.Val, qt);
 	}
 }
 

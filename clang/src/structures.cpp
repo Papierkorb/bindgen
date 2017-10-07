@@ -82,6 +82,8 @@ JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
 	case LiteralData::StringKind:
 		s << *value.container.string_value;
 		break;
+	default:
+		s << JsonStream::Null;
 	}
 	return s;
 }
@@ -216,7 +218,14 @@ JsonStream &operator<<(JsonStream &s, const Macro &value) {
 		<< std::make_pair("isFunction", value.isFunction) << c
 		<< std::make_pair("isVarArg", value.isVarArg) << c
 		<< std::make_pair("arguments", value.arguments) << c
-		<< std::make_pair("value", value.value)
-		<< JsonStream::ObjectEnd;
+		<< std::make_pair("value", value.value);
+
+	if (value.type) {
+		s << c
+		  << std::make_pair("type", *value.type) << c
+		  << std::make_pair("evaluated", value.evaluated);
+	}
+
+	s << JsonStream::ObjectEnd;
 	return s;
 }

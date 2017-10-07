@@ -14,6 +14,11 @@ namespace TypeHelper {
 
 	void qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx);
 
+	bool readValue(LiteralData &literal, const clang::QualType &qt,
+	  clang::ASTContext &ctx, const clang::Expr *expr);
+
+	bool valueFromApValue(LiteralData &value, const clang::APValue &apValue, const clang::QualType &qt);
+
 	Argument processFunctionParameter(const clang::ParmVarDecl *decl);
 
 	void addFunctionParameters(const clang::FunctionDecl *func, Method &m);

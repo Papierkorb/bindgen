@@ -23,5 +23,5 @@ bool BindgenFrontendAction::BeginSourceFileAction(clang::CompilerInstance &ci) {
 }
 
 std::unique_ptr<clang::ASTConsumer> BindgenFrontendAction::CreateASTConsumer(clang::CompilerInstance &ci, llvm::StringRef file) {
-	return llvm::make_unique<BindgenASTConsumer>(this->m_macros);
+	return llvm::make_unique<BindgenASTConsumer>(this->m_macros, ci);
 }
