@@ -20,6 +20,19 @@ module Bindgen
 
         # The body of the macro, as written in the C/C++ source
         value: String,
+
+        # The type of the evaluated macro body
+        type: {
+          type: Type,
+          nilable: true,
+        },
+
+        # If the macro was successfully evaluated, the parsed value.
+        evaluated: {
+          type: DefaultValueTypes,
+          nilable: true,
+          converter: ValueConverter,
+        },
       )
 
       # Is this macro function-like?
