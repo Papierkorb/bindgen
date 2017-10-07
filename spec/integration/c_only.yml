@@ -1,0 +1,34 @@
+<<: spec_base.yml
+
+# Special: We DON'T want the C++ generator at all!  As we still require
+# something to link against, abuse the Crystal generators build step.
+generators:
+  crystal:
+    output: tmp/{SPEC_NAME}.cr
+    build: "{CC|cc} -c -o {SPEC_NAME}.o ../{SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function"
+
+library: "%/tmp/{SPEC_NAME}.o"
+
+processors:
+  - function_class
+  - inheritance
+  - filter_methods
+  - macros
+  - default_constructor
+  - functions
+  - extern_c
+  - cpp_wrapper
+  - crystal_binding
+  - crystal_wrapper
+  - sanity_check
+
+functions:
+  # For `Processor::Functions`
+  "extern_(.*)": { destination: "::" }
+  # For `Processor::FunctionClass`
+  "class_(.*)": # Simple class
+    destination: Class
+    class:
+      structure: class_t
+      constructors:
+        - class_new
