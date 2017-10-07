@@ -93,7 +93,7 @@ module Bindgen
       getter call : String
 
       # Default value for this argument.
-      getter default_value : Parser::Argument::DefaultValueTypes?
+      getter default_value : Parser::DefaultValueTypes?
 
       def initialize(@type, @type_name, @name, @call, @reference = false,
         @pointer = 0, @default_value = nil, @nilable = false)
