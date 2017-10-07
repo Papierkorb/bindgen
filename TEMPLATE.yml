@@ -15,6 +15,12 @@
 #   Mandatory!
 module: MyStuff
 
+# Defines how conversions in C/C++ shall happen.  Use `boehmgc-cpp` for C*+,
+# or `boehmgc-c` for pure C.
+#
+# Don't worry too much about this setting at first.
+cookbook: boehmgc-cpp # Default!
+
 # Defines the `ld_flags` value for the `@[Link]` directive of the generated `lib`.
 # `%` will be replaced by the path to the base-directory of your project,
 # relative to the path of the generated `.cr` file.
