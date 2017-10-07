@@ -141,6 +141,7 @@ module Bindgen
           name: namer.generate(method, "", Parser::Method::Type::StaticMethod),
         )
 
+        graph_method.set_tag(Graph::Method::REMOVABLE_BINDING_TAG)
         graph_method.calls[Graph::Platform::Cpp] = wrapper.build(
           method: method,
           target: target,

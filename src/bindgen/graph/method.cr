@@ -13,6 +13,11 @@ module Bindgen
       # function to point to this method.  The Crystal wrapper is not affected.
       EXPLICIT_BIND_TAG = "EXPLICIT_BIND_TAG"
 
+      # If this tag is set, this method has a removal CrystalBinding and Cpp
+      # call.  This means it's acceptable to remove these if a later processor
+      # has something better in mind.  The value is left empty.
+      REMOVABLE_BINDING_TAG = "REMOVABLE_BINDING_TAG"
+
       # `Parser::Method` this method node is based on.
       getter origin : Parser::Method
 
