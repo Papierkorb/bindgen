@@ -26,6 +26,7 @@ int two() { return 2; }   // Full name
 int three() { return 3; } // Short-hand, One capture group
 int four() { return 4; }  // One capture group
 
+extern "C" {
 // Test simple name rewriting: /mycalc_(.*)/ -> "\1"
 int mycalc_add(int a, int b) { return a + b; }
 int mycalc_sub(int a, int b) { return a - b; }
@@ -33,6 +34,7 @@ int mycalc_sub(int a, int b) { return a - b; }
 // Test individual nesting: /thing_([^_]+)_(.*)/ -> "\1::\2"
 int thing_increment_one(int v) { return v + 1; }
 int thing_decrement_one(int v) { return v - 1; }
+} // extern "C"
 
 // C-with-classes wrapper test
 struct string_buffer {
@@ -40,6 +42,7 @@ struct string_buffer {
   int size;
 };
 
+extern "C" {
 string_buffer *buffer_new() { // Constructor
   string_buffer *buf = static_cast<string_buffer *>(malloc(sizeof(string_buffer)));
   buf->ptr = nullptr;
@@ -79,3 +82,5 @@ void buffer_append(string_buffer *buf, const char *string) { // Member
 int buffer_version() { // Static
   return 123;
 }
+
+} // extern "C"

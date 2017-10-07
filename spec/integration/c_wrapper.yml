@@ -7,10 +7,11 @@ processors:
   - macros
   - default_constructor
   - functions
+  - extern_c
   - cpp_wrapper
   - crystal_binding
   - crystal_wrapper
-  # - sanity_check
+  - sanity_check
 
 macros:
   "CONSTANT_(.*)":
