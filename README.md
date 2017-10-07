@@ -172,6 +172,25 @@ constructors.  This processor finds these cases and adds an explicit constructor
 
 Debugging processor dumping the current graph onto `STDERR`.
 
+### `ExternC`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: `Functions` and `FunctionClass`
+
+Checks if a method require a C/C++ wrapper.  If not, marks the method to
+bind directly to the target method instead of writing a "trampoline"
+wrapper in C++.
+
+A method can be bound directly if all of these are true:
+
+1. It uses the C ABI (`extern "C"`)
+2. No argument uses a `to_cpp` converter
+3. The return type doesn't use a `from_cpp` converter
+
+**Note**: If all methods can be bound to directly, you can remove the `cpp`
+generator completely from your configuration.
+
 ### `FilterMethods`
 
 * **Kind**: Refining
@@ -188,7 +207,7 @@ of the pipeline.
 ### `Functions`
 
 * **Kind**: Refining
-* **Run after**: `FunctionClass`
+* **Run after**: `FunctionClass` and `ExternC`
 * **Run before**: No specific dependency
 
 Maps C functions, configured through the `functions:` map in the configuration.
@@ -196,7 +215,7 @@ Maps C functions, configured through the `functions:` map in the configuration.
 ### `FunctionClass`
 
 * **Kind**: Refining
-* **Run after**: No specific dependency
+* **Run after**: `ExternC`
 * **Run before**: `Inheritance` and `Functions`
 
 Generates wrapper classes from OOP-like C APIs, using guidance from the user
