@@ -6,7 +6,8 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      def build(method : Parser::Method, klass_type : Parser::Type?, body = FunBody) : Call
+      # *explicit_binding* only affects the `FunBody`.
+      def build(method : Parser::Method, klass_type : Parser::Type?, body = FunBody, explicit_binding : String? = nil) : Call
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
@@ -24,12 +25,12 @@ module Bindgen
           name: method.mangled_name,
           result: result,
           arguments: arguments,
-          body: body.new(@db),
+          body: body.new(@db, explicit_binding),
         )
       end
 
       class FunBody < Call::Body
-        def initialize(@db : TypeDatabase)
+        def initialize(@db : TypeDatabase, @target : String?)
         end
 
         def to_code(call : Call, _platform : Graph::Platform) : String
@@ -37,12 +38,14 @@ module Bindgen
           typer = Crystal::Typename.new(@db)
           func_result = typer.full(call.result)
           func_args = formatter.argument_list(call.arguments)
-          %[fun #{call.name}(#{func_args}) : #{func_result}]
+          infix = " = #{@target}" if @target
+
+          %[fun #{call.name}#{infix}(#{func_args}) : #{func_result}]
         end
       end
 
       class InvokeBody < Call::HookableBody
-        def initialize(@db : TypeDatabase)
+        def initialize(@db : TypeDatabase, _target)
         end
 
         def to_code(call : Call, platform : Graph::Platform) : String

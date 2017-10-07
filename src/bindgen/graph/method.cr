@@ -7,6 +7,12 @@ module Bindgen
       # The value is left empty.
       UNWRAP_INITIALIZE_TAG = "UNWRAP_INITIALIZE_TAG"
 
+      # If this tag is set, this method binds directly to the method named as
+      # value.  `Processor::CppWrapper` won't generate a wrapper for this
+      # method.  `Processor::CrystalBinding` will make point the `fun` of this
+      # function to point to this method.  The Crystal wrapper is not affected.
+      EXPLICIT_BIND_TAG = "EXPLICIT_BIND_TAG"
+
       # `Parser::Method` this method node is based on.
       getter origin : Parser::Method
 

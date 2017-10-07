@@ -88,9 +88,13 @@ module Bindgen
           klass_type = klass.origin.as_type
         end
 
-        call = @builder.build(method.origin, klass_type)
-        method.calls[PLATFORM] = call
-        call
+        explicit_bind = method.tag?(Graph::Method::EXPLICIT_BIND_TAG)
+
+        @builder.build(
+          method: method.origin,
+          klass_type: klass_type,
+          explicit_binding: explicit_bind,
+        )
       end
 
       # Makes sure all types in *call* are have an alias to `Void`.

@@ -18,6 +18,7 @@ module Bindgen
 
       def visit_method(method)
         return if method.calls[PLATFORM]?
+        return if method.tag?(Graph::Method::EXPLICIT_BIND_TAG)
 
         mangled = method.mangled_name
         return if @wrapped_methods.includes?(mangled)
