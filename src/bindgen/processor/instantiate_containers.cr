@@ -99,7 +99,7 @@ module Bindgen
 
       # Updates the *rules* of the container *klass*, carrying a *var_type*.
       # The rules are changed to convert from and to the binding type.
-      private def set_sequential_container_type_rules(cpp_type_name, klass, var_type)
+      private def set_sequential_container_type_rules(cpp_type_name, klass : Parser::Class, var_type)
         pass = Crystal::Pass.new(@db)
 
         rules = @db.get_or_add(cpp_type_name)
@@ -113,8 +113,8 @@ module Bindgen
         rules.cpp_type ||= cpp_type_name
         rules.to_crystal ||= "#{klass.name}.new(unwrap: %)"
         rules.from_crystal ||= "BindgenHelper.wrap_container(#{klass.name}, %).to_unsafe"
-        rules.from_cpp ||= "new (UseGC) #{klass.name} (%)"
-        rules.to_cpp ||= "(*%)"
+        rules.from_cpp ||= @db.cookbook.value_to_pointer(klass.name)
+        rules.to_cpp ||= @db.cookbook.pointer_to_reference(klass.name)
       end
 
       # Name of *container* with *instance* for diagnostic purposes.

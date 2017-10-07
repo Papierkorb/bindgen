@@ -114,28 +114,32 @@ module Bindgen
         is_val = type.pointer < 1
         type_name = type.base_name
         generate_template = false
+        pass_by = TypeDatabase::PassBy::Original
 
         # TODO: Check for copy-constructor.
         if (is_constructor || is_val) && is_copied
           is_ref = false
           ptr = 0
+          # Don't do pass_by magic here for this case, that's done in
+          # `MethodName`.
         elsif is_ref || (is_val && !is_copied)
           is_ref = false
           ptr = 1
 
           generate_template = !is_copied
+          pass_by = TypeDatabase::PassBy::Pointer
         end
 
         if rules = @db[type]?
-          # Support `from_cpp`.
-          # generate_template = false unless rules.pass_by.original?
           template = rules.from_cpp
           type_name = rules.cpp_type || type_name
-          is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
+          pass_by = rules.pass_by
+          is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
         if generate_template && template.nil?
-          template = "new (UseGC) #{type_name} (%)"
+          pass_by = type_config_to_pass_by(is_ref, ptr)
+          template = template = conversion_template(pass_by, type, type_name)
         end
 
         Call::Result.new(
@@ -145,6 +149,17 @@ module Bindgen
           pointer: ptr,
           conversion: template,
         )
+      end
+
+      # Takes *is_ref* and *ptr* and decides the described pass-by from it.
+      private def type_config_to_pass_by(is_ref, ptr)
+        if is_ref
+          TypeDatabase::PassBy::Reference
+        elsif ptr > 0
+          TypeDatabase::PassBy::Pointer
+        else
+          TypeDatabase::PassBy::Value
+        end
       end
 
       # Computes a result which is directly usable from C++ code, without
@@ -157,42 +172,26 @@ module Bindgen
       # type to the outside, as received by C++ (Thus even ignoring
       # `rules.cpp_type`!).  It still follows the passing rules towards Crystal.
       def passthrough_to_crystal(type : Parser::Type)
-        is_copied = is_type_copied?(type)
-        is_ref = type.reference?
-        is_val = type.pointer < 1
-        ptr = type_pointer_depth(type)
         type_name = type.base_name
         type_name = crystal_proc_name(type) if type.kind.function?
-
-        conversion_type_name = type_name
-        generate_template = false
-
-        # TODO: Check for copy-constructor.
-        if !is_copied && (is_ref || is_val)
-          # Don't change the external type (is_ref, ptr)!
-          generate_template = true
-        end
-
-        if rules = @db[type]?
-          # Support `from_cpp`.
-          template = rules.from_cpp
-
-          # We accept a C++ type here: The original one!  Don't let the user
-          # overwrite this, as it would result in a compilation error anyway.
-          conversion_type_name = rules.cpp_type || conversion_type_name
-        end
-
-        if generate_template && template.nil?
-          template = "new (UseGC) #{conversion_type_name} (%)"
-        end
+        to_cr = to_crystal(type, is_constructor: false)
 
         Call::Result.new(
           type: type,
           type_name: type_name,
-          reference: is_ref,
-          pointer: ptr,
-          conversion: template,
+          reference: type.reference?,
+          pointer: type_pointer_depth(type),
+          conversion: to_cr.conversion,
         )
+      end
+
+      # Finds the conversion template to go from *type* to the desired target
+      # type configuration.
+      private def conversion_template(pass_by, type, type_name) : String?
+        original_ref = type.reference?
+        original_ptr = type_pointer_depth(type) > 0
+
+        @db.cookbook.find(type_name, original_ref, original_ptr, pass_by)
       end
 
       # Passes the *type* through without changes.

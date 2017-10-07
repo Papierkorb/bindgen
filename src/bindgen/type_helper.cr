@@ -36,8 +36,8 @@ module Bindgen
       end
     end
 
-    # Helper for `#pass_to_X`, configuring the type according to
-    # user-specified rules.
+    # Helper for `#to_X`, configuring the type according to user-specified
+    # rules.
     def reconfigure_pass_type(pass_by, is_ref, ptr)
       if pass_by.reference?
         is_ref = true

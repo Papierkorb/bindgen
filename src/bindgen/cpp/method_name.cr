@@ -25,7 +25,7 @@ module Bindgen
             method.class_name
           else # Support shadow sub-classing.
             name = class_name_for_new(method.class_name)
-            "new (UseGC) #{name}"
+            @db.cookbook.constructor_name(method.name, name)
           end
         when .member_method?, .signal?, .operator?
           "#{self_var}->#{method.name}"
