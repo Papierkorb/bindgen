@@ -18,7 +18,7 @@ module Bindgen
     getter root_path : String
 
     def initialize(@root_path : String, @config : Configuration, @show_stats = false)
-      @database = TypeDatabase.new(@config.types)
+      @database = TypeDatabase.new(@config.types, @config.cookbook)
 
       # Add enum types to the db
       @config.enums.each do |cpp_name, crystal_name|

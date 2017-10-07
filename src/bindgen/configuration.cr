@@ -172,7 +172,13 @@ module Bindgen
 
     YAML.mapping(
       # Target Crystal module
-      module: String, # TODO: Keep this?  Or move into `Generator`?
+      module: String,
+
+      # Cookbook to use for templates
+      cookbook: {
+        type: String,
+        default: "boehmgc-cpp", # See `Cpp::Cookbook.create_by_name`
+      },
 
       # Used processors
       processors: {

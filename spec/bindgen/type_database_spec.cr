@@ -5,7 +5,7 @@ private def parse(*args)
 end
 
 describe Bindgen::TypeDatabase do
-  db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new)
+  db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
 
   db.add("Recursive", alias_for: "Recursive")
   db.add("Aliaserer", alias_for: "Aliaser")
@@ -104,7 +104,7 @@ describe Bindgen::TypeDatabase do
     end
 
     it "creates and returns new rules" do
-      db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new)
+      db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
       db["NewRules"]?.should be_nil
       new_rules = db.get_or_add("NewRules")
       db["NewRules"]?.should be(new_rules)

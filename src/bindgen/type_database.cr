@@ -181,12 +181,18 @@ module Bindgen
 
     @types : Configuration
 
-    def initialize(config : Configuration, with_builtins = true)
+    getter cookbook : Cpp::Cookbook
+
+    def initialize(config : Configuration, cookbook : String | Cpp::Cookbook, with_builtins = true)
+
       if with_builtins
         builtins = self.class.load_builtins
         config = builtins.merge(config)
       end
 
+      cookbook = Cpp::Cookbook.create_by_name(cookbook) if cookbook.is_a?(String)
+
+      @cookbook = cookbook
       @types = config.dup
     end
 
