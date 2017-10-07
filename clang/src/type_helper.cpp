@@ -6,6 +6,8 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 
+#include "clang_type_name.hpp"
+
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
 	const clang::ClassTemplateSpecializationDecl *decl);
 static void tryReadDefaultArgumentValue(Argument &arg, const clang::QualType &qt,
@@ -20,7 +22,7 @@ Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ct
 
 void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx) {
 	if (target.fullName.empty()) {
-		target.fullName = clang::TypeName::getFullyQualifiedName(qt, ctx);
+		target.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
 	}
 
 	if (qt->isReferenceType() || qt->isPointerType()) {
@@ -40,7 +42,7 @@ void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::
 	target.isConst = qt.isConstQualified();
 	target.isVoid = qt->isVoidType();
 	target.isBuiltin = qt->isBuiltinType();
-	target.baseName = clang::TypeName::getFullyQualifiedName(qt.getUnqualifiedType(), ctx);
+	target.baseName = ClangTypeName::getFullyQualifiedName(qt.getUnqualifiedType(), ctx);
 }
 
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record, const clang::ClassTemplateSpecializationDecl *decl) {
@@ -52,7 +54,7 @@ static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record, cons
 	const clang::Type *typePtr = record->getTypeForDecl();
 	clang::QualType qt(typePtr, 0);
 	t.baseName = record->getQualifiedNameAsString();
-	t.fullName = clang::TypeName::getFullyQualifiedName(qt, ctx);
+	t.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
 
 	for (const clang::TemplateArgument &argument : decl->getTemplateInstantiationArgs().asArray()) {
 
