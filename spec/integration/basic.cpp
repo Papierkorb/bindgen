@@ -1,3 +1,8 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <gc/gc.h>
+
 class IgnoreMe { };
 
 class Adder {
@@ -24,6 +29,23 @@ public:
   const IgnoreMe &ignoreByReturnCRef() { return *new IgnoreMe(); }
   IgnoreMe *ignoreByReturnPtr() { return new IgnoreMe(); }
   const IgnoreMe *ignoreByReturnCPtr() { return new IgnoreMe(); }
+};
+
+class TypeConversion {
+public:
+
+  char next(char c) {
+    return c + 1;
+  }
+
+  // Specialized match in argument and result.  Result with decay.
+  char *greet(const char *name) {
+    int length = 31;
+    char *buffer = static_cast<char *>(GC_malloc(length + 1));
+    snprintf(buffer, length, "Hello %s!", name);
+    return buffer;
+  }
+
 };
 
 struct ImplicitConstructor {

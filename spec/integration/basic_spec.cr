@@ -39,6 +39,19 @@ describe "a basic C++ wrapper" do
           methods.includes?("ignoreByArgument").should be_false
         end
       end
+
+      context "type decay matching" do
+        it "supports specialized matching" do
+          subject = Test::TypeConversion.new
+          # `char *greet(const char *)` to `greet(String) : String`
+          subject.greet("User").should eq("Hello User!")
+        end
+
+        it "supports base-type matching" do
+          subject = Test::TypeConversion.new
+          subject.next(5u8).should eq(6u8)
+        end
+      end
     end
   end
 end

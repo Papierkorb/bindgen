@@ -5,6 +5,7 @@
 classes:
   Adder: AdderWrap
   ImplicitConstructor: ImplicitConstructor
+  TypeConversion: TypeConversion
 
 types:
   IgnoreMe: # Ignore by type
@@ -12,3 +13,8 @@ types:
   Adder: # Ignore by method name
     ignore_methods:
       - ignoreByName
+  "char *": # Also matches "cosnt char *" through type decay
+    crystal_type: String
+    wrapper_pass_by: Value
+    to_crystal: "String.new(%)"
+    from_crystal: "%.to_unsafe"
