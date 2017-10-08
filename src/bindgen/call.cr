@@ -100,6 +100,11 @@ module Bindgen
       end
     end
 
+    # An argument specifying a var-arg (`...`) argument.
+    # Also see `TypeHelper#variadic_argument`.
+    class VariadicArgument < Argument
+    end
+
     # A `Proc` argument.  May be a block.
     class ProcArgument < Argument
       # Is this a block argument?

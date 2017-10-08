@@ -14,7 +14,11 @@ module Bindgen
         argument = Argument.new(@db)
 
         list.map_with_index do |arg, idx|
-          to_binding(arg).to_argument(argument.name(arg, idx))
+          if idx == list.size - 1 && arg.variadic?
+            self.variadic_argument
+          else
+            to_binding(arg).to_argument(argument.name(arg, idx))
+          end
         end
       end
 
@@ -23,13 +27,17 @@ module Bindgen
         argument = Argument.new(@db)
 
         list.map_with_index do |arg, idx|
+          is_last = (idx == list.size - 1)
+          if is_last && arg.variadic? # Support variadic argument
+            next self.variadic_argument
+          end
+
           result = to_wrapper(arg)
           name = argument.name(arg, idx)
 
           if result.is_a?(Call::ProcResult)
             # Treat as block if it's the last argument.
-            is_block = (idx + 1) == list.size
-            result.to_argument(name, block: is_block)
+            result.to_argument(name, block: is_last)
           else
             value = arg.value if arg.has_default?
             result.to_argument(name, default: value)

@@ -3,6 +3,17 @@ module Bindgen
   #
   # TODO: Turn into a `struct`?
   module TypeHelper
+    # Builds a `Call::VariadicArgument`.  This is only applicable to directly
+    # bound functions.
+    def variadic_argument : Call::VariadicArgument
+      Call::VariadicArgument.new(
+        type: Parser::Type::VOID,
+        type_name: "",
+        name: "*va_args",
+        call: "*va_args",
+      )
+    end
+
     # Builds a result passing-through *type* without modifications.
     def passthrough(type : Parser::Type)
       Call::Result.new(

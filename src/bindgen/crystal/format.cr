@@ -5,10 +5,20 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      # Formats *arg* as `type name`
-      def argument(arg : Call::Argument, idx, expose_default = true) : String
+      # Formats *arg* as `type name`.  If *binding* is `true`, treat this as
+      # argument for a `fun` declaration.
+      def argument(arg : Call::Argument, idx, expose_default = true, binding = false) : String
         argument = Argument.new(@db)
         typer = Typename.new(@db)
+
+        # Support variadic argument
+        if arg.is_a?(Call::VariadicArgument)
+          if binding
+            return "..."
+          else
+            return arg.name
+          end
+        end
 
         value = arg.default_value
         if value != nil && expose_default
@@ -28,12 +38,13 @@ module Bindgen
         "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
       end
 
-      # Formats *arguments* as `type name, ...`
-      def argument_list(arguments : Enumerable(Call::Argument)) : String
+      # Formats *arguments* as `type name, ...`.  If *binding* is `true`, treat
+      # this as argument for a `fun` declaration.
+      def argument_list(arguments : Enumerable(Call::Argument), binding = false) : String
         first_optional = arguments.rindex(&.default_value.nil?) || -1
 
         arguments.map_with_index do |arg, idx|
-          argument(arg, idx, expose_default: idx > first_optional)
+          argument(arg, idx, expose_default: idx > first_optional, binding: binding)
         end.join(", ")
       end
 

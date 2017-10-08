@@ -37,7 +37,7 @@ module Bindgen
           formatter = Crystal::Format.new(@db)
           typer = Crystal::Typename.new(@db)
           func_result = typer.full(call.result)
-          func_args = formatter.argument_list(call.arguments)
+          func_args = formatter.argument_list(call.arguments, binding: true)
           infix = " = #{@target}" if @target
 
           %[fun #{call.name}#{infix}(#{func_args}) : #{func_result}]
