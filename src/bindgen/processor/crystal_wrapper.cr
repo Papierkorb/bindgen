@@ -29,13 +29,18 @@ module Bindgen
         pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
 
-        ptr = klass.structure ? 0 : 1 # Store as value if structure is copied.
-        type = klass.origin.as_type(pointer: ptr)
+        if structure = klass.structure
+          type = klass.origin.as_type(pointer: 0)
+          type_name = Graph::Path.local(klass, structure).to_s
+        else
+          type = klass.origin.as_type(pointer: 1)
+          type_name = typer.qualified(*typer.binding(type))
+        end
 
         klass.instance_variables["unwrap"] ||= Call::Result.new(
           type: type,
-          type_name: typer.qualified(*typer.binding(type)),
-          pointer: ptr,
+          type_name: type_name,
+          pointer: type.pointer,
           reference: false,
           conversion: nil,
         )
