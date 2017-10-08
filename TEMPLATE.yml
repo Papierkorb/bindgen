@@ -129,6 +129,11 @@ functions:
     # Destination module or class the functions should be put into.  If using
     # `class:`, the name of the class itself.
     destination: Util::StringBuffer
+    # Method names are always underscored: `setTheThing` will be rewritten to
+    # `set_the_thing`.  You can also rewrite the names to be more Crystal-style:
+    # `setTheThing` would turn into `the_thing=`.
+    # The value defaults to `true` if `class:` is used.  It is `false` otherwise.
+    crystalize_names: true | false
     # You can also map all matched functions as class: With a little help,
     # bindgen can generate full wrapper classes!  If you don't want this,
     # leave the whole `class:` option out.

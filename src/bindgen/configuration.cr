@@ -142,6 +142,13 @@ module Bindgen
         # Qualified name of the destination module/class
         destination: String,
 
+        # Fully crystalize method names?
+        crystalize_names: {
+          type: Bool,
+          nilable: true, # Default depends on `#wrapper` being (not) set
+          getter: false,
+        },
+
         # `class:` in the YAML!
         wrapper: {
           key: "class",
@@ -151,6 +158,16 @@ module Bindgen
       )
 
       def initialize(@destination, @name = nil, @wrapper = nil)
+      end
+
+      # Shall method names be fully crystalized?
+      def crystalize_names? : Bool
+        rewrite = @crystalize_names
+        if rewrite.nil? # Default to true for class mappings
+          @wrapper != nil
+        else
+          rewrite
+        end
       end
     end
 
