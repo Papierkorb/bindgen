@@ -30,6 +30,7 @@ module Bindgen
 
         # `Argument` part
         hasDefault: Bool,
+        isVariadic: Bool,
         name: String,
         value: {
           type: DefaultValueTypes,
@@ -38,7 +39,11 @@ module Bindgen
         },
       )
 
-      def initialize(@name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false, @value = nil, @nilable = false)
+      def initialize(
+        @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,
+        @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false,
+        @value = nil, @nilable = false, @isVariadic = false,
+      )
       end
 
       def initialize(@name, type : Type, @hasDefault = false, @value = nil)
@@ -49,6 +54,7 @@ module Bindgen
         @isMove = type.isMove
         @isBuiltin = type.isBuiltin
         @isVoid = type.isVoid
+        @isVariadic = false
         @pointer = type.pointer
         @kind = type.kind
         @template = type.template
@@ -75,6 +81,11 @@ module Bindgen
       # Assume that if the argument defaults to `nullptr`, that it is nilable.
       def nilable? : Bool
         defaults_to_nil? || super
+      end
+
+      # Is this the vararg (`...`) argument?
+      def variadic? : Bool
+        @isVariadic
       end
 
       # Returns a copy of this argument without a default value.

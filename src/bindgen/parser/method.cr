@@ -87,6 +87,11 @@ module Bindgen
         @isExternC
       end
 
+      # Does this function take a variable amount of arguments?
+      def variadic? : Bool
+        !!@arguments.last?.try(&.variadic?)
+      end
+
       # Is this a `Type::Constructor` or a `Type::CopyConstructor`?
       def any_constructor? : Bool
         @type.constructor? || @type.copy_constructor?
