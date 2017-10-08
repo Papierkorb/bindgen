@@ -11,6 +11,10 @@ describe "C-only functionality" do
         Test.two.should eq(2)
       end
 
+      it "binds variadic function" do
+        Test.sum(3, 4, 5, 6).should eq(4 + 5 + 6)
+      end
+
       it "binds function class" do
         subject = Test::Class.new
         subject.three.should eq(3)
