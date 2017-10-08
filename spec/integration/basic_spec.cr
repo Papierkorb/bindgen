@@ -52,6 +52,11 @@ describe "a basic C++ wrapper" do
           subject.next(5u8).should eq(6u8)
         end
       end
+
+      it "returns a void pointer" do
+        subject = Test::TypeConversion.new
+        subject.void_pointer.address.should eq(0x11223344)
+      end
     end
   end
 end

@@ -46,6 +46,10 @@ public:
     return buffer;
   }
 
+  // Regression test for issue #2: Void pointer yields a return in C++ wrapper.
+  void *voidPointer() {
+    return reinterpret_cast<void *>(0x11223344); // Don't break on 32bit!
+  }
 };
 
 struct ImplicitConstructor {
