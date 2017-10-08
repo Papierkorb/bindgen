@@ -78,6 +78,7 @@ module Bindgen
         )
 
         binding_method.calls[PLATFORM] = call
+        binding_method.tags.merge!(method.tags)
 
         add_type_aliases(call)
       end
