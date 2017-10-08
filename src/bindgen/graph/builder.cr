@@ -12,13 +12,13 @@ module Bindgen
       def build_document(document : Parser::Document, ns : Namespace) : Namespace
         # Add classes first, so that enums can end up in their target class.
         document.classes.each do |_, klass|
-          target_name = @db[klass.name].crystal_type || klass.name
+          target_name = @db[klass.name].crystal_type || klass.name.camelcase
           build_class(klass, target_name, ns)
         end
 
         # Add enums second
         document.enums.each do |_, enumeration|
-          target_name = @db[enumeration.name].crystal_type || enumeration.name
+          target_name = @db[enumeration.name].crystal_type || enumeration.name.camelcase
           build_enum(enumeration, target_name, ns)
         end
 

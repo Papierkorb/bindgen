@@ -9,7 +9,7 @@ module Bindgen
         root = graph.by_name(Graph::LIB_BINDING)
 
         @db.each do |cpp_name, rules|
-          next unless rules.copy_structure # Only care copy-able structures
+          next unless rules.copy_structure # Only care about copy-able structures
 
           klass = find_structure(doc, cpp_name)
           graph = rules.graph_node.as(Graph::Class)
@@ -39,7 +39,7 @@ module Bindgen
       private def copy_structure(klass, root)
         typename = Crystal::Typename.new(@db)
         Graph::Struct.new( # Add the struct into the graph
-          name: typename.binding(klass.as_type).first,
+          name: typename.binding(klass.as_type).first.camelcase,
           fields: fields_to_graph(klass.fields),
           parent: root,
         )
