@@ -181,6 +181,9 @@ Checks if a method require a C/C++ wrapper.  If not, marks the method to
 bind directly to the target method instead of writing a "trampoline"
 wrapper in C++.
 
+**Note**: This processor is *required* for variadic functions to work.  A
+variadic function looks like this: `void func(int c, ...);`
+
 A method can be bound directly if all of these are true:
 
 1. It uses the C ABI (`extern "C"`)
