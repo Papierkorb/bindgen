@@ -18,6 +18,14 @@
 #define FLAGS_TWO 2
 #define FLAGS_FOUR 4
 
+#define COMPLEX_ADD(x) (x + 1)
+#define STR(x) #x
+#define STRINGIFY(x) STR(x)
+
+#define COMPLEX_A 1 | 2
+#define COMPLEX_B COMPLEX_ADD(4)
+#define COMPLEX_C STRINGIFY(FooBar)
+
 /* Function mapping */
 
 // Simple cases

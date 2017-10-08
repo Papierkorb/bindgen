@@ -20,6 +20,9 @@ macros:
   "ANOTHER_(.*)":
     map_as: Constant
     destination: Foo # Map into a new module
+  "COMPLEX_(.*)":
+    map_as: Constant
+    destination: Complex
   "ENUM_(.*)":
     map_as: Enum
     name: "Thing_\\1"

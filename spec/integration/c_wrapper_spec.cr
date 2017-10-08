@@ -15,6 +15,12 @@ describe "C-specific functionality" do
           Test::Foo::B.should eq("B")
           Test::Foo::C.should eq("C")
         end
+
+        it "evaluates complex macros" do
+          Test::Complex::A.should eq(3)
+          Test::Complex::B.should eq(5)
+          Test::Complex::C.should eq("FooBar")
+        end
       end
 
       context "enums" do
