@@ -82,6 +82,28 @@ describe "C-specific functionality" do
         end
       end
 
+      context "functions with crystalized names" do
+        it "defaults to false" do
+          Test::DontCrystalize.set_foo(5)
+          Test::DontCrystalize.get_foo.should eq(5)
+          Test::DontCrystalize.is_foo_zero.should be_false
+
+          Test::DontCrystalize.set_foo(0)
+          Test::DontCrystalize.get_foo.should eq(0)
+          Test::DontCrystalize.is_foo_zero.should be_true
+        end
+
+        it "can be explicitly enabled" do
+          Test::Crystalize.foo = 5
+          Test::Crystalize.foo.should eq(5)
+          Test::Crystalize.foo_zero?.should be_false
+
+          Test::Crystalize.foo = 0
+          Test::Crystalize.foo.should eq(0)
+          Test::Crystalize.foo_zero?.should be_true
+        end
+      end
+
       context "function classes" do
         it "wraps functions as methods" do
           instance_methods = {{ Test::Buffer.methods.map(&.name.stringify) }}
@@ -98,6 +120,8 @@ describe "C-specific functionality" do
 
           # Member methods
           instance_methods.includes?("size").should be_true
+          instance_methods.includes?("size=").should be_true
+          instance_methods.includes?("empty?").should be_true
           instance_methods.includes?("string").should be_true
           instance_methods.includes?("append").should be_true
 
@@ -120,6 +144,33 @@ describe "C-specific functionality" do
           string = String.new(buffer.string)
           string.should eq("Hello, Crystal!")
           buffer.size.should eq(string.size)
+        end
+
+        it "does normal Crystal method name rewriting" do
+          buffer = Test::Buffer.new
+          buffer.empty?.should be_true # Question getter
+          buffer.size = 32 # Setter
+          buffer.size.should eq(32) # Getter
+        end
+      end
+
+      context "function class without crystalized names" do
+        it "leaves the names alone" do
+          instance_methods = {{ Test::MyInt.methods.map(&.name.stringify) }}
+
+          instance_methods.includes?("set_value").should be_true
+          instance_methods.includes?("get_value").should be_true
+          instance_methods.includes?("is_zero").should be_true
+        end
+
+        it "can interact with this class" do
+          int = Test::MyInt.new
+
+          int.is_zero.should be_true
+          int.get_value.should eq(0)
+          int.set_value(4)
+          int.is_zero.should be_false
+          int.get_value.should eq(4)
         end
       end
     end

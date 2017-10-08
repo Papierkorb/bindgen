@@ -34,6 +34,20 @@ int two() { return 2; }   // Full name
 int three() { return 3; } // Short-hand, One capture group
 int four() { return 4; }  // One capture group
 
+
+// Test crystalize_names configuration option
+static int foo = 0;
+
+// `crystalize_names: true`
+void crystalize_set_foo(int value) { foo = value; }
+int crystalize_get_foo() { return foo; }
+bool crystalize_is_foo_zero() { return (foo == 0); }
+
+// `crystalize_names: UNSET` Should default to false.
+void dont_crystalize_set_foo(int value) { foo = value; }
+int dont_crystalize_get_foo() { return foo; }
+bool dont_crystalize_is_foo_zero() { return (foo == 0); }
+
 extern "C" {
 // Test simple name rewriting: /mycalc_(.*)/ -> "\1"
 int mycalc_add(int a, int b) { return a + b; }
@@ -44,7 +58,7 @@ int thing_increment_one(int v) { return v + 1; }
 int thing_decrement_one(int v) { return v - 1; }
 } // extern "C"
 
-// C-with-classes wrapper test
+// C-with-classes wrapper test.  `crystalize_names: UNSET` should default to true.
 struct string_buffer {
   char *ptr;
   int size;
@@ -71,7 +85,16 @@ void buffer_free(string_buffer *buf) { // Destructor
   free(buf);
 }
 
-int buffer_size(string_buffer *buf) { // Member
+bool buffer_is_empty(string_buffer *buf) { // Question member
+  return (buf->size == 0);
+}
+
+void buffer_set_size(string_buffer *buf, int size) { // Setter member
+  buf->size = size;
+  buf->ptr = static_cast<char *>(realloc(buf->ptr, size));
+}
+
+int buffer_get_size(string_buffer *buf) { // Getter Member
   return buf->size;
 }
 
@@ -92,3 +115,17 @@ int buffer_version() { // Static
 }
 
 } // extern "C"
+
+// C-with-classes wrapper test.  `crystalize_names: false`
+struct my_int {
+  int value;
+};
+
+my_int *my_int_new() {
+  return static_cast<my_int *>(calloc(1, sizeof(my_int)));
+}
+
+void my_int_free(my_int *inst) { free(inst); }
+void my_int_set_value(my_int *inst, int value) { inst->value = value; }
+int my_int_get_value(my_int *inst) { return inst->value; }
+bool my_int_is_zero(my_int *inst) { return (inst->value == 0); }
