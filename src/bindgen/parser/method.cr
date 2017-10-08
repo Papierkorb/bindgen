@@ -182,22 +182,22 @@ module Bindgen
       end
 
       # Try to deduce if this is a getter.
-      def getter?
-        @arguments.empty? && !@returnType.void? && /^get[_A-Z]/.match(@name)
+      def getter?(name = @name)
+        @arguments.empty? && !@returnType.void? && /^get[_A-Z]/.match(name)
       end
 
       # Try to deduce if this is a setter.
-      def setter?
-        @arguments.size == 1 && @returnType.void? && /^set[_A-Z]/.match(@name)
+      def setter?(name = @name)
+        @arguments.size == 1 && @returnType.void? && /^set[_A-Z]/.match(name)
       end
 
       # Try to deduce if this is a getter for a boolean value.
-      def question_getter?
+      def question_getter?(name = @name)
         return unless @arguments.empty?
         return unless @returnType.builtin?
         return unless @returnType.full_name == "bool"
 
-        /^(?:get|has|is)[_A-Z]/.match(@name)
+        /^(?:get|has|is)[_A-Z]/.match(name)
       end
 
       # Does this method have move semantics anywhere?
@@ -215,13 +215,16 @@ module Bindgen
         !@crystal_name.nil?
       end
 
-      # Turns the method name into something canonical to Crystal
-      def crystal_name : String
+      # Turns the method name into something canonical to Crystal.  If a
+      # explicit `#crystal_name` name is set, it'll be returned without furtehr
+      # processing.  If *override* is not `nil`, it'll be used over `#name`.
+      # Otherwise, the generated name will be based on `#name`.
+      def crystal_name(override : String? = nil) : String
         if enforced_name = @crystal_name
           return enforced_name
         end
 
-        name = @name.underscore
+        name = (override || @name).underscore
 
         case self
         when .operator?
@@ -229,7 +232,7 @@ module Bindgen
         when .signal?
           name # Don't butcher signal names
         when .member_method?, .static_method?
-          if question_getter?
+          if question_getter?(name)
             if name.starts_with?("is_")
               name[3..-1] + "?" # Remove `is_` prefix
             elsif name.starts_with?("get_")
@@ -237,9 +240,9 @@ module Bindgen
             else
               name + "?" # Keep `has_` prefix!
             end
-          elsif getter?
+          elsif getter?(name)
             name[4..-1] # Remove `get_` prefix
-          elsif setter?
+          elsif setter?(name)
             name[4..-1] + "=" # Remove `set_` prefix and add `=` suffix
           else
             name # Normal method
