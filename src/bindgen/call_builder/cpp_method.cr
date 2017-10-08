@@ -35,7 +35,7 @@ module Bindgen
           func_args = formatter.argument_list(call.arguments)
 
           # Returning a `void` from a void method generates a warning.
-          prefix = "return " unless call.result.type.void?
+          prefix = "return " unless call.result.type.pure_void?
           const = "const " if call.origin.const?
 
           %[#{func_result} #{call.name}(#{func_args}) #{const}override {\n] \

@@ -232,9 +232,15 @@ module Bindgen
         @isBuiltin
       end
 
-      # Is it C++ `void`?
+      # Is it C++ `void`?  Note that `void *` is also void.
+      # See also `#pure_void?`
       def void?
         @isVoid
+      end
+
+      # Returns `true` if this type is `void`, and nothing else.
+      def pure_void?
+        @isVoid && @pointer == 0
       end
 
       # Unqualified base name for easier mapping to Crystal.
