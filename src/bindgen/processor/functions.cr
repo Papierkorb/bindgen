@@ -33,7 +33,11 @@ module Bindgen
         end
 
         function = method.dup
-        function.crystal_name = name
+        if config.crystalize_names?
+          function.crystal_name = method.crystal_name(override: name)
+        else
+          function.crystal_name = name.underscore
+        end
 
         Graph::Method.new(
           name: name,
@@ -54,7 +58,7 @@ module Bindgen
           name = parts.last
         end
 
-        { path, name.underscore }
+        { path, name }
       end
     end
   end

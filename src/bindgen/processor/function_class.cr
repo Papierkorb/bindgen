@@ -20,7 +20,7 @@ module Bindgen
         builder = Graph::Builder.new(@db)
         parent, local_name = builder.parent_and_local_name(root, Graph::Path.from(config.destination))
 
-        klass = build_class(local_name, config.name, wrapper, list)
+        klass = build_class(local_name, config, wrapper, list)
 
         graph_class = Graph::Class.new(
           name: local_name.camelcase,
@@ -32,33 +32,40 @@ module Bindgen
         add_methods(klass.methods, graph_class, wrapper.structure)
       end
 
-      private def classify_methods(wrapper, pattern, list) : Array(Parser::Method)
+      private def classify_methods(wrapper, config, list) : Array(Parser::Method)
         list.map do |method, match|
-          classify_method(wrapper, pattern, method, match)
+          classify_method(wrapper, config, method, match)
         end
       end
 
-      private def classify_method(wrapper, pattern, method, match)
+      private def classify_method(wrapper, config, method, match)
         type = detect_method_type(wrapper, method)
         arguments = method.arguments.dup
-
-        if !type.constructor? && !type.destructor?
-          crystal_name = Util.pattern_rewrite(pattern, match).underscore
-        end
 
         if type.destructor? || type.member_method?
           arguments.shift # Remove self type, this'll be added later again.
         end
 
-        Parser::Method.new(
+        function = Parser::Method.new(
           type: type,
           name: method.name,
-          crystal_name: crystal_name,
           className: method.class_name,
           returnType: method.return_type,
           arguments: arguments,
           isExternC: method.extern_c?,
         )
+
+        if !type.constructor? && !type.destructor?
+          rewritten = Util.pattern_rewrite(config.name, match)
+
+          if config.crystalize_names?
+            function.crystal_name = function.crystal_name(override: rewritten)
+          else
+            function.crystal_name = rewritten.underscore
+          end
+        end
+
+        function
       end
 
       private def detect_method_type(wrapper, method) : Parser::Method::Type
@@ -95,7 +102,7 @@ module Bindgen
         )
       end
 
-      private def build_class(name, pattern, wrapper, list) : Parser::Class
+      private def build_class(name, config, wrapper, list) : Parser::Class
         bases = [ ] of Parser::BaseClass
 
         if base_name = wrapper.inherit_from
@@ -107,7 +114,7 @@ module Bindgen
           hasDefaultConstructor: has_default_constructor?(wrapper.constructors, list),
           hasCopyConstructor: false,
           isClass: true,
-          methods: classify_methods(wrapper, pattern, list),
+          methods: classify_methods(wrapper, config, list),
           bases: bases,
         )
       end
