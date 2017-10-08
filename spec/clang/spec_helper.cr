@@ -18,6 +18,9 @@ def clang_tool(cpp_code, arguments, **checks)
     object = traverse_path(doc.raw, path)
     check_partial_value(object, value, path.to_s)
   end
+rescue error
+  pp doc.raw if doc
+  raise error
 ensure
   file.try(&.delete)
 end
