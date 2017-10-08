@@ -291,6 +291,7 @@ Checks are as follows:
 * Enumerations have at least one constant
 * Flag-enumerations don't have `All` nor `None` constants
 * Method arguments and result types are reachable
+* Variadic methods are directly bound
 * Alias targets are reachable
 * Class base-classes are reachable
 

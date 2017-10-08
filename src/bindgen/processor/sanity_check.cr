@@ -10,6 +10,7 @@ module Bindgen
     # * Enumeration constants are correctly named
     # * Flag-enumerations don't have `All` nor `None` constants
     # * Method arguments and result types are reachable
+    # * Variadic methods are directly bound
     # * Alias targets are reachable
     # * Class base-classes are reachable
     class SanityCheck < Base
@@ -116,6 +117,10 @@ module Bindgen
 
         unless type_reachable?(call.result, method)
           add_error(method, "Result type #{call.result.type_name} is unreachable")
+        end
+
+        if method.origin.variadic? && method.tag?(Graph::Method::EXPLICIT_BIND_TAG).nil?
+          add_error(method, "Variadic function must be directly bound")
         end
       end
 
