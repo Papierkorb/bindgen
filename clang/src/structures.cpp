@@ -93,7 +93,8 @@ JsonStream &operator<<(JsonStream &s, const Argument &value) {
 	s << JsonStream::ObjectBegin;
 	writeTypeJson(s, value) << c;
 	s << std::make_pair("hasDefault", value.hasDefault) << c
-		<< std::make_pair("name", value.name);
+	  << std::make_pair("isVariadic", value.isVariadic) << c
+	  << std::make_pair("name", value.name);
 
 	if (value.hasDefault && value.value.hasValue()) {
 		s << c << std::make_pair("value", value.value);

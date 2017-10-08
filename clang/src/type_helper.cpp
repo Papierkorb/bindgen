@@ -74,6 +74,7 @@ Argument TypeHelper::processFunctionParameter(const clang::ParmVarDecl *decl) {
 	clang::QualType qt = decl->getType();
 	qualTypeToType(arg, qt, ctx);
 	arg.name = decl->getQualifiedNameAsString();
+	arg.isVariadic = false;
 	arg.hasDefault = decl->hasDefaultArg();
 	arg.value = JsonStream::Null;
 
@@ -182,6 +183,14 @@ void TypeHelper::addFunctionParameters(const clang::FunctionDecl *func, Method &
 		if (arg.hasDefault && m.firstDefaultArgument < 0)
 			m.firstDefaultArgument = i;
 
+		m.arguments.push_back(arg);
+	}
+
+	if (func->isVariadic()) { // Support vararg functions
+		Argument arg;
+		arg.name = "...";
+		arg.isVariadic = true;
+		arg.hasDefault = false;
 		m.arguments.push_back(arg);
 	}
 }

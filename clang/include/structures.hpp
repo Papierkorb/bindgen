@@ -79,6 +79,7 @@ struct LiteralData {
 JsonStream &operator<<(JsonStream &s, const LiteralData &value);
 
 struct Argument : public Type {
+	bool isVariadic; // Is this argument the `...` vararg?
 	bool hasDefault; // Does this argument have a default value?
 	std::string name; // Name of the argument
 
