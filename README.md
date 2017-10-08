@@ -8,7 +8,7 @@ A C/C++/Qt binding and wrapper generator.
 |--------------------------------------------------|---------|
 | Automatic Crystal binding generation             | **YES** |
 | Automatic Crystal wrapper generation             | **YES** |
-| Mapping C++ classes                              | **YES** |
+| Mapping C++ classes                              |         |
 |  +- Member methods                               | **YES** |
 |  +- Static methods                               | **YES** |
 |  +- Constructors                                 | **YES** |

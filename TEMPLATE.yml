@@ -15,7 +15,7 @@
 #   Mandatory!
 module: MyStuff
 
-# Defines how conversions in C/C++ shall happen.  Use `boehmgc-cpp` for C*+,
+# Defines how conversions in C/C++ shall happen.  Use `boehmgc-cpp` for C++,
 # or `boehmgc-c` for pure C.
 #
 # Don't worry too much about this setting at first.
