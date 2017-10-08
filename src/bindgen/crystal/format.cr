@@ -74,7 +74,7 @@ module Bindgen
         if suffix = number_literal_suffix(type_name)
           if floating_type?(type_name)
             value = value.to_f
-          else
+          elsif !value.is_a?(Int)
             value = value.to_i
           end
 
