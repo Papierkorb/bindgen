@@ -75,6 +75,7 @@ void BindgenASTConsumer::evaluateMacros(clang::ASTContext &ctx) {
 	clang::FileID macroFile = sourceMgr.createFileID(llvm::MemoryBuffer::getMemBuffer(evalFile));
 	sourceMgr.setMainFileID(macroFile);
 
+	this->m_compiler.getDiagnostics().setClient(new clang::IgnoringDiagConsumer());
 	clang::ParseAST(this->m_compiler.getPreprocessor(), consumer, ctx);
 }
 
