@@ -40,14 +40,16 @@ module Bindgen
 
       # Adds all *macros* into the graph.
       private def create_constants(root, config, macros)
+        type = Crystal::Type.new(@db)
         builder = Graph::Builder.new(@db)
         path = Graph::Path.from(config.destination)
         parent = builder.get_or_create_path(root, path).as(Graph::Container)
         host = parent.platform_specific(Graph::Platform::Crystal)
 
         macros.each do |define, match|
+          next if define.function?
           name = Util.pattern_rewrite(config.name, match).underscore.upcase
-          value = define.evaluated
+          value = type.convert(define.evaluated, define.type.not_nil!)
 
           next if value.nil?
 
