@@ -20,6 +20,9 @@ macros:
   "ANOTHER_(.*)":
     map_as: Constant
     destination: Foo # Map into a new module
+  "VALUE_(.*)": # Value type tests
+    map_as: Constant
+    destination: Value
   "COMPLEX_(.*)":
     map_as: Constant
     destination: Complex
@@ -65,5 +68,3 @@ functions:
       constructors:
         - my_int_new
       destructor: my_int_free
-
-types: { }

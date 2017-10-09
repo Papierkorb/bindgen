@@ -21,6 +21,29 @@ describe "C-specific functionality" do
           Test::Complex::B.should eq(5)
           Test::Complex::C.should eq("FooBar")
         end
+
+        it "chooses the correct Crystal type" do
+          Test::Value::INT32.should be_a(Int32)
+          Test::Value::INT32.should eq(1)
+          Test::Value::INT64.should be_a(Int64)
+          Test::Value::INT64.should eq(1)
+          Test::Value::UINT32.should be_a(UInt32)
+          Test::Value::UINT32.should eq(1)
+          Test::Value::NEGATIVE_INT32.should be_a(Int32)
+          Test::Value::NEGATIVE_INT32.should eq(-123)
+          Test::Value::NEGATIVE_INT64.should be_a(Int64)
+          Test::Value::NEGATIVE_INT64.should eq(-123)
+          Test::Value::LARGE_UINT64.should be_a(UInt64)
+          Test::Value::LARGE_UINT64.should eq(9223372036854775808)
+          Test::Value::LARGE_INT64.should be_a(Int64)
+          Test::Value::LARGE_INT64.should eq(9223372036854775807)
+          Test::Value::TRUE.should be_a(Bool)
+          Test::Value::TRUE.should eq(true)
+          Test::Value::FALSE.should be_a(Bool)
+          Test::Value::FALSE.should eq(false)
+          Test::Value::FLOAT.should be_a(Float64)
+          Test::Value::FLOAT.should eq(3.5)
+        end
       end
 
       context "enums" do
