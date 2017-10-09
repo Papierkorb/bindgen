@@ -1,5 +1,13 @@
 require "../spec_helper"
 
+class ClangValidationError < Exception
+  getter document : JSON::Type
+
+  def initialize(@document, path, message)
+    super("At #{path}: #{message}")
+  end
+end
+
 # Runs the clang tool on *cpp_code*, passing *arguments* to it.  All given
 # key-word arguments are checked for equality in the returned JSON document.
 # The check allows partial document comparisons.
@@ -10,7 +18,11 @@ def clang_tool(cpp_code, arguments, **checks)
 
   tool = ENV["BINDGEN_BIN"]? || Bindgen::Parser::Runner::BINARY_PATH
 
-  json_doc = `#{tool} #{file.path} #{arguments} -- -x c++ -std=c++11 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS`
+  command = "#{tool} #{file.path} #{arguments} -- " \
+    "-x c++ -std=c++11 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS " \
+    "-Wno-implicitly-unsigned-literal"
+  puts "Command: #{command}" if ENV["VERBOSE"]?
+  json_doc = `#{command}`
 
   doc = JSON.parse(json_doc)
 
@@ -18,11 +30,14 @@ def clang_tool(cpp_code, arguments, **checks)
     object = traverse_path(doc.raw, path)
     check_partial_value(object, value, path.to_s)
   end
+rescue error : ClangValidationError
+  pp error.document
+  raise error
 rescue error
   pp doc.raw if doc
   raise error
 ensure
-  file.try(&.delete)
+  file.try(&.delete) unless ENV["VERBOSE"]?
 end
 
 private def traverse_path(document, path)
@@ -34,24 +49,24 @@ private def traverse_path(document, path)
     end
   end
 rescue error
-  raise "Couldn't find path #{path}: #{error}"
+  raise ClangValidationError.new(document, path, "Couldn't find: #{error}")
 end
 
 private def check_partial_value(original, expected, path)
   case expected
   when Hash, NamedTuple
     hash = original.as?(Hash)
-    raise "Expected a Hash, but got a #{expected.class}" if hash.nil?
+    raise ClangValidationError.new(original, path, "Expected a Hash, but got a #{expected.class}") if hash.nil?
 
     expected.each do |key, expected_child|
       check_partial_value(hash[key.to_s]?, expected_child, "#{path}.#{key}")
     end
   when Array, Tuple
     array = original.as?(Array)
-    raise "Expected an Array, but got a #{expected.class}" if array.nil?
+    raise ClangValidationError.new(original, path, "Expected an Array, but got a #{expected.class}") if array.nil?
 
     if array.size != expected.size
-      raise "Expected array of size #{expected.size}, but got a size of #{array.size} instead"
+      raise ClangValidationError.new(original, path, "Expected array of size #{expected.size}, but got a size of #{array.size} instead")
     end
 
     expected.each_with_index do |expected_child, index|
@@ -59,7 +74,7 @@ private def check_partial_value(original, expected, path)
     end
   else
     if original != expected
-      raise "At #{path}: Expected #{expected.inspect}, got #{original.inspect}"
+      raise ClangValidationError.new(original, path, "Expected #{expected.inspect}, got #{original.inspect}")
     end
   end
 end
