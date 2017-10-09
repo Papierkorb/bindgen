@@ -44,6 +44,20 @@ describe "C-specific functionality" do
           Test::Value::FLOAT.should be_a(Float64)
           Test::Value::FLOAT.should eq(3.5)
         end
+
+        it "allows to force the type of constants" do
+          Test::Forced::A.should be_a(Int32)
+          Test::Forced::B.should be_a(Int32)
+          Test::Forced::C.should be_a(Int32)
+          Test::Forced::D.should be_a(Int32)
+          Test::Forced::E.should be_a(Int32)
+
+          Test::Forced::A.should eq(1)
+          Test::Forced::B.should eq(2)
+          Test::Forced::C.should eq(3)
+          Test::Forced::D.should eq(4)
+          Test::Forced::E.should eq(5)
+        end
       end
 
       context "enums" do

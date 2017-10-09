@@ -23,6 +23,10 @@ macros:
   "VALUE_(.*)": # Value type tests
     map_as: Constant
     destination: Value
+  "FORCED_(.*)": # Force given type
+    map_as: Constant
+    type: int
+    destination: Forced
   "COMPLEX_(.*)":
     map_as: Constant
     destination: Complex

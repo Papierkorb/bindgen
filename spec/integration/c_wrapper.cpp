@@ -22,6 +22,12 @@
 #define ANOTHER_B "B"
 #define ANOTHER_C "C"
 
+#define FORCED_A 1
+#define FORCED_B 2L
+#define FORCED_C 3LL
+#define FORCED_D 4LLU
+#define FORCED_E 5.9
+
 #define ENUM_ONE 1
 #define ENUM_TWO 2
 #define ENUM_THREE 3
