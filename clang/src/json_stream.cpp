@@ -7,6 +7,11 @@ JsonStream::JsonStream(std::ostream &out)
 	//
 }
 
+JsonStream &JsonStream::operator<<(double value) {
+	this->m_out << value;
+	return *this;
+}
+
 JsonStream &JsonStream::operator<<(bool value) {
 	if (value)
 		this->m_out << "true";

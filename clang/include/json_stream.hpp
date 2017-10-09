@@ -27,6 +27,8 @@ public:
 		return *this;
 	}
 
+	JsonStream &operator<<(double value);
+
 	JsonStream &operator<<(bool value);
 
 	JsonStream &operator<<(const char *value);
