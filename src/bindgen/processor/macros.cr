@@ -4,6 +4,9 @@ module Bindgen
     class Macros < Base
       include Util::FindMatching(Parser::Macro)
 
+      # Default value for `Configuration::Macro#type` for an enumeration
+      ENUM_DEFAULT_TYPE = "int"
+
       def process(graph : Graph::Node, doc : Parser::Document)
         @config.macros.each do |regex, config|
           list = find_matching(regex, doc.macros)
@@ -46,10 +49,15 @@ module Bindgen
         parent = builder.get_or_create_path(root, path).as(Graph::Container)
         host = parent.platform_specific(Graph::Platform::Crystal)
 
+        if type_name = config.type # Force to user configured type
+          forced_type = Parser::Type.parse(type_name)
+        end
+
         macros.each do |define, match|
           next if define.function?
           name = Util.pattern_rewrite(config.name, match).underscore.upcase
-          value = type.convert(define.evaluated, define.type.not_nil!)
+          value_type = forced_type || define.type.not_nil!
+          value = type.convert(define.evaluated, value_type)
 
           next if value.nil?
 
@@ -79,7 +87,7 @@ module Bindgen
         Parser::Enum.new(
           name: name,
           values: values,
-          type: config.type,
+          type: (config.type || ENUM_DEFAULT_TYPE),
           isFlags: config.flags,
         )
       end

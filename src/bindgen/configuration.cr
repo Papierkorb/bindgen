@@ -96,7 +96,7 @@ module Bindgen
         # Only used if mapping as enum:  C++ mapping type
         type: {
           type: String,
-          default: "int",
+          nilable: true,
         },
 
         # Only used if mapping as enum:  Treat as flags enum?
