@@ -144,8 +144,8 @@ module Bindgen
 
         # Fully crystalize method names?
         crystalize_names: {
-          type: Bool,
-          nilable: true, # Default depends on `#wrapper` being (not) set
+          type: Util::Tribool,
+          default: Util::Tribool.unset, # Default depends on `#wrapper` being set
           getter: false,
         },
 
@@ -157,18 +157,12 @@ module Bindgen
         }
       )
 
-      def initialize(@destination, @name = nil, @wrapper = nil)
+      def initialize(@destination, @name = nil, @wrapper = nil, @crystalize_names = Util::Tribool.unset)
       end
 
       # Shall method names be fully crystalized?
       def crystalize_names? : Bool
-        rewrite = @crystalize_names
-        if rewrite.nil? # Default to true for class mappings
-          @wrapper != nil
-        else
-          rewrite
-        end
-      end
+        @crystalize_names.true?(@wrapper != nil)
     end
 
     # Converter to accept `Hash(String, String | Function)` and turn it into
