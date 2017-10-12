@@ -22,7 +22,7 @@ module Bindgen
 
       # Add enum types to the db
       @config.enums.each do |cpp_name, crystal_name|
-        @database.add_sparse_type cpp_name, crystal_name, Parser::Type::Kind::Enum
+        @database.add_sparse_type cpp_name, crystal_name.destination, Parser::Type::Kind::Enum
       end
 
       # Add classes too

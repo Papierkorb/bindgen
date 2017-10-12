@@ -19,6 +19,8 @@ module Bindgen
       def flags?
         @isFlags
       end
+
+      def_equals_and_hash @name, @type, @isFlags, @values
     end
   end
 end

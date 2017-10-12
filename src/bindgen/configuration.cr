@@ -18,6 +18,17 @@ module Bindgen
       end
     end
 
+    # Reads a `(String | Bool)` from a YAML pull parser without breaking.
+    module StringOrBool
+      def self.from_yaml(pull)
+        case value = pull.read_scalar
+        when "true" then true
+        when "false" then false
+        else value
+        end
+      end
+    end
+
     # Configuration of a generator, as given as value in `generators:`
     class Generator
       YAML.mapping(
@@ -86,6 +97,30 @@ module Bindgen
         # Method telling the current count of elements.
         size_method: { type: String, default: "size" },
       )
+    end
+
+    # Configuration for enum mapping
+    class Enum
+      YAML.mapping(
+        # Path of the enumeration type in Crystal
+        destination: String,
+
+        # Common prefix detection of enums
+        prefix: {
+          type: String | Bool,
+          default: false,
+          converter: StringOrBool,
+        },
+
+        # Forces a specific `@[Flags]` setting
+        flags: {
+          type: Util::Tribool,
+          default: Util::Tribool.unset,
+        },
+      )
+
+      def initialize(@destination, @prefix = false, @flags = Util::Tribool.unset)
+      end
     end
 
     # Configuration for a macro
@@ -208,8 +243,9 @@ module Bindgen
 
       # Which enums to wrap
       enums: {
-        type: Hash(String, String),
-        default: Hash(String, String).new,
+        type: Hash(String, Enum),
+        default: Hash(String, Enum).new,
+        converter: GenericConverter(Enum),
       },
 
       # Which classes to wrap
