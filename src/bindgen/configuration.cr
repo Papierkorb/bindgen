@@ -2,6 +2,21 @@ module Bindgen
   # Configuration as read from the `.yml` file passed to **bindgen** as
   # program parameter.
   class Configuration
+    # Converter to accept `Hash(String, String | T)` and turn it into
+    # `Hash(String, T)`
+    module GenericConverter(T)
+      def self.from_yaml(pull)
+        hsh = Hash(String, String | T).new(pull)
+
+        hsh.map do |key, value|
+          if value.is_a?(String)
+            { key, T.new(value) }
+          else
+            { key, value }
+          end
+        end.to_h
+      end
+    end
 
     # Configuration of a generator, as given as value in `generators:`
     class Generator
@@ -163,21 +178,6 @@ module Bindgen
       # Shall method names be fully crystalized?
       def crystalize_names? : Bool
         @crystalize_names.true?(@wrapper != nil)
-    end
-
-    # Converter to accept `Hash(String, String | Function)` and turn it into
-    # `Hash(String, Function)`
-    module FunctionConverter
-      def self.from_yaml(pull)
-        hsh = Hash(String, String | Function).new(pull)
-
-        hsh.map do |key, value|
-          if value.is_a?(String)
-            { key, Function.new(value) }
-          else
-            { key, value }
-          end
-        end.to_h
       end
     end
 
@@ -228,7 +228,7 @@ module Bindgen
       functions: {
         type: Hash(String, Function),
         default: Hash(String, Function).new,
-        converter: FunctionConverter,
+        converter: GenericConverter(Function),
       },
 
       # Which templates to instantiate
