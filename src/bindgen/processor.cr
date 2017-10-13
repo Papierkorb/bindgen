@@ -28,6 +28,7 @@ module Bindgen
       # "auto_container_instantiation", # Not stable yet
       "extern_c",
       "instantiate_containers",
+      "enums",
       # Preliminary generation processors:
       "crystal_wrapper",
       "virtual_override",

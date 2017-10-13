@@ -39,6 +39,7 @@ processors:
   - filter_methods # Throw out filtered methods
   - extern_c # Directly bind to pure C functions
   - instantiate_containers # Actually instantiate containers
+  - enums # Add enums
   # Preliminary generation processors:
   - crystal_wrapper # Create Crystal wrappers
   - virtual_override # Allow overriding C++ virtual methods
