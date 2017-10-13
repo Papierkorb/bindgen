@@ -40,6 +40,7 @@ A C/C++/Qt binding and wrapper generator.
 |  +- Mapping as constant (Including strings)      | **YES** |
 | Copying in-source docs                           |   TBD   |
 | Platform specific type binding rules             | **YES** |
+| Portable path finding for headers, libs, etc.    | **YES** |
 
 ## Projects using bindgen
 
