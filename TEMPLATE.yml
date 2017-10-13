@@ -70,6 +70,81 @@ generators:
     # You'll most likely only need the `output` option.
     output: src/my_lib/binding.cr
 
+# This lets you find paths to your dependencies.  If you don't need it, just
+# omit it.
+find_paths:
+  # The key is the environment variable a match will be put into.  These are
+  # exposed to build-steps, so you can access them in e.g. a Makefile.  You can
+  # also access these in all templated strings, just as if you set it right
+  # away.
+  # If an environment variable of this name is already set, and is not empty,
+  # the match will *not* run!  This allows your users to supply a path easily
+  # to non-standard installations.
+  #
+  # The searches are run in the order they're defined.  Thus, later searches
+  # have access to the result of previous searches by accessing the environment
+  # variable they assigned to.
+  #
+  # Attention when using conditionals: The conditionals are evaluated first,
+  # then these paths are found.  This means that you can't check for a found
+  # path in a conditional!
+  #
+  # All regular expressions in this section are matche case-sensitive and are
+  # in multi-line mode (`^` will always match at the beginning of a line).
+  ENV_VAR_NAME:
+    # The "thing" you're looking for: A directory or a file.
+    # Defaults to `Directory`.
+    kind: Directory | File
+    # If finding this match is optional or not.  If not found, it'll be not
+    # set.
+    # Defaults to `false`, making a match mandatory by default.
+    optional: true | false
+    # If no match was found, you can output a helpful message to the user.
+    # For example, a link to your wiki where you say what to install to make it
+    # work.
+    # If not found, and `optional:` is `true`, it'll still output the message,
+    # but will continue.
+    error_message: Please install MyLib: http://example.com/
+    # List of paths to try.  These are tried in the order they appear in the
+    # list.
+    try:
+      # Strings indicate a normal path to try.  These strings accept glob
+      # patterns, like `*` and `**`.  `%` is expanded to the project root.
+      - /usr/include/mylib*
+      # Or you can call out to a tool which outputs the path.  The command is
+      # expected to exit with a successful status code (`0`).  The output to
+      # standard output (`STDOUT`) is captured, standard error is not changed
+      # and will be shown to the user.
+      # Commands have access to (previously set) environment variables.  `%`
+      # will be expanded to the project root.
+      - shell: some-tool --some-arg
+        # The regular expression used to match the path.  Uses the first capture
+        # group if one is used.  Uses the whole match instead.
+        # An empty match is treated as no match.
+        # This is optional:  If not given, the first line of output from the
+        # program is taken as-is, and tried as path.
+        regex: "^INCLUDE_DIR=([^ ]+)"
+    # Do additional checks on the found paths.  For a successful match, all
+    # checks have to pass.  If no checks are required, omit this.
+    checks:
+      # Checks that the given sub-path exists.  The `path:` is ignored if the
+      # expected `kind:` from above is `File`.
+      - path: relative/to/the/tested/path/my_lib_version.h
+        # The expected kind.  Defaults to `File`.  Ignored if the `kind:` above
+        # is `File`.
+        kind: Directory | File
+        # Optional: Makes sure that the given string exists in the file.  Useful
+        # to do a quick version string check.
+        contains: '#define MYLIB_VERSION "1\.[123]"'
+        # Optional: If `true`, then the `contains` string is treated as regular
+        # expression.  Defaults to `false`.
+        regex: true
+      # You can also call a program to check the path.  `%` will expand to the
+      # tried path.  If the programs exit code signals success (`0`), the path
+      # is used.  The standard output (`STDOUT`) will be hidden, the standard
+      # error (`STDERR`) is shown to the user.
+      - shell: "some-tool %"
+
 # Map of classes to bind to.  A class inheriting another class should follow
 # *after* that base-class.
 classes:
