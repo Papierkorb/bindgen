@@ -58,6 +58,10 @@ module Bindgen
     private def run_steps : Statistics
       stats = Statistics.new
 
+      if path_config = @config.find_paths
+        stats.measure("Find paths"){ find_paths(path_config) }
+      end
+
       document = stats.measure("Parse C++"){ parse_cpp_sources }
       graph = stats.measure("Build graph"){ build_graph(document) }
 
@@ -67,6 +71,36 @@ module Bindgen
       stats.finish!
     end
 
+    # Finds all paths per the user configuration.
+    private def find_paths(config)
+      finder = FindPath.new(root: @root_path, variables: ENV)
+      errors = finder.find_all!(config)
+      dump_find_path_errors(errors)
+    end
+
+    # Prints all find_path errors to the screen.
+    private def dump_find_path_errors(errors)
+      fatal = false
+
+      errors.each do |error|
+        if error.config.optional
+          puts "Failed to find optional path for #{error.variable}"
+        else
+          puts "Failed to find mandatory path for #{error.variable}".colorize.mode(:bold)
+          fatal = true # Bail later
+        end
+
+        if message = error.config.error_message
+          puts "  " + message.split("\n").join("\n  ")
+        end
+      end
+
+      if fatal
+        raise ExitError.new("Didn't find all mandatory paths", 1)
+      end
+    end
+
+    # Builds the initial graph from *document*.
     private def build_graph(document)
       builder = Graph::Builder.new(@database)
       graph = Graph::Namespace.new(@config.module, nil)
