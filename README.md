@@ -171,6 +171,15 @@ constructors.  This processor finds these cases and adds an explicit constructor
 
 Debugging processor dumping the current graph onto `STDERR`.
 
+### `Enums`
+
+* **Kind**: Refining
+* **Run after**: `FunctionClass`
+* **Run before**: No specific dependency
+
+Adds the copied enums to the graph.  Should be run after other processors adding
+classes, so that enums can be added into classes.
+
 ### `ExternC`
 
 * **Kind**: Refining
