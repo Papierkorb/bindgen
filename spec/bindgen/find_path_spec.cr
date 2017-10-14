@@ -296,6 +296,56 @@ describe Bindgen::FindPath do
     end
   end
 
+  context "file kinds" do
+    it "finds a file" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: File
+        try: [ "%/bindgen", "%/spec_helper.cr" ]
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/spec_helper.cr" })
+    end
+
+    it "finds a directory" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: Directory
+        try: [ "%/spec_helper.cr", "%/bindgen" ]
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/bindgen" })
+    end
+
+    it "finds an executable file" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: Executable
+        try:
+          - "%/spec_helper.cr"
+          - "%/bindgen"
+          - "%/bindgen/find_path/fixture/tool"
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/bindgen/find_path/fixture/tool" })
+    end
+  end
+
   context "Dir.glob bug" do
     it "fails if #5118 has been fixed" do
       # TODO: Remove this spec once it fails and the issue has been fixed.
