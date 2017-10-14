@@ -1,6 +1,9 @@
-LIBS     := $(shell crystal run find_clang.cr) -ldl -pthread -lz -lcurses
+IGNORE   := $(shell crystal run find_clang.cr > Makefile.variables)
+include Makefile.variables
+
+LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lcurses
 DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
-CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude
+CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
 
 HEADERS  := $(wildcard include/*.hpp)
 SOURCES  := $(wildcard src/*.cpp)
@@ -8,7 +11,7 @@ OBJECTS  := $(patsubst src/%.cpp,build/%.o,$(SOURCES))
 BINARY   := bindgen
 
 RM       ?= rm
-CXX      ?= g++
+CXX      := $(CLANG_BINARY)
 
 all: $(BINARY)
 

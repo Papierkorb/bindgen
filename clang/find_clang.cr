@@ -4,21 +4,53 @@
 # Also outputs all LLVM and Clang libraries to link to.  Provides diagnostics
 # to standard error.  Called by the `Makefile`.
 
+require "yaml"
+require "../src/bindgen/util"
+require "../src/bindgen/find_path"
+
+def find_clang_binary : String?
+  clang_find_config = Bindgen::FindPath::PathConfig.from_yaml <<-YAML
+  kind: Executable
+  try:
+    - "clang++"
+    - "clang++-*"
+  version:
+    min: "4.0.0"
+    command: "% --version"
+    regex: "clang version ([0-9.]+)"
+  YAML
+
+  path_finder = Bindgen::FindPath.new(__DIR__)
+  path_finder.find(clang_find_config)
+end
+
+def print_help_and_bail
+  STDERR.puts <<-HELP
+  You're missing the LLVM and/or Clang development libraries.
+  Please install these:
+    ArchLinux: pacman -S llvm clang
+    Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev
+    Mac OS: HELP WANTED!
+
+  If you've installed these in a non-standard location, do one of these:
+    1) Make the CLANG environment variable point to your `clang++` executable
+    2) Add the `clang++` executable to your PATH
+  HELP
+
+  exit 1
+end
+
 # Find clang++ binary, through user setting, or automatically.
 if binary = ENV["CLANG"]?
-  unless File.exists? binary
-    STDERR.puts "No binary found at #{binary.inspect}"
-    STDERR.puts "Make sure your CLANG environment variable points at the clang++ binary"
-    exit 1
+  unless Process.find_executable(binary)
+    print_help_and_bail
   end
 
   clang_binary = binary
-elsif binary = Process.find_executable("clang++")
+elsif binary = find_clang_binary
   clang_binary = binary
 else
-  STDERR.puts "Failed to find clang++ binary."
-  STDERR.puts "You can provide the path to it through the CLANG environment variable."
-  exit 1
+  print_help_and_bail
 end
 
 STDERR.puts "Using clang binary #{clang_binary.inspect}"
@@ -88,6 +120,10 @@ while index < flags.size
   when "-internal-isystem"
     system_includes << flags[index + 1]
     index += 1
+  when "-resource-dir" # Find paths on Ubuntu
+    resource_dir = flags[index + 1]
+    system_includes << "#{resource_dir}/../../../include"
+    index += 1
   when /^-L/
     system_libs << flags[index][2..-1]
   end
@@ -122,7 +158,15 @@ end
 llvm_libs = find_libraries(system_libs, "LLVM")
 clang_libs = find_libraries(system_libs, "clang")
 
+# Try to provide the user with an error if we can't find it.
+print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
+
 # Libraries must precede their dependencies.  By putting the whole list twice
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
-puts (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}.join(" ")
+libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}
+includes = system_includes.map{|x| "-I#{x}"}
+
+puts "CLANG_LIBS := " + libs.join(" ")
+puts "CLANG_INCLUDES := " + includes.join(" ")
+puts "CLANG_BINARY := " + clang_binary
