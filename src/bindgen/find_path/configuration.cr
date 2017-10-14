@@ -164,6 +164,12 @@ module Bindgen
           converter: TryListConverter,
         },
 
+        # Search paths for relative try paths
+        search_paths: {
+          type: Array(String),
+          nilable: true,
+        },
+
         # Checks to do
         checks: {
           type: Array(PathCheck | ShellCheck),

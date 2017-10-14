@@ -346,6 +346,59 @@ describe Bindgen::FindPath do
     end
   end
 
+  context "search paths feature" do
+    it "supports them" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: File
+        try: [ "bindgen", "spec_helper.cr" ]
+        search_paths: [ "..", "%" ]
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/spec_helper.cr" })
+    end
+
+    it "works with sub-directories" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: File
+        try: [ "spec/bindgen", "spec/spec_helper.cr" ]
+        search_paths: [ "%/.." ]
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/../spec/spec_helper.cr" })
+    end
+
+    it "defaults to PATH for executables" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: Executable
+        try: [ "DOESNT_EXIST_HOPEFULLY", "ls", "cmd.exe" ]
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      {% if flag?(:windows) %}
+        vars.should eq({ "TEST" => Process.find_executable("cmd") })
+      {% else %}
+        vars.should eq({ "TEST" => Process.find_executable("ls") })
+      {% end %}
+    end
+  end
+
   context "Dir.glob bug" do
     it "fails if #5118 has been fixed" do
       # TODO: Remove this spec once it fails and the issue has been fixed.

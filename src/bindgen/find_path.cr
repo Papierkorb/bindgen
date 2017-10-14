@@ -10,6 +10,12 @@ module Bindgen
     # dot-all option, which we don't want.
     MULTILINE_OPTION = Regex::Options.from_value(2)
 
+    {% if flag?(:windows) %}
+      PATH_SEPARATOR = ';'
+    {% else %}
+      PATH_SEPARATOR = ':'
+    {% end %}
+
     # Root path of the project.
     getter root : String
 
@@ -49,22 +55,23 @@ module Bindgen
     # Finds a path for *config*.  On success, returns the path as string.
     # Returns `nil` on error.
     def find(config : PathConfig) : String?
+      search_paths = get_search_paths(config)
       checkers = config.checks.map do |check_config|
         Checker.create(check_config, !config.kind.directory?)
       end
 
       if version_check = config.version
-        find_versioned(config, checkers, version_check)
+        find_versioned(search_paths, config, checkers, version_check)
       else
-        find_unversioned(config, checkers)
+        find_unversioned(search_paths, config, checkers)
       end
     end
 
     # Returns the best candidate that satisfies all *checkers*
-    private def find_versioned(config, checkers, version_check) : String?
+    private def find_versioned(search_paths, config, checkers, version_check) : String?
       version_checker = VersionChecker.new(version_check)
 
-      find_each_candidate(config, checkers) do |path|
+      find_each_candidate(search_paths, config, checkers) do |path|
         version_checker.check(path)
       end
 
@@ -72,45 +79,72 @@ module Bindgen
     end
 
     # Returns the first candidate that satisfies all *checkers*
-    private def find_unversioned(config, checkers) : String?
-      find_each_candidate(config, checkers) do |path|
+    private def find_unversioned(search_paths, config, checkers) : String?
+      find_each_candidate(search_paths, config, checkers) do |path|
         return path
       end
     end
 
     # Yields each path candidate that satisfies all *checkers*
-    private def find_each_candidate(config, checkers) : Nil
+    private def find_each_candidate(search_paths, config, checkers) : Nil
       config.try.each do |try|
-        if found = run_path_try(try, config.kind, checkers)
-          yield found
+        run_path_try(try, search_paths).each do |path|
+          if run_path_checkers(path, config.kind, checkers)
+            yield path
+          end
         end
       end
 
       nil # Not found
     end
 
-    # Tries to match *path* of type *kind* using *checkers*.
-    private def run_path_try(path : String, kind, checkers) : String?
-      pattern = Util.template(path, @root, env: @variables)
+    # Returns the list of search paths, if any
+    private def get_search_paths(config) : Array(String)?
+      paths = config.search_paths
 
-      # Band aid for https://github.com/crystal-lang/crystal/issues/5118
-      # TODO: Remove once #5118 is fixed.
-      candidates = Dir[pattern]
-      if candidates.empty?
-        # BUG: This still breaks for `/foo/*/..`
-        candidates = [ pattern ]
+      if paths.nil?
+        if config.kind.executable?
+          paths = [ ENV["PATH"] ]
+        else
+          paths = [ ] of String
+        end
       end
 
-      candidates.find do |candidate|
-        run_path_checkers(candidate, kind, checkers)
+      paths.flat_map do |path| # Expand:Paths;Like:This
+        expanded = Util.template(path, replacement: @root)
+        expanded.split(PATH_SEPARATOR)
+      end.reject(&.empty?)
+    end
+
+    # Expands *search_paths* for *path*
+    private def prefix_search_paths(search_paths, path : String) : Array(String)
+      if search_paths.nil? || search_paths.empty?
+        [ path ]
+      elsif path.starts_with?('/')
+        [ path ]
+      else
+        search_paths.map{|x| "#{x}/#{path}"}
+      end
+    end
+
+    # Tries to match *path* of type *kind* using *checkers*.
+    private def run_path_try(path : String, search_paths) : Array(String)
+      pattern = Util.template(path, @root, env: @variables)
+      patterns = prefix_search_paths(search_paths, pattern)
+      # Band aid for https://github.com/crystal-lang/crystal/issues/5118
+      # TODO: Remove once #5118 is fixed.
+      candidates = Dir[patterns]
+      if candidates.empty?
+        # BUG: This still breaks for `/foo/*/..`
+        patterns
+      else
+        candidates
       end
     end
 
     # ditto
-    private def run_path_try(shell : ShellTry, kind, checkers) : String?
-      if path = run_shell_try(shell)
-        run_path_checkers(path, kind, checkers)
-      end
+    private def run_path_try(shell : ShellTry, search_paths) : Array(String)
+      [ run_shell_try(shell) ].compact
     end
 
     # Tests if *path* matches *kind* and all *checkers*.  Returns *path* on

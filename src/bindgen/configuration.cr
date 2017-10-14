@@ -286,7 +286,7 @@ module Bindgen
       find_paths: {
         type: FindPath::Configuration,
         nilable: true,
-      }
+      },
     )
   end
 end
