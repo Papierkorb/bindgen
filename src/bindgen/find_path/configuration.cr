@@ -8,10 +8,12 @@ module Bindgen
         ary = [] of String | ShellTry
 
         pull.read_sequence do
-          if pull.kind.scalar?
-            ary << String.new(pull)
-          else
-            ary << ShellTry.new(pull)
+          while !pull.kind.sequence_end?
+            if pull.kind.scalar?
+              ary << String.new(pull)
+            else
+              ary << ShellTry.new(pull)
+            end
           end
         end
 

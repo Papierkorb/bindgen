@@ -60,6 +60,29 @@ describe Bindgen::FindPath do
     end
   end
 
+  context "if the first tries fail" do
+    it "tries the next one" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        try:
+          - "doesnt_exist/"
+          - shell: "false"
+          - "%"
+          - "%/*"
+        checks:
+          - path: find_path_spec.cr
+      YAML
+
+      vars = { } of String => String
+
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{root_dir}/bindgen" })
+    end
+  end
+
   context "try: String" do
     it "has access to the environment" do
       config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
