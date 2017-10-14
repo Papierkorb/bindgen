@@ -165,7 +165,7 @@ module Bindgen
       if rx = shell.regex
         regex_capture(rx, output)
       else
-        empty_is_nil(output.lines.first)
+        empty_is_nil(output.lines.first?)
       end
     end
 

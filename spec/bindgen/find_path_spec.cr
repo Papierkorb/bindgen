@@ -200,6 +200,22 @@ describe Bindgen::FindPath do
         error = errors.first
         error.variable.should eq("TEST")
       end
+
+      it "fails if the output is empty" do
+        config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+        TEST: { try: [ { shell: "#{print_bin} ''" } ] }
+        YAML
+
+        vars = { } of String => String
+        subject = Bindgen::FindPath.new(root_dir, vars)
+        errors = subject.find_all!(config)
+
+        vars.empty?.should be_true
+        errors.size.should eq(1)
+
+        error = errors.first
+        error.variable.should eq("TEST")
+      end
     end
 
     context "if regex is set" do
