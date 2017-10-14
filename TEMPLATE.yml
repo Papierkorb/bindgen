@@ -94,7 +94,7 @@ find_paths:
   ENV_VAR_NAME:
     # The "thing" you're looking for: A directory or a file.
     # Defaults to `Directory`.
-    kind: Directory | File
+    kind: Directory | File | Executable
     # If finding this match is optional or not.  If not found, it'll be not
     # set.
     # Defaults to `false`, making a match mandatory by default.
@@ -124,15 +124,25 @@ find_paths:
         # This is optional:  If not given, the first line of output from the
         # program is taken as-is, and tried as path.
         regex: "^INCLUDE_DIR=([^ ]+)"
+
+    # Optional: Search paths for relative try paths.  Most useful to find
+    # executables.  Entries are split on semi-colons (`;`) on Windows and
+    # colons (`:`) everywhere else.
+    # Entries also have access to environment variables.
+    # For `kind: Executable`, defaults to the `PATH` environment variable.
+    # Defaults to an empty list otherwise.
+    search_paths:
+      - "%" # Search relative to the project root.
+
     # Do additional checks on the found paths.  For a successful match, all
     # checks have to pass.  If no checks are required, omit this.
     checks:
       # Checks that the given sub-path exists.  The `path:` is ignored if the
-      # expected `kind:` from above is `File`.
+      # expected `kind:` from above isn't `Directory`.
       - path: relative/to/the/tested/path/my_lib_version.h
         # The expected kind.  Defaults to `File`.  Ignored if the `kind:` above
-        # is `File`.
-        kind: Directory | File
+        # isn't `Directory`.
+        kind: Directory | File | Executable
         # Optional: Makes sure that the given string exists in the file.  Useful
         # to do a quick version string check.
         contains: '#define MYLIB_VERSION "1\.[123]"'
@@ -144,6 +154,36 @@ find_paths:
       # is used.  The standard output (`STDOUT`) will be hidden, the standard
       # error (`STDERR`) is shown to the user.
       - shell: "some-tool %"
+    # You can also do a version check, on the path itself, or using a command.
+    # `min` and `max` are optional.  Omit them if you want an unbounded check.
+    # If you don't need a version check, omit this section.
+    version:
+      # Min version.  The lowest, still accepted version string.
+      min: "4.0"
+      # Max version.  The highest, still accepted version string.
+      max: "6.0"
+      # If figuring out the version number failed, should this be accepted
+      # anyway?  Some systems don't use version strings in their executable
+      # names (Or not always), so this may help.
+      # `Fail` fails the check, `Accept` passes the check, and `Prefer` would
+      # not only pass, but also prefer the unversioned one over versioned
+      # candidates.  Defaults to `Fail`.
+      fallback: Fail | Accept | Prefer
+      # Which version to prefer if faced with multiple valid candidates.
+      # Defaults to `Highest`.
+      prefer: Lowest | Highest
+      # Regular expression applied on the file path to grab the version
+      # string.  Must have a capture group containing the name.
+      # Defaults to the Debian-style version suffix:
+      regex: "-([0-9.]+)$"
+      # Optional: A command to run to figure out the version.  `%` expands to
+      # the currently tested executable.  `regex:` will be applied on the
+      # output of the command.  The command is expected to return
+      # successfully.
+      #
+      # WARNING: This calls random commands on the users system, so please use
+      # with caution!
+      command: "% --version"
 
 # Map of classes to bind to.  A class inheriting another class should follow
 # *after* that base-class.
