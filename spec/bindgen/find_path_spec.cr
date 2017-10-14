@@ -3,6 +3,10 @@ require  "../spec_helper"
 describe Bindgen::FindPath do
   root_dir = "#{__DIR__}/.." # spec/
 
+  # Some shells think it's not required to implement echo correctly.  Yes, echo.
+  # Looking at you, `dash`.
+  print_bin = "printf"
+
   context "if all paths are found" do
     it "adds all variables and returns an empty array" do
       config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
@@ -111,9 +115,9 @@ describe Bindgen::FindPath do
       PREVIOUS:
         try: [ "%/bindgen" ]
       EXPANSION:
-        try: [ { shell: "echo '%'" } ]
+        try: [ { shell: "#{print_bin} '%\\\\n'" } ]
       ENV_VAR:
-        try: [ { shell: "echo '{PREVIOUS}'" } ]
+        try: [ { shell: "#{print_bin} '{PREVIOUS}\\\\n'" } ]
       YAML
 
       vars = { } of String => String
@@ -131,7 +135,7 @@ describe Bindgen::FindPath do
     context "the command fails" do
       it "fails the try" do
         config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
-        FAILS: { try: [ { shell: "echo '/lib'; false" } ] }
+        FAILS: { try: [ { shell: "#{print_bin} '/lib\\\\n'; false" } ] }
         YAML
 
         vars = { } of String => String
@@ -150,7 +154,7 @@ describe Bindgen::FindPath do
       it "fails the try" do
         config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
         FAILS:
-          try: [ { shell: "echo '%'" } ]
+          try: [ { shell: "#{print_bin} '%\\\\n'" } ]
           checks:
             - path: doesnt_exist
         YAML
@@ -170,7 +174,7 @@ describe Bindgen::FindPath do
     context "no regex is set" do
       it "takes the first line" do
         config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
-        TEST: { try: [ { shell: "echo -e '%\\\\nFooBar'" } ] }
+        TEST: { try: [ { shell: "#{print_bin} '%\\\\nFooBar\\\\n'" } ] }
         YAML
 
         vars = { } of String => String
@@ -183,7 +187,7 @@ describe Bindgen::FindPath do
 
       it "fails if the first line is empty" do
         config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
-        TEST: { try: [ { shell: "echo" } ] }
+        TEST: { try: [ { shell: "#{print_bin} '\\\\n'" } ] }
         YAML
 
         vars = { } of String => String
@@ -204,7 +208,7 @@ describe Bindgen::FindPath do
           config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
           TEST:
             try:
-              - shell: "echo -e 'Header\\\\nDIR=%\\\\nFooter'"
+              - shell: "#{print_bin} 'Header\\\\nDIR=%\\\\nFooter\\\\n'"
                 regex: "^DIR=(.*)"
           YAML
 
@@ -220,7 +224,7 @@ describe Bindgen::FindPath do
           config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
           TEST:
             try:
-              - shell: "echo -e 'Header\\\\nDIR=%\\\\nFooter'"
+              - shell: "#{print_bin} 'Header\\\\nDIR=%\\\\nFooter\\\\n'"
                 regex: "DIR=()"
           YAML
 
@@ -241,7 +245,7 @@ describe Bindgen::FindPath do
           config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
           TEST:
             try:
-              - shell: "echo -e 'Header\\\\n%\\\\nFooter'"
+              - shell: "#{print_bin} 'Header\\\\n%\\\\nFooter\\\\n'"
                 regex: "^.*/spec/.*$"
           YAML
 
@@ -257,7 +261,7 @@ describe Bindgen::FindPath do
           config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
           TEST:
             try:
-              - shell: "echo -e 'Something\\\\nDIR=%'"
+              - shell: "#{print_bin} 'Something\\\\nDIR=%\\\\n'"
                 regex: ""
           YAML
 
@@ -278,7 +282,7 @@ describe Bindgen::FindPath do
           config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
           TEST:
             try:
-              - shell: "echo -e 'Something\\\\nDIR=%'"
+              - shell: "#{print_bin} 'Something\\\\nDIR=%\\\\n'"
                 regex: "^/doesnt_exist/.*"
           YAML
 
