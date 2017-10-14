@@ -78,6 +78,64 @@ module Bindgen
       end
     end
 
+    # A path check testing the version of a path or program.
+    class VersionCheck
+      enum Prefer
+        Highest
+        Lowest
+      end
+
+      enum Fallback
+        Fail
+        Accept
+        Prefer
+      end
+
+      YAML.mapping(
+        # Min version string
+        min: {
+          type: String,
+          nilable: true,
+        },
+
+        # Max version string
+        max: {
+          type: String,
+          nilable: true,
+        },
+
+        # Which version to prefer
+        prefer: {
+          type: Prefer,
+          default: Prefer::Highest,
+        },
+
+        # Fallback behaviour if the regex fails.
+        fallback: {
+          type: Fallback,
+          default: Fallback::Fail,
+        },
+
+        # Regular expression to grab it from the name
+        regex: {
+          type: String,
+          default: "-([0-9.]+)$", # Debian-style
+        },
+
+        # Custom command to run to figure out the version
+        command: {
+          type: String,
+          nilable: true,
+        }
+      )
+
+      def initialize(
+        @min = nil, @max = nil, @prefer = Prefer::Highest,
+        @fallback = Fallback::Fail, @regex = "-([0-9.]+)$", @command = nil
+      )
+      end
+    end
+
     # YAML-based configuration.  Used as value for the `#find_paths` option in
     # `Bindgen::Configuration`.
     class PathConfig
@@ -110,6 +168,12 @@ module Bindgen
         checks: {
           type: Array(PathCheck | ShellCheck),
           default: Array(PathCheck | ShellCheck).new,
+        },
+
+        # Version check to do
+        version: {
+          type: VersionCheck,
+          nilable: true,
         },
       )
 

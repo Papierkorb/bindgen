@@ -50,12 +50,39 @@ module Bindgen
     # Returns `nil` on error.
     def find(config : PathConfig) : String?
       checkers = config.checks.map do |check_config|
-        Checker.create(check_config, config.kind.file?)
+        Checker.create(check_config, !config.kind.directory?)
       end
 
+      if version_check = config.version
+        find_versioned(config, checkers, version_check)
+      else
+        find_unversioned(config, checkers)
+      end
+    end
+
+    # Returns the best candidate that satisfies all *checkers*
+    private def find_versioned(config, checkers, version_check) : String?
+      version_checker = VersionChecker.new(version_check)
+
+      find_each_candidate(config, checkers) do |path|
+        version_checker.check(path)
+      end
+
+      version_checker.best_candidate
+    end
+
+    # Returns the first candidate that satisfies all *checkers*
+    private def find_unversioned(config, checkers) : String?
+      find_each_candidate(config, checkers) do |path|
+        return path
+      end
+    end
+
+    # Yields each path candidate that satisfies all *checkers*
+    private def find_each_candidate(config, checkers) : Nil
       config.try.each do |try|
         if found = run_path_try(try, config.kind, checkers)
-          return found
+          yield found
         end
       end
 
