@@ -7,7 +7,7 @@ generators:
   cpp:
     output: tmp/{SPEC_NAME}.cpp
     # Don't barf on unused functions.  Everything else: Error.
-    build: "{CXX|c++} -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function"
+    build: "{CXX|c++} -std=c++11 -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function"
     preamble: |-
       #include <gc/gc_cpp.h>
       #include "bindgen_helper.hpp"
