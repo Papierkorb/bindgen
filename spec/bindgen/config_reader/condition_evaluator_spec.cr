@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 describe Bindgen::ConfigReader::ConditionEvaluator do
-  variables = { "foo" => "bar" }
+  variables = { "foo" => "bar", "under_scored" => "okay" }
   subject = Bindgen::ConfigReader::ConditionEvaluator.new(variables)
 
   context "is-checker" do
@@ -60,6 +60,13 @@ describe Bindgen::ConfigReader::ConditionEvaluator do
       subject.evaluate("elsif_foo_is_bar").should be_true
       subject.evaluate("elsif_foo_is_yadda").should be_false
     end
+
+    it "works with variable using underscores" do
+      subject.evaluate("if_under_scored_is_okay").should be_true
+      subject.evaluate("if_under_scored_is_broken").should be_false
+      subject.evaluate("if_under_scored_is_").should be_false
+      subject.evaluate("if_under_scored_isnt_").should be_true
+    end
   end
 
   context "spaces" do
@@ -71,6 +78,13 @@ describe Bindgen::ConfigReader::ConditionEvaluator do
     it "works with elsif" do
       subject.evaluate("elsif foo is bar").should be_true
       subject.evaluate("elsif foo is yadda").should be_false
+    end
+
+    it "works with variable using underscores" do
+      subject.evaluate("if under_scored is okay").should be_true
+      subject.evaluate("if under_scored is broken").should be_false
+      subject.evaluate("if under_scored is ").should be_false
+      subject.evaluate("if under_scored isnt ").should be_true
     end
   end
 

@@ -16,7 +16,7 @@ module Bindgen
       # Regular expression for conditionals.
       # Matches: `[els]if VARIABLE (is|matches) VALUE`.
       # Instead of a space, an underscore may be used instead.
-      RX = /^(?:els)?if(?: +|_)([^ _]+)(?: +|_)(is|isnt|matches)(?: +|_)(.*)$/
+      RX = /^(?:els)?if(?: +|_)(.+?)(?: +|_)(is|isnt|matches)(?: +|_)(.*)$/
 
       # Available variables
       getter variables : Hash(String, String)
