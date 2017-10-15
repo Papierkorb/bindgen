@@ -18,7 +18,7 @@ module Bindgen
       def arguments(input_file)
         classes = @classes.flat_map{|x| [ "-c", "#{x}" ] }
         enums = @enums.flat_map{|x| [ "-e", "#{x}" ] }
-        flags = @config.flags
+        flags = @config.flags.map{|x| Util.template(x, replacement: nil)}
         defines = @config.defines.map{|x| "-D#{x}"}
         includes = template_include_paths.map{|x| "-I#{x}"}
         macros = [ "-m", @macros.join('|').inspect ]
