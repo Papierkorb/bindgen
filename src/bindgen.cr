@@ -1,21 +1,46 @@
 require "./bindgen_lib"
+require "toka"
 
-show_stats = !!ARGV.delete("--stats")
-show_help = ARGV.any?{|arg| { "-h", "--help", "help" }.includes?(arg)}
+class CliOptions
+  Toka.mapping({
+    stats: { # --stats, -s
+      type: Bool,
+      default: false,
+      description: "Show runtime statistics",
+    },
 
-if ARGV.empty? || show_help
-  puts "bindgen - Wrapper generator for C++ to Crystal."
-  puts "  Usage: #{$0} [configuration yaml] [--stats]"
-  puts "See https://github.com/Papierkorb/bindgen for further information."
+    var: { # --var, -v
+      type: Hash(String, String),
+      value_name: "NAME=VALUE",
+      description: "Add variable.  Overrides builtins.",
+    },
+  }, {
+    banner: "bindgen [options] <configuration.yml>",
+    footer: "See https://github.com/Papierkorb/bindgen for further information.",
+  })
+end
+
+opts = CliOptions.new
+
+if opts.positional_options.size < 1
+  puts Toka::HelpPageRenderer.new(CliOptions)
+  exit 1
+elsif opts.positional_options.size > 1
+  puts "Exactly one configuration file must be supplied.  See --help."
   exit 1
 end
 
-config_path = ARGV.first
+# Merge additional --var's
+Bindgen::Variables.builtin.merge!(opts.var)
+
+# Parse the configuration
+config_path = opts.positional_options.first
 config = Bindgen::ConfigReader.from_file(
   klass: Bindgen::Configuration,
   path: config_path,
 )
-tool = Bindgen::Tool.new(File.dirname(config_path), config, show_stats)
 
+# And off we go!
+tool = Bindgen::Tool.new(File.dirname(config_path), config, opts.stats)
 exit_code = tool.run!
 exit exit_code
