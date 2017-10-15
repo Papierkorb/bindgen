@@ -7,6 +7,10 @@ description: C/C++/Qt binding and wrapper generator
 authors:
   - Stefan Merettig <stefan-merettig@nuriaproject.org>
 
+dependencies:
+  toka:
+    github: Papierkorb/toka
+
 targets:
   bindgen:
     main: src/bindgen.cr
