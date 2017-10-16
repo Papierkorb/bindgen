@@ -154,6 +154,12 @@ find_paths:
       # is used.  The standard output (`STDOUT`) will be hidden, the standard
       # error (`STDERR`) is shown to the user.
       - shell: "some-tool %"
+      # You can also `OR` combine multiple checks.  This checker matches if any
+      # one checker in it matches.  Useful if your library renamed critical
+      # files in a newer version.  You can use any checker in here:
+      - any_of:
+        - path: either_this.cpp
+        - path: or_this.cpp
     # You can also do a version check, on the path itself, or using a command.
     # `min` and `max` are optional.  Omit them if you want an unbounded check.
     # If you don't need a version check, omit this section.
