@@ -1,0 +1,45 @@
+# Sample configuration to generate bindings to `ioctl(3p)`.
+# See `ioctl.cr` for the sample Crystal code.
+
+# Put everything into `Ioctl`
+module: Ioctl
+
+# We only need Crystal code generation for this
+generators:
+  crystal:
+    output: binding/ioctl.cr
+
+# Which classes to inspect.  A struct is a class too:
+classes:
+  # We want `struct winsize`
+  winsize: WindowSize
+
+# Copy a few `#define`s.  If you need some more, just add them:
+macros:
+  "^TIO.*":
+    map_as: Constant
+    type: unsigned long
+    # Make these constants end up in `Ioctl`
+    destination: "::"
+
+# Map `ioctl()` into `Ioctl`:
+functions:
+  "^ioctl$": { destination: "::" }
+
+# Type-specific configuration:
+types:
+  # Modify the behaviour of `struct winsize`:
+  winsize:
+    # We want to copy its structure:
+    copy_structure: true
+    # But don't care about any methods that may be defined in it.  As bindgen
+    # comes from a C++ background, it has to handle this possibility.
+    generate_binding: false
+    generate_wrapper: false
+
+# Configure the Clang-based parser
+parser:
+  # Tell it which files to inspect.  These files are searched for in the C++
+  # search paths, so no need to know the absolute paths.
+  files:
+    - sys/ioctl.h
