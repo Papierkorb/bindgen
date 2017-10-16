@@ -1,4 +1,5 @@
 require "./bindgen_lib"
+
 require "toka"
 
 class CliOptions
@@ -13,6 +14,12 @@ class CliOptions
       type: Hash(String, String),
       value_name: "NAME=VALUE",
       description: "Add variable.  Overrides builtins.",
+    },
+
+    chdir: { # Hack to make Crystal find paths by itself.
+      type: String?,
+      description: "Change into the directory before proceeding",
+      short: false,
     },
   }, {
     banner: "bindgen [options] <configuration.yml>",
@@ -32,6 +39,10 @@ end
 
 # Merge additional --var's
 Bindgen::Variables.builtin.merge!(opts.var)
+
+if working_directory = opts.chdir
+  Dir.cd(working_directory)
+end
 
 # Parse the configuration
 config_path = opts.positional_options.first
