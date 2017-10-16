@@ -417,6 +417,62 @@ describe Bindgen::FindPath do
         vars.should eq({ "TEST" => Process.find_executable("ls") })
       {% end %}
     end
+
+    context "checker support test" do
+      # These tests verify primarily that FindPath can work will all checkers.
+      # Not necessarily that all checkers work correctly.  See the checkers own
+      # spec for that.
+
+      it "supports PathChecker" do
+        config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+        TEST:
+          try: [ "%" ]
+          checks:
+            - path: bindgen/find_path_spec.cr
+        YAML
+
+        vars = { } of String => String
+        subject = Bindgen::FindPath.new(root_dir, vars)
+        errors = subject.find_all!(config)
+
+        errors.empty?.should be_true
+        vars.should eq({ "TEST" => root_dir })
+      end
+
+      it "supports ShellChecker" do
+        config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+        TEST:
+          try: [ "%" ]
+          checks:
+            - shell: true
+        YAML
+
+        vars = { } of String => String
+        subject = Bindgen::FindPath.new(root_dir, vars)
+        errors = subject.find_all!(config)
+
+        errors.empty?.should be_true
+        vars.should eq({ "TEST" => root_dir })
+      end
+
+      it "supports AnyOfChecker" do
+        config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+        TEST:
+          try: [ "%" ]
+          checks:
+            - any_of:
+              - path: bindgen/find_path_spec.cr
+              - path: doesnt_exist.cr
+        YAML
+
+        vars = { } of String => String
+        subject = Bindgen::FindPath.new(root_dir, vars)
+        errors = subject.find_all!(config)
+
+        errors.empty?.should be_true
+        vars.should eq({ "TEST" => root_dir })
+      end
+    end
   end
 
   context "Dir.glob bug" do
