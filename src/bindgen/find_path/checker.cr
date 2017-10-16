@@ -7,6 +7,7 @@ module Bindgen
         case config
         when PathCheck then PathChecker.new(config, is_file)
         when ShellCheck then ShellChecker.new(config)
+        when AnyOfCheck then AnyOfChecker.new(config, is_file)
         else raise "BUG: Unreachable!"
         end
       end

@@ -1,3 +1,4 @@
+require "./find_path/checker"
 require "./find_path/*"
 
 module Bindgen

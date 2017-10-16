@@ -78,6 +78,17 @@ module Bindgen
       end
     end
 
+    # A path check testing using multiple inner checkers.
+    class AnyOfCheck
+      YAML.mapping(
+        # Inner checkers
+        any_of: Array(PathCheck | ShellCheck),
+      )
+
+      def initialize(@any_of)
+      end
+    end
+
     # A path check testing the version of a path or program.
     class VersionCheck
       enum Prefer
@@ -172,8 +183,8 @@ module Bindgen
 
         # Checks to do
         checks: {
-          type: Array(PathCheck | ShellCheck),
-          default: Array(PathCheck | ShellCheck).new,
+          type: Array(PathCheck | ShellCheck | AnyOfCheck),
+          default: Array(PathCheck | ShellCheck | AnyOfCheck).new,
         },
 
         # Version check to do
