@@ -5,7 +5,6 @@
 BASE="$(dirname "$(readlink -f "$0")")"
 
 CLANG_DIR="$BASE/clang/"
-BIN_FILE="$BASE/bin/bindgen"
 SOURCE_FILE="$BASE/src/bindgen.cr"
 
 function print_clang_error {
@@ -24,8 +23,4 @@ if [ ! -f "$CLANG_DIR/bindgen" ]; then
   cd -
 fi
 
-if [ -f "$BIN_FILE" ]; then
-  exec "$BIN_FILE" $@
-else
-  exec crystal run "$SOURCE_FILE" -- $@
-fi
+exec crystal run "$SOURCE_FILE" -- $@
