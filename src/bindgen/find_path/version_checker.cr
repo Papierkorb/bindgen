@@ -15,6 +15,18 @@ module Bindgen
       def initialize(@config : VersionCheck)
       end
 
+      # Returns the list of sorted candidates, from the best candidate first
+      # down to worse candidates.
+      def sorted_candidates : Array(String)
+        list = @candidates.sort_by!(&.first).map(&.last)
+
+        if @config.prefer.lowest?
+          list
+        else
+          list.reverse
+        end
+      end
+
       # Returns the best checked candidate
       def best_candidate : String?
         @candidates.sort_by!(&.first)
