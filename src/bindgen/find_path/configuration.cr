@@ -147,6 +147,44 @@ module Bindgen
       end
     end
 
+    # Configuration for `PathConfig#list`.
+    class ListConfig
+      YAML.mapping(
+        # Element separator
+        separator: {
+          type: String,
+          default: FindPath::PATH_SEPARATOR.to_s,
+        },
+
+        # Element template
+        template: {
+          type: String,
+        },
+      )
+
+      def initialize(@template, @separator = FindPath::PATH_SEPARATOR.to_s)
+      end
+
+      def self.default
+        new(template: "%")
+      end
+    end
+
+    # Converts a `Bool | ListConfig` into a `ListConfig | Nil`.
+    module ListConfigConverter
+      def self.from_yaml(pull) : ListConfig?
+        if pull.kind.scalar? # A bool?
+          if Bool.new(pull)
+            ListConfig.default
+          else
+            nil
+          end
+        else # A full config
+          ListConfig.new(pull)
+        end
+      end
+    end
+
     # YAML-based configuration.  Used as value for the `#find_paths` option in
     # `Bindgen::Configuration`.
     class PathConfig
@@ -192,6 +230,13 @@ module Bindgen
           type: VersionCheck,
           nilable: true,
         },
+
+        # List functionality
+        list: {
+          type: ListConfig,
+          nilable: true,
+          converter: ListConfigConverter,
+        }
       )
 
       def initialize(

@@ -2,6 +2,9 @@ module Bindgen
   class FindPath
     # Finds all matches in a list of candidate paths.
     struct MatchFinder
+      # Eases testing, as we can now expect other code to restrict to Enumerable
+      include Enumerable(String)
+
       @parent : FindPath
       @search_paths : Array(String)?
       @config : PathConfig

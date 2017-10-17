@@ -3,7 +3,7 @@ module Bindgen
     # Finds all matches, yielding them in the sorted order going from most to
     # least preferred.
     struct VersionedMatchFinder
-      def initialize(@finder : MatchFinder, @version_check : VersionCheck)
+      def initialize(@finder : Enumerable(String), @version_check : VersionCheck)
       end
 
       # Iterates over the set of candidates, yielding each candidate in sorted

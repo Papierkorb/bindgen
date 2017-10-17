@@ -62,7 +62,7 @@ module Bindgen
       end
 
       finder = create_match_finder(search_paths, config, checkers)
-      collector = MatchCollector.new
+      collector = create_match_collector(config)
       collector.collect(finder)
     end
 
@@ -77,6 +77,14 @@ module Bindgen
       end
     end
 
+    # Returns a new `MatchCollector` decided by *config*.
+    def create_match_collector(config)
+      if list_config = config.list
+        ListMatchCollector.new(list_config)
+      else
+        MatchCollector.new
+      end
+    end
 
     # Returns the list of search paths, if any
     private def get_search_paths(config) : Array(String)?
