@@ -42,6 +42,17 @@ A C/C++/Qt binding and wrapper generator.
 | Platform specific type binding rules             | **YES** |
 | Portable path finding for headers, libs, etc.    | **YES** |
 
+### Platform support
+
+| Arch    | System            | Status           | Clang version  |
+| ------- | ----------------- | ---------------- | -------------- |
+| x86_64  | ArchLinux         | **Works always** | *Rolling*      |
+| x86_64  | Ubuntu 16.04      | Works            | 4.0            |
+|         | Other systems     | Help wanted      | ?              |
+
+You require the LLVM and Clang development libraries and headers.  If you don't
+have them already installed, bindgen will tell you.
+
 ## Projects using bindgen
 
 * [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
