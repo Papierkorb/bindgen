@@ -475,6 +475,53 @@ describe Bindgen::FindPath do
     end
   end
 
+  context "list feature" do
+    it "is supported" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        list: true
+        try: [ "bindgen", "integration", "clang" ]
+        search_paths: [ "%" ]
+        checks:
+          - path: spec_helper.cr
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+      sep = Bindgen::FindPath::PATH_SEPARATOR
+
+      errors.empty?.should be_true
+      vars.should eq({
+        "TEST" => "#{root_dir}/integration#{sep}#{root_dir}/clang"
+      })
+    end
+
+    it "is supported in combination with version check" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        list: true
+        kind: Executable
+        try: [ "*" ]
+        search_paths: [ "%/bindgen/find_path/fixture" ]
+        version:
+          prefer: Highest
+          fallback: Prefer
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      sep = Bindgen::FindPath::PATH_SEPARATOR
+      base = "#{root_dir}/bindgen/find_path/fixture"
+      errors.empty?.should be_true
+      vars.should eq({
+        "TEST" => "#{base}/tool#{sep}#{base}/tool-2.0#{sep}#{base}/tool-1.0"
+      })
+    end
+  end
+
   context "Dir.glob bug" do
     it "fails if #5118 has been fixed" do
       # TODO: Remove this spec once it fails and the issue has been fixed.
