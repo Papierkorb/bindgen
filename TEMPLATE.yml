@@ -105,6 +105,20 @@ find_paths:
     # If not found, and `optional:` is `true`, it'll still output the message,
     # but will continue.
     error_message: Please install MyLib: http://example.com/
+    # Accept multiple paths?  If `true`, all matching paths will be combined
+    # into a list separated by a colon (`:`), or a semi-colon (`;`) on Windows.
+    # A list formatted like this can also be used as `search_path` in a later
+    # path search.  If combined with a version check (See below), the list will
+    # be sorted from the best candidate first downwards.
+    # Defaults to `false` to only accept a single path.
+    list: true | false
+    # You can also configure how the multi-path combination should happen:
+    list:
+      # Element separator, added between elements.  Think of `Array#join`.
+      # Defaults to the platforms default separator.
+      separator: " "
+      # Template for each element.  `%` will be expanded to the current element.  This option is mandatory.
+      template: "-L%"
     # List of paths to try.  These are tried in the order they appear in the
     # list.
     try:
@@ -124,6 +138,9 @@ find_paths:
         # This is optional:  If not given, the first line of output from the
         # program is taken as-is, and tried as path.
         regex: "^INCLUDE_DIR=([^ ]+)"
+        # By default, the `regex` is matched once.  To match multiple times,
+        # set this to `true`.  Also see the `list` option above!
+        multiple: true | false
 
     # Optional: Search paths for relative try paths.  Most useful to find
     # executables.  Entries are split on semi-colons (`;`) on Windows and
