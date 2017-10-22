@@ -13,4 +13,4 @@ size = Ioctl::Binding::Winsize.new
 Ioctl.ioctl(STDOUT.fd, Ioctl::TIOCGWINSZ, pointerof(size));
 
 # And output what we've got:
-puts "Your terminal is #{size.ws_col}x#{size.ws_row}."
+puts "Your terminal size is #{size.ws_col}x#{size.ws_row}."
