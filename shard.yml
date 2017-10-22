@@ -10,6 +10,7 @@ authors:
 dependencies:
   toka:
     github: Papierkorb/toka
+    version: ">= 0.1.1"
 
 targets:
   bindgen:
