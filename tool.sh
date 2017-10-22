@@ -23,4 +23,16 @@ if [ ! -f "$CLANG_DIR/bindgen" ]; then
   cd -
 fi
 
-exec crystal run "$SOURCE_FILE" -- $@
+OLD_PWD="$PWD"
+cd "$BASE"
+
+if [[ "$@" == *"--chdir"* ]]; then
+  exec crystal run "$SOURCE_FILE" -- $@
+else
+  exec crystal run "$SOURCE_FILE" -- --chdir "$OLD_PWD" $@
+fi
+
+echo "If you see this, something went horribly wrong."
+echo "  1) Make sure you have crystal installed"
+echo "  2) Make sure `crystal` is in your \$PATH"
+exit 127
