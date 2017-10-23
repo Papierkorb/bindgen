@@ -31,6 +31,15 @@ describe Bindgen::Processor::Enums do
     prefix_string:
       destination: PrefixString
       prefix: "Flags_"
+    prefix_uppercased_true:
+      destination: PrefixUppercasedTrue
+      prefix: true
+    prefix_uppercased_false:
+      destination: PrefixUppercasedFalse
+      prefix: false
+    prefix_uppercased_string:
+      destination: PrefixUppercasedString
+      prefix: "UPPER_"
   YAML
 
   flags_enum = Bindgen::Parser::Enum.new(
@@ -55,6 +64,17 @@ describe Bindgen::Processor::Enums do
     }
   )
 
+  uppercased_enum = Bindgen::Parser::Enum.new(
+    name: "uppercased_enum",
+    type: "int",
+    isFlags: false,
+    values: {
+      "UPPER_FIRST_ONE" => 1i64,
+      "UPPER_SECOND_ONE" => 2i64,
+      "UPPER_THIRD_ONE" => 3i64,
+    }
+  )
+
   db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
   doc = Bindgen::Parser::Document.new(
     enums: {
@@ -67,6 +87,9 @@ describe Bindgen::Processor::Enums do
       "prefix_true" => normal_enum,
       "prefix_false" => normal_enum,
       "prefix_string" => flags_enum,
+      "prefix_uppercased_true" => uppercased_enum,
+      "prefix_uppercased_false" => uppercased_enum,
+      "prefix_uppercased_string" => uppercased_enum,
     },
   )
 
@@ -116,11 +139,27 @@ describe Bindgen::Processor::Enums do
           "Three" => 3i64,
         })
       end
+
+      it "camel-cases the constant names" do
+        lookup(graph, "PrefixUppercasedTrue").origin.values.should eq({
+          "FirstOne" => 1i64,
+          "SecondOne" => 2i64,
+          "ThirdOne" => 3i64,
+        })
+      end
     end
 
     context "prefix: false" do
       it "leaves any prefix alone" do
         lookup(graph, "PrefixFalse").origin.values.should eq(normal_enum.values)
+      end
+
+      it "camel-cases the constant names" do
+        lookup(graph, "PrefixUppercasedFalse").origin.values.should eq({
+          "UpperFirstOne" => 1i64,
+          "UpperSecondOne" => 2i64,
+          "UpperThirdOne" => 3i64,
+        })
       end
     end
 
@@ -130,6 +169,14 @@ describe Bindgen::Processor::Enums do
           "One" => 1i64, # Will remove "Flags_"
           "Two" => 2i64,
           "Different_Three" => 3i64, # Leaves different prefix alone
+        })
+      end
+
+      it "camel-cases the constant names" do
+        lookup(graph, "PrefixUppercasedString").origin.values.should eq({
+          "FirstOne" => 1i64,
+          "SecondOne" => 2i64,
+          "ThirdOne" => 3i64,
         })
       end
     end

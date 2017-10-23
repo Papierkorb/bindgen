@@ -20,13 +20,25 @@ module Bindgen
       # Reconfigures *enumeration* according to the users *config*.
       private def reconfigure_enum(config, enumeration : Parser::Enum) : Parser::Enum
         is_flags = config.flags.get(enumeration.flags?)
+        fields = remove_key_prefix(config.prefix, enumeration.values)
 
         Parser::Enum.new(
           name: enumeration.name,
           type: enumeration.type, # Make configurable?
           isFlags: is_flags,
-          values: remove_key_prefix(config.prefix, enumeration.values),
+          values: camelcase_fields(fields),
         )
+      end
+
+      # CamelCases all field names, if they're not already camel-cased.
+      private def camelcase_fields(fields)
+        fields.map do |key, value|
+          unless key[0]?.try(&.uppercase?) && key[1]?.try(&.lowercase?)
+            key = key.downcase.camelcase
+          end
+
+          { key, value }
+        end.to_h
       end
 
       # Removes the common *prefix* from all *fields*.  If *prefix* is `true`,
