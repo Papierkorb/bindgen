@@ -219,7 +219,24 @@ classes:
 enums:
   # Maps from the name of the C++ enum, to the Crystal enum.
   # `CrystalEnumName` can reside in a wrapped class.
-  CppEnumName: CrystalEnumName
+  CppEnumName: Crystal::Enum::Name
+  # Or the full configuration:
+  CppEnumName:
+    # Destintation path of the enum.  Can be in a class too.
+    destination: Crystal::Enum::Name
+    # Prefix removal:  If `true`, the prefix is detected automatically.  If a
+    # string, it's used as prefix.  A prefix of a constant name is only removed
+    # if the given prefix matches the constants name.  Else, it's left alone.
+    # Defaults to `false` for no prefix removal.
+    prefix: true | false | ThePrefixString_
+    # If to force a specific `@[Flags]` behaviour.  If `true`, will force it to
+    # be a flags enum.  `false` will force it to *not* be a flags enum.
+    # Omitting this option (Leaving it literally unset) will default to what the
+    # clang parser decided it to be.
+    # Flags detection is Qt specific: A enum is only then detected to be a flags
+    # enum, if it's used in a `QFlags<E>` template.
+    # Defaults to being unset.
+    flags: true | false | unset
 
 # Map of macros (`#define`s) to copy.  Requires the `macros` processor.
 macros:
