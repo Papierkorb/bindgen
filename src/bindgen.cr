@@ -1,4 +1,6 @@
-require "./bindgen_lib"
+# This is the main file running the `bindgen` program.
+# If you want use bindgen as library, require "bindgen/library" instead.
+require "./bindgen/library"
 
 require "toka"
 

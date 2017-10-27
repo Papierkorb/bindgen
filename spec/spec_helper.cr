@@ -1,5 +1,5 @@
 require "spec"
-require "../src/bindgen_lib"
+require "../src/bindgen/library"
 
 ### Helpers
 
