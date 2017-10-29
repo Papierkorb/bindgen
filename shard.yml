@@ -16,4 +16,8 @@ targets:
   bindgen:
     main: src/bindgen.cr
 
+# Required as bindgen will be used as a tool on its own.
+scripts:
+  postinstall: crystal deps
+
 license: GPLv3
