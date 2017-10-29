@@ -1,1 +1,16 @@
 language: crystal
+
+sudo: required
+services:
+  - docker
+
+matrix:
+  include:
+   - install:
+      - docker build . -t bindgen-test --build-arg CLANG_VERSION=4.0
+     script:
+      - docker run --rm bindgen-test crystal spec
+   - install:
+      - docker build . -t bindgen-test --build-arg CLANG_VERSION=5.0
+     script:
+      - docker run --rm bindgen-test crystal spec
