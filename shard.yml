@@ -16,7 +16,4 @@ targets:
   bindgen:
     main: src/bindgen.cr
 
-scripts:
-  postinstall: crystal deps build
-
 license: GPLv3
