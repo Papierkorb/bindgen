@@ -115,6 +115,12 @@ module Bindgen
           nilable: true,
         },
 
+        # Variable to store the detected version string in
+        variable: {
+          type: String,
+          nilable: true,
+        },
+
         # Which version to prefer
         prefer: {
           type: Prefer,

@@ -37,14 +37,18 @@ module Bindgen
     # Finds all paths of *config*, yielding for each successful find.
     # Unsuccessful matches are collected into an `Error` array and returned
     # afterwards.
+    # If *additional* is given, additional variables set by matches are stored
+    # within it.  If no *additional* is given, these variables are lost.
     def find_all(config : Configuration) : Array(Error)
       errors = [ ] of Error
 
       config.each do |name, single|
         next if has_value?(name)
 
-        if result = find(single)
+        additional = { } of String => String
+        if result = find(single, additional)
           yield(name, result)
+          additional.each{|k, v| yield(k, v)}
         else
           errors << Error.new(name, single)
         end
@@ -55,7 +59,10 @@ module Bindgen
 
     # Finds a path for *config*.  On success, returns the path as string.
     # Returns `nil` on error.
-    def find(config : PathConfig) : String?
+    #
+    # If the match wants to set additional variables, it'll write them into the
+    # *additional* hash.  If no *additional* is given, these variables are lost.
+    def find(config : PathConfig, additional = nil) : String?
       search_paths = get_search_paths(config)
       checkers = config.checks.map do |check_config|
         Checker.create(check_config, !config.kind.directory?)
@@ -63,7 +70,13 @@ module Bindgen
 
       finder = create_match_finder(search_paths, config, checkers)
       collector = create_match_collector(config)
-      collector.collect(finder)
+      collected = collector.collect(finder)
+
+      if additional && (to_add = finder.additional_variables)
+        additional.merge!(to_add)
+      end
+
+      collected
     end
 
     # Returns a new `MatchFinder` decided by *config*.

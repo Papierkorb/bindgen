@@ -475,6 +475,27 @@ describe Bindgen::FindPath do
     end
   end
 
+  context "version-capturing feature" do
+    it "is supported" do
+      config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
+      TEST:
+        kind: Executable
+        try: [ "*" ]
+        search_paths: [ "%/bindgen/find_path/fixture" ]
+        version:
+          variable: MY_VER
+      YAML
+
+      vars = { } of String => String
+      subject = Bindgen::FindPath.new(root_dir, vars)
+      errors = subject.find_all!(config)
+
+      base = "#{root_dir}/bindgen/find_path/fixture"
+      errors.empty?.should be_true
+      vars.should eq({ "TEST" => "#{base}/tool-2.0", "MY_VER" => "2.0" })
+    end
+  end
+
   context "list feature" do
     it "is supported" do
       config = Bindgen::FindPath::Configuration.from_yaml <<-YAML
@@ -506,7 +527,8 @@ describe Bindgen::FindPath do
         search_paths: [ "%/bindgen/find_path/fixture" ]
         version:
           prefer: Highest
-          fallback: Prefer
+          fallback: Accept
+          variable: MY_VER
       YAML
 
       vars = { } of String => String
@@ -517,7 +539,8 @@ describe Bindgen::FindPath do
       base = "#{root_dir}/bindgen/find_path/fixture"
       errors.empty?.should be_true
       vars.should eq({
-        "TEST" => "#{base}/tool#{sep}#{base}/tool-2.0#{sep}#{base}/tool-1.0"
+        "TEST" => "#{base}/tool-2.0#{sep}#{base}/tool-1.0#{sep}#{base}/tool",
+        "MY_VER" => "2.0",
       })
     end
   end

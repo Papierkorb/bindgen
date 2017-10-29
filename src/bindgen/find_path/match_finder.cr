@@ -1,7 +1,7 @@
 module Bindgen
   class FindPath
     # Finds all matches in a list of candidate paths.
-    struct MatchFinder
+    class MatchFinder
       # Eases testing, as we can now expect other code to restrict to Enumerable
       include Enumerable(String)
 
@@ -9,6 +9,9 @@ module Bindgen
       @search_paths : Array(String)?
       @config : PathConfig
       @checkers : Array(Checker)
+
+      # Additional variables to be set by this match.
+      getter additional_variables : Hash(String, String)?
 
       def initialize(@parent, @search_paths, @config, @checkers)
       end

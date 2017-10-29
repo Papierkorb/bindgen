@@ -17,8 +17,8 @@ module Bindgen
 
       # Returns the list of sorted candidates, from the best candidate first
       # down to worse candidates.
-      def sorted_candidates : Array(String)
-        list = @candidates.sort_by!(&.first).map(&.last)
+      def sorted_candidates : Array({ String, String })
+        list = @candidates.sort_by!(&.first)
 
         if @config.prefer.lowest?
           list
