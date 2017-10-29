@@ -185,6 +185,13 @@ find_paths:
       min: "4.0"
       # Max version.  The highest, still accepted version string.
       max: "6.0"
+      # Optional: You can capture the version string of the selected candidate
+      # in a variable.  If The selected candidate has an empty version string,
+      # the variable will be empty too.  If used with the `list:` feature, only
+      # the version string of the best candidate (The first one in the list)
+      # will be captured.
+      # If no candidate was selected, this variable will not be set.
+      variable: ENV_VAR_NAME
       # If figuring out the version number failed, should this be accepted
       # anyway?  Some systems don't use version strings in their executable
       # names (Or not always), so this may help.
@@ -352,6 +359,11 @@ parser:
 # Additional type configuration, of both explicitly wrapped types and all other
 # found types.  All fields are optional.
 # Commonly referred to "type rules", or just "rules" in the source code.
+#
+# The matched type names (The mapping keys) are best-matched:  You can have
+# separate rules for type `T*` and `T`.  If no matching rule is found, the match
+# is retried after decaying the type: `const T*&` to `T*&` to `T**` to `T*` to
+# `T`.
 types:
   FullCppTypeName: # Full name of the C++ Type (Like `std::string`)
     # Ignore everything else in this map, and look-up the other type for rules.
