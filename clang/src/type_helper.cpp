@@ -160,6 +160,8 @@ bool TypeHelper::readValue(LiteralData &literal, const clang::QualType &qt,
   clang::ASTContext &ctx, const clang::Expr *expr) {
 	clang::Expr::EvalResult result;
 
+	if (!expr) return false; // Sanity check
+
 	if (!expr->EvaluateAsRValue(result, ctx)) {
 		// Failed to evaluate - Try to unpack this expression
 		return stringLiteralFromExpression(literal, expr);
