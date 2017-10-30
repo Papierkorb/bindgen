@@ -2,6 +2,20 @@
 
 A C/C++/Qt binding and wrapper generator.
 
+### Platform support
+
+<!-- Table is sorted from A-Z ascending, versions descending. -->
+
+| Arch    | System            | CI          | Clang version  |
+| ------- | ----------------- | ----------- | -------------- |
+| x86_64  | ArchLinux         | Travis      | *Rolling*      |
+| x86_64  | Ubuntu 17.04      | *None*      | 5.0            |
+| x86_64  | Ubuntu 16.04      | Travis      | 4.0 or 5.0     |
+|         | Other systems     | Help wanted | ?              |
+
+You require the LLVM and Clang development libraries and headers.  If you don't
+have them already installed, bindgen will tell you.
+
 ## Features
 
 | Feature                                          | Support |
@@ -42,17 +56,6 @@ A C/C++/Qt binding and wrapper generator.
 | Platform specific type binding rules             | **YES** |
 | Portable path finding for headers, libs, etc.    | **YES** |
 
-### Platform support
-
-| Arch    | System            | Status           | Clang version  |
-| ------- | ----------------- | ---------------- | -------------- |
-| x86_64  | ArchLinux         | Works            | *Rolling*      |
-| x86_64  | Ubuntu 17.04      | Works            | 5.0            |
-| x86_64  | Ubuntu 16.04      | [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen) | 4.0 or 5.0     |
-|         | Other systems     | Help wanted      | ?              |
-
-You require the LLVM and Clang development libraries and headers.  If you don't
-have them already installed, bindgen will tell you.
 
 ## Projects using bindgen
 
