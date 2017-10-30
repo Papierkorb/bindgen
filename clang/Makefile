@@ -18,9 +18,6 @@ all: $(BINARY)
 clean:
 	$(RM) -f bindgen $(OBJECTS)
 
-parse: parse.cpp
-	$(CXX) -o parse parse.cpp $(CXXFLAGS) $(LIBS)
-
 build/%.o: src/%.cpp $(HEADERS)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 

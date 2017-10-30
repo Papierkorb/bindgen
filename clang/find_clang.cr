@@ -29,7 +29,7 @@ def print_help_and_bail
   You're missing the LLVM and/or Clang development libraries.
   Please install these:
     ArchLinux: pacman -S llvm clang
-    Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev
+    Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev llvm-4.0-dev libpcre3-dev
     Mac OS: HELP WANTED!
 
   If you've installed these in a non-standard location, do one of these:
