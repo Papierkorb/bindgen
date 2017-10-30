@@ -93,8 +93,9 @@ string_buffer *buffer_new() { // Constructor
 string_buffer *buffer_new_string(const char *string) { // Constructor
   string_buffer *buf = static_cast<string_buffer *>(malloc(sizeof(string_buffer)));
   buf->size = strlen(string);
-  buf->ptr = static_cast<char *>(malloc(buf->size));
+  buf->ptr = static_cast<char *>(malloc(buf->size + 1));
   memcpy(buf->ptr, string, buf->size);
+  buf->ptr[buf->size] = 0;
   return buf;
 }
 
@@ -109,7 +110,8 @@ bool buffer_is_empty(string_buffer *buf) { // Question member
 
 void buffer_set_size(string_buffer *buf, int size) { // Setter member
   buf->size = size;
-  buf->ptr = static_cast<char *>(realloc(buf->ptr, size));
+  buf->ptr = static_cast<char *>(realloc(buf->ptr, size + 1));
+  buf->ptr[buf->size] = 0;
 }
 
 int buffer_get_size(string_buffer *buf) { // Getter Member
@@ -123,9 +125,11 @@ char *buffer_string(string_buffer *buf) { // Member
 void buffer_append(string_buffer *buf, const char *string) { // Member
   int added = strlen(string);
 
-  buf->ptr = static_cast<char *>(realloc(buf->ptr, buf->size + added));
+  buf->ptr = static_cast<char *>(realloc(buf->ptr, buf->size + added + 1));
   memcpy(buf->ptr + buf->size, string, added);
+
   buf->size += added;
+  buf->ptr[buf->size] = 0;
 }
 
 int buffer_version() { // Static
