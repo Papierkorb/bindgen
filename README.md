@@ -1,4 +1,4 @@
-# Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png)
+# Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png) [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen)
 
 A C/C++/Qt binding and wrapper generator.
 
@@ -46,8 +46,9 @@ A C/C++/Qt binding and wrapper generator.
 
 | Arch    | System            | Status           | Clang version  |
 | ------- | ----------------- | ---------------- | -------------- |
-| x86_64  | ArchLinux         | **Works always** | *Rolling*      |
-| x86_64  | Ubuntu 16.04      | Works            | 4.0            |
+| x86_64  | ArchLinux         | Works            | *Rolling*      |
+| x86_64  | Ubuntu 17.04      | Works            | 5.0            |
+| x86_64  | Ubuntu 16.04      | [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen) | 4.0 or 5.0     |
 |         | Other systems     | Help wanted      | ?              |
 
 You require the LLVM and Clang development libraries and headers.  If you don't
