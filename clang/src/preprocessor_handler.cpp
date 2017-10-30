@@ -4,6 +4,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
 
+#include <pcre.h>
+
 static llvm::cl::opt<std::string> MacroChecker("m", llvm::cl::desc("Macros to copy"), llvm::cl::value_desc("regex"));
 
 PreprocessorHandler::PreprocessorHandler(std::vector<Macro> &macros, clang::Preprocessor &preprocessor)
@@ -12,13 +14,7 @@ PreprocessorHandler::PreprocessorHandler(std::vector<Macro> &macros, clang::Prep
 }
 
 bool PreprocessorHandler::isMacroInteresting(const std::string &name) {
-	std::smatch ignored_match;
-
-	if (std::regex_match(name, ignored_match, this->m_regex)) {
-  	return true;
-	} else {
-		return false;
-	}
+	return this->m_regex.isMatch(name);
 }
 
 void PreprocessorHandler::MacroDefined(const clang::Token &token, const clang::MacroDirective *md) {

@@ -19,13 +19,7 @@ void FunctionMatchHandler::run(const clang::ast_matchers::MatchFinder::MatchResu
 }
 
 bool FunctionMatchHandler::isFunctionInteresting(const std::string &name) const {
-	std::smatch ignored_match;
-
-	if (std::regex_match(name, ignored_match, this->m_regex)) {
-  	return true;
-	} else {
-		return false;
-	}
+	return this->m_regex.isMatch(name);
 }
 
 static std::string getFunctionParentName(const std::string &fullName, const std::string &funcName) {

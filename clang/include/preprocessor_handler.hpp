@@ -1,7 +1,7 @@
 #ifndef PREPROCESSOR_HANDLER_HPP
 #define PREPROCESSOR_HANDLER_HPP
 
-#include <regex>
+#include "regex.hpp"
 
 class PreprocessorHandler : public clang::PPCallbacks {
 public:
@@ -16,7 +16,7 @@ private:
 
 	clang::Preprocessor &m_preprocessor;
 	std::vector<Macro> &m_macros;
-  std::regex m_regex;
+  Regex m_regex;
 };
 
 #endif // PREPROCESSOR_HANDLER_HPP

@@ -3,7 +3,7 @@
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "structures.hpp"
-#include <regex>
+#include "regex.hpp"
 
 namespace clang {
 	class FunctionDecl;
@@ -22,7 +22,7 @@ public:
 	void runOnFunction(const clang::FunctionDecl *func);
 
 private:
-	std::regex m_regex;
+	Regex m_regex;
 	std::vector<Method> m_functions;
 };
 
