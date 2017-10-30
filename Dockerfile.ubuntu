@@ -1,17 +1,17 @@
 # Dockerfile for bindgen, used for automated testing on travis-ci.org
 
-FROM ubuntu:16.04
-
 ARG CLANG_VERSION=5.0
+ARG RELEASE=xenial
+FROM ubuntu:$RELEASE
 
 COPY . /
 
-RUN echo ' \
-  deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-4.0 main \n\
-  deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-4.0 main \n\
-  deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-5.0 main \n\
-  deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-5.0 main \n\
-  ' > /etc/apt/sources.list.d/clang.list
+RUN echo " \
+  deb http://apt.llvm.org/${RELEASE}/ llvm-toolchain-${RELEASE}-4.0 main \n\
+  deb-src http://apt.llvm.org/${RELEASE}/ llvm-toolchain-${RELEASE}-4.0 main \n\
+  deb http://apt.llvm.org/${RELEASE}/ llvm-toolchain-${RELEASE}-5.0 main \n\
+  deb-src http://apt.llvm.org/${RELEASE}/ llvm-toolchain-${RELEASE}-5.0 main \n\
+  " > /etc/apt/sources.list.d/clang.list
 
 RUN \
   apt-get update && \
