@@ -1,7 +1,8 @@
 # Dockerfile for bindgen, used for automated testing on travis-ci.org
 
-FROM debian:$DISTRIB_CODENAME
+FROM ubuntu:xenial
 ARG CLANG_VERSION=5.0
+ARG DISTRIB_CODENAME=xenial
 
 COPY . /
 
