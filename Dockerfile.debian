@@ -1,9 +1,9 @@
 # Dockerfile for bindgen, used for automated testing on travis-ci.org
 
-FROM ubuntu:$DISTRIB_CODENAME
+FROM debian:$DISTRIB_CODENAME
 ARG CLANG_VERSION=5.0
 
 COPY . /
 
-RUN ci/install_ubuntu.sh
+RUN ci/install_debian.sh
 RUN make -C clang

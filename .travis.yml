@@ -7,9 +7,13 @@ services:
 matrix:
   include:
     - install: # Clang 4.0 on Ubuntu 16.04 (Xenial)
-      - docker build . -f Dockerfile.ubuntu -t bindgen-test --build-arg CLANG_VERSION=4.0
+      - docker build . -f Dockerfile.ubuntu -t bindgen-test --build-arg DISTRIB_CODENAME=xenial --build-arg CLANG_VERSION=4.0
     - install: # Clang 5.0 on Ubuntu 16.04 (Xenial)
-      - docker build . -f Dockerfile.ubuntu -t bindgen-test --build-arg CLANG_VERSION=5.0
+      - docker build . -f Dockerfile.ubuntu -t bindgen-test --build-arg DISTRIB_CODENAME=xenial --build-arg CLANG_VERSION=5.0
+    - install: # Clang 4.0 on Debian 7 (Stretch)
+      - docker build . -f Dockerfile.debian -t bindgen-test --build-arg DISTRIB_CODENAME=stretch --build-arg CLANG_VERSION=4.0
+    - install: # Clang 5.0 on Debian 7 (Stretch)
+      - docker build . -f Dockerfile.debian -t bindgen-test --build-arg DISTRIB_CODENAME=stretch --build-arg CLANG_VERSION=5.0
     - install: # Clang "latest" on ArchLinux (Rolling)
       - docker build . -f Dockerfile.archlinux -t bindgen-test
 
