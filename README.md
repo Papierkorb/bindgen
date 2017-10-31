@@ -9,8 +9,9 @@ A C/C++/Qt binding and wrapper generator.
 | Arch    | System            | CI          | Clang version  |
 | ------- | ----------------- | ----------- | -------------- |
 | x86_64  | ArchLinux         | Travis      | *Rolling*      |
+| x86_64  | Debian 7          | Travis      | 4.0, 5.0       |
 | x86_64  | Ubuntu 17.04      | *None*      | 5.0            |
-| x86_64  | Ubuntu 16.04      | Travis      | 4.0 or 5.0     |
+| x86_64  | Ubuntu 16.04      | Travis      | 4.0, 5.0       |
 |         | Other systems     | Help wanted | ?              |
 
 You require the LLVM and Clang development libraries and headers.  If you don't
