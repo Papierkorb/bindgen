@@ -4,5 +4,5 @@ FROM base/devel
 
 COPY . /
 
-RUN pacman -Syu --noconfirm llvm clang crystal gc libyaml
+RUN pacman -Syu --noconfirm llvm clang crystal shards gc libyaml
 RUN make -C clang
