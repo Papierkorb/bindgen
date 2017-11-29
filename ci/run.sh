@@ -9,6 +9,4 @@ pwd
 
 crystal version
 
-crystal deps
-
 crystal spec
