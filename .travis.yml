@@ -18,4 +18,4 @@ matrix:
       - docker build . -f ci/Dockerfile.archlinux -t bindgen-test
 
 script:
-  - docker run --rm bindgen-test crystal spec
+  - docker run --rm bindgen-test ci/run.sh
