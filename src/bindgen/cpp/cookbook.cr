@@ -16,7 +16,7 @@ module Bindgen
         case name.downcase
         when "boehmgc-cpp", "boehmgc-cxx", "boehmgc-c++", "cpp", "cxx", "c++"
           BoehmGcCppCookbook.new
-        when "bare-cpp", "bare-cxx", "bare-c"
+        when "bare-cpp", "bare-cxx", "bare-c++"
           BareCppCookbook.new
         when "boehmgc-c", "c"
           BoehmGcCCookbook.new
