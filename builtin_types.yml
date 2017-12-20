@@ -86,6 +86,7 @@ qint16: { binding_type: Int16, kind: Struct, builtin: true }
 qint32: { binding_type: Int32, kind: Struct, builtin: true }
 qint64: { binding_type: Int64, kind: Struct, builtin: true }
 qlonglong: { binding_type: Int64, kind: Struct, builtin: true }
+qsizetype: { binding_type: "LibC::SizeT", kind: Struct, builtin: true } # Since Qt5.10
 
 if_architecture_is_arm: # Only Float32 on ARM
   qreal: { binding_type: Float32, kind: Struct, builtin: true }
