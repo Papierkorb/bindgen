@@ -30,7 +30,7 @@ module Bindgen
     # Returns a list of all encountered errors.
     def find_all!(config : Configuration) : Array(Error)
       find_all(config) do |key, value|
-        @variables[key] = value
+        @variables[key] = value unless has_value?(key)
       end
     end
 
