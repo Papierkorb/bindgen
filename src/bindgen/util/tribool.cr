@@ -21,8 +21,12 @@ module Bindgen
       def initialize(@value : Bool | Nil)
       end
 
-      def initialize(pull : YAML::PullParser)
-        @value = pull.read_null_or{ Bool.new(pull) }
+      def initialize(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        if node.is_a?(YAML::Nodes::Scalar) && node.value.empty?
+          @value = nil
+        else
+          @value = Bool.new(ctx, node)
+        end
       end
 
       # Returns a new unset `Tribool`.

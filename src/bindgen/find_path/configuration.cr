@@ -2,25 +2,6 @@ module Bindgen
   class FindPath
     alias Configuration = Hash(String, PathConfig)
 
-    # Converter to read `Array(String | ShellTry)`.
-    module TryListConverter
-      def self.from_yaml(pull)
-        ary = [] of String | ShellTry
-
-        pull.read_sequence do
-          while !pull.kind.sequence_end?
-            if pull.kind.scalar?
-              ary << String.new(pull)
-            else
-              ary << ShellTry.new(pull)
-            end
-          end
-        end
-
-        ary
-      end
-    end
-
     # Used in `PathConfig#try` to distinguish a path try from a shell one.
     class ShellTry
       YAML.mapping(
@@ -89,6 +70,17 @@ module Bindgen
       end
     end
 
+    # Forces the interpretation of numeric values as String.
+    module AlwaysStringConverter
+      def self.from_yaml(ctx, node)
+        if node.is_a?(YAML::Nodes::Scalar)
+          node.value
+        else
+          node.raise "Expected a scalar value, not a #{node.class}"
+        end
+      end
+    end
+
     # A path check testing the version of a path or program.
     class VersionCheck
       enum Prefer
@@ -107,12 +99,14 @@ module Bindgen
         min: {
           type: String,
           nilable: true,
+          converter: AlwaysStringConverter,
         },
 
         # Max version string
         max: {
           type: String,
           nilable: true,
+          converter: AlwaysStringConverter,
         },
 
         # Variable to store the detected version string in
@@ -178,15 +172,15 @@ module Bindgen
 
     # Converts a `Bool | ListConfig` into a `ListConfig | Nil`.
     module ListConfigConverter
-      def self.from_yaml(pull) : ListConfig?
-        if pull.kind.scalar? # A bool?
-          if Bool.new(pull)
+      def self.from_yaml(ctx, node) : ListConfig?
+        if node.is_a?(YAML::Nodes::Scalar) # A bool?
+          if Bool.new(ctx, node)
             ListConfig.default
           else
             nil
           end
         else # A full config
-          ListConfig.new(pull)
+          ListConfig.new(ctx, node)
         end
       end
     end
@@ -216,7 +210,7 @@ module Bindgen
         # Paths to try
         try: {
           type: Array(String | ShellTry),
-          converter: TryListConverter,
+          # converter: TryListConverter,
         },
 
         # Search paths for relative try paths

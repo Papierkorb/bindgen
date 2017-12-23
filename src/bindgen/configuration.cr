@@ -5,27 +5,29 @@ module Bindgen
     # Converter to accept `Hash(String, String | T)` and turn it into
     # `Hash(String, T)`
     module GenericConverter(T)
-      def self.from_yaml(pull)
-        hsh = Hash(String, String | T).new(pull)
+      def self.from_yaml(ctx : YAML::ParseContext, value_node : YAML::Nodes::Node) : Hash(String, T)
+        hsh = Hash(String, T).new
 
-        hsh.map do |key, value|
-          if value.is_a?(String)
-            { key, T.new(value) }
-          else
-            { key, value }
-          end
-        end.to_h
+        Hash(String, String | T).new(ctx, value_node) do |key, value|
+          value = T.new(value) if value.is_a?(String)
+          hsh[key] = value
+        end
+
+        hsh
       end
     end
 
     # Reads a `(String | Bool)` from a YAML pull parser without breaking.
     module StringOrBool
-      def self.from_yaml(pull)
-        case value = pull.read_scalar
-        when "true" then true
-        when "false" then false
-        else value
+      def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String | Bool
+        if node.is_a?(YAML::Nodes::Scalar)
+          case node.value
+          when "true" then return true
+          when "false" then return false
+          end
         end
+
+        String.new(ctx, node)
       end
     end
 
