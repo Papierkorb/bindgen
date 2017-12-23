@@ -1,6 +1,8 @@
 require  "../../spec_helper"
 
 describe Bindgen::FindPath::Kind do
+  this_binary = Process.executable_path.not_nil!
+
   describe "Directory#exists?" do
     context "on a file" do
       it "returns false" do
@@ -16,7 +18,7 @@ describe Bindgen::FindPath::Kind do
 
     context "on an executable" do
       it "returns false" do
-        Bindgen::FindPath::Kind::Directory.exists?($0).should be_false
+        Bindgen::FindPath::Kind::Directory.exists?(this_binary).should be_false
       end
     end
 
@@ -42,7 +44,7 @@ describe Bindgen::FindPath::Kind do
 
     context "on an executable" do
       it "returns true" do
-        Bindgen::FindPath::Kind::File.exists?($0).should be_true
+        Bindgen::FindPath::Kind::File.exists?(this_binary).should be_true
       end
     end
 
@@ -68,7 +70,7 @@ describe Bindgen::FindPath::Kind do
 
     context "on an executable" do
       it "returns true" do
-        Bindgen::FindPath::Kind::Executable.exists?($0).should be_true
+        Bindgen::FindPath::Kind::Executable.exists?(this_binary).should be_true
       end
     end
 
