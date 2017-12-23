@@ -2,11 +2,25 @@ module Bindgen
   class FindPath
     alias Configuration = Hash(String, PathConfig)
 
+    # Forces the interpretation of numeric values as String.
+    module AlwaysStringConverter
+      def self.from_yaml(ctx, node) : String
+        if node.is_a?(YAML::Nodes::Scalar)
+          node.value
+        else
+          node.raise "Expected a scalar value, not a #{node.class}"
+        end
+      end
+    end
+
     # Used in `PathConfig#try` to distinguish a path try from a shell one.
     class ShellTry
       YAML.mapping(
         # The shell command to run
-        shell: String,
+        shell: {
+          type: String,
+          converter: AlwaysStringConverter,
+        },
 
         # An optional regex to grab the path
         regex: {
@@ -23,7 +37,10 @@ module Bindgen
     class PathCheck
       YAML.mapping(
         # The sub-path to check for existence.
-        path: String,
+        path: {
+          type: String,
+          converter: AlwaysStringConverter,
+        },
 
         # What the path should be
         kind: {
@@ -52,7 +69,10 @@ module Bindgen
     class ShellCheck
       YAML.mapping(
         # The shell command to run
-        shell: String,
+        shell: {
+          type: String,
+          converter: AlwaysStringConverter,
+        },
       )
 
       def initialize(@shell)
@@ -67,17 +87,6 @@ module Bindgen
       )
 
       def initialize(@any_of)
-      end
-    end
-
-    # Forces the interpretation of numeric values as String.
-    module AlwaysStringConverter
-      def self.from_yaml(ctx, node)
-        if node.is_a?(YAML::Nodes::Scalar)
-          node.value
-        else
-          node.raise "Expected a scalar value, not a #{node.class}"
-        end
       end
     end
 
@@ -136,6 +145,7 @@ module Bindgen
         # Custom command to run to figure out the version
         command: {
           type: String,
+          converter: AlwaysStringConverter,
           nilable: true,
         }
       )

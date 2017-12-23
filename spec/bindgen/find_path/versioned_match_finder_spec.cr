@@ -5,7 +5,7 @@ describe Bindgen::FindPath::VersionedMatchFinder do
     it "yields a list going from lowest to highest" do
       list = [ "tool-2.0", "tool", "tool-1.0" ]
       config = Bindgen::FindPath::VersionCheck.from_yaml("prefer: Lowest")
-      subject = Bindgen::FindPath::VersionedMatchFinder.new(list, config)
+      subject = Bindgen::FindPath::VersionedMatchFinder.new(list.as(Array(String)), config)
 
       collected = [ ] of String
       subject.each{|x| collected << x}

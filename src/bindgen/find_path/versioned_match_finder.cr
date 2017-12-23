@@ -3,11 +3,24 @@ module Bindgen
     # Finds all matches, yielding them in the sorted order going from most to
     # least preferred.
     class VersionedMatchFinder
+      include Enumerable(String)
+
       # Additional variables to be set by this match.
       getter additional_variables : Hash(String, String)?
 
-      def initialize(@finder : Enumerable(String), @version_check : VersionCheck)
+      # Temporary "Fix" for https://github.com/crystal-lang/crystal/issues/5445
+      # Once fixed, switch to the #initialize below again.
+      {% if Dir.methods.any?(&.name.== "each".id) ||
+            !Dir.ancestors.map(&.stringify).includes?("Enumerable(String)")
+          raise "Good news: Crystal#5445 is fixed, see this file!"
+        end %}
+
+      def initialize(@finder : Array(String) | MatchFinder, @version_check : VersionCheck)
       end
+
+      # Fixed version:
+      # def initialize(@finder : Enumerable(String), @version_check : VersionCheck)
+      # end
 
       # Iterates over the set of candidates, yielding each candidate in sorted
       # order.

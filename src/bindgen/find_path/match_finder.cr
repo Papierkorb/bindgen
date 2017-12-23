@@ -29,11 +29,13 @@ module Bindgen
         nil # Not found
       end
 
-      # Tests if *path* matches *kind* and all *checkers*.  Returns *path* on
-      # success, or `nil` otherwise.
-      private def run_path_checkers(path : String, kind, checkers) : String?
-        if kind.exists?(path) && checkers.all?(&.check(path))
-          path
+      # Tests if *path* matches *kind* and all *checkers*.  Returns `true` on
+      # success, or `false` otherwise.
+      private def run_path_checkers(path : String, kind, checkers) : Bool
+        if kind.exists?(path)
+          checkers.all?(&.check(path))
+        else
+          false
         end
       end
 

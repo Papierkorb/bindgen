@@ -8,7 +8,7 @@ module Bindgen
 
       # Returns the first match *finder* returns.  Returns `nil` if nothing was
       # found.
-      def collect(finder) : String?
+      def collect(finder : Enumerable(String)) : String?
         candidates = [ ] of String
         finder.each{|x| candidates << x}
 
