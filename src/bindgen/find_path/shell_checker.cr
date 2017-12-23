@@ -10,8 +10,12 @@ module Bindgen
       # succeeds if the command returned exit code `0`.
       def check(path : String) : Bool
         command = Util.template(@config.shell, path)
-        status = Process.run(command: command, shell: true, output: false, error: true)
-        status.success?
+        Process.run(
+          command: command,
+          shell: true,
+          output: Process::Redirect::Close,
+          error: Process::Redirect::Inherit,
+        ).success?
       end
     end
   end
