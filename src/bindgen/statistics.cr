@@ -60,7 +60,7 @@ module Bindgen
     # Returns the total duration of all measured steps.  The timings between the
     # stages is *not* recorded, and is thus excluded from the total duration.
     def total_duration : Time::Span
-      @stages.values.sum(Time::Span.new(0), &.duration)
+      @stages.values.sum(Time::Span::ZERO, &.duration)
     end
 
     # Returns how much the heap size has changed during the measurements
@@ -111,10 +111,10 @@ module Bindgen
         io << table_header(justification, indent) << "\n"
       end
 
-      total = total_duration.ticks.to_f
+      total = total_duration
 
       @stages.each do |name, timing|
-        duration = timing.duration.ticks.to_f
+        duration = timing.duration
         percent = ((duration / total) * 100).to_i
         child = timing.child
         heap_size_change = timing.heap_size_change
