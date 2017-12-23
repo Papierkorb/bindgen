@@ -118,30 +118,28 @@ module Bindgen
     # * The maximum dependency depth of `10` (`MAX_DEPTH`) is exceeded.
     # * The dependency name contains a dot: `../foo.yml` won't work.
     # * The dependency name is absolute: `/foo/bar.yml` won't work.
-    class Parser < YAML::PullParser
-      class Error < Exception
-        # The row this error occured
-        getter row : Int32
-
-        # The column this error occured
-        getter column : Int32
-
+    class Parser < YAML::Nodes::Parser
+      class Error < YAML::ParseException
         # The file the error occured in
         getter file : String
 
-        def initialize(message, @row, @column, @file)
-          super("#{message} at #{@row}:#{@column} in #{@file} ")
+        def initialize(message, line, column, @file)
+          super("In #{@file}: #{message}", line, column)
+        end
+
+        def self.from(err : YAML::ParseException, file : String)
+          new(err.message, err.line_number, err.column_number, file)
         end
       end
 
       # Maximum dependency load depth.
       MAX_DEPTH = 10
 
-      # Global loader for dependencies.
+      # Default loader for dependencies.
       class_property loader : Loader = Loader.new
 
-      # Variables for use in conditions.
-      getter variables : VariableHash
+      # Evaluator for conditionals.
+      getter evaluator : ConditionEvaluator
 
       # Instance local loader
       getter loader : Loader
@@ -149,98 +147,93 @@ module Bindgen
       # Path to the root YAML file.
       getter path : String
 
-      # Parser stack
-      getter parsers = [ ] of InnerParser
+      # Parser depth, bounded by `MAX_DEPTH`
+      getter depth : Int32
 
-      def initialize(@variables, @content, @path, @loader = @@loader)
-        # `YAML::PullParser` variables.  Is this a good idea..?
-        # We'll never use these in reality.  And I don't know what's worse:
-        # Hard-to-trace bugs because of a non-forwarded method, or a NULL
-        # pointer dereference ("Crashing the application").
-        @parser = Pointer(LibYAML::Parser).null
-        @event = LibYAML::Event.new
-        @closed = false
-
-        # Build the real parser.
-        @parsers << InnerParser.new(@variables, @content, @path, self)
+      def initialize(content : String | IO, @evaluator : ConditionEvaluator, @path, @loader = @@loader, @depth = 1)
+        super(content)
       end
 
-      # Closes all parsers.
-      def close
-        @parsers.each(&.close) unless @closed
-        @closed = true
+      # Loads and parses a dependency by *path*.
+      protected def load_dependency(path : String) : YAML::Nodes::Node
+        parser = open_dependency(path)
+        parser.parse.nodes.first
       end
 
-      # Tries to deserialize a *klass* from the *content* of this instance.
-      # Mimics `Object.from_yaml` in behaviour otherwise:
-      #
-      # ```
-      # MyThing.from_yaml(code) # What you're used to
-      # ConfigReader::Parser.new(variables, code).construct(MyThing) # What you want
-      # ```
-      #
-      # See `ConfigReader.from_yaml` for a higher-level method.
-      def construct(klass)
-        read_stream do
-          read_document do
-            klass.new(self)
+      # Loads the dependency at *path* using the `#loader`.
+      protected def open_dependency(path : String)
+        if @depth >= MAX_DEPTH
+          ::raise Error.new("Max dependency depth of #{MAX_DEPTH} exceeded", 0, 0, @path)
+        end
+
+        content, full_path = @loader.load(@path, path)
+        self.class.new(
+          content: content,
+          evaluator: @evaluator,
+          path: full_path,
+          loader: @loader,
+          depth: @depth + 1
+        )
+      end
+
+      # Reimplementation: Add support for `<<: file/path.yml` while retaining
+      # support for `<<: *ALIAS`.
+      protected def parse_mapping
+        mapping = anchor new_mapping
+        @pull_parser.read_mapping_start
+
+        parse_mapping_noclose(mapping)
+        end_value(mapping)
+
+        mapping
+      end
+
+      # Recursive version of `#parse_mapping` capable of handling conditionals.
+      protected def parse_mapping_noclose(mapping)
+        state = ConditionState::AwaitingIf
+
+        until @pull_parser.kind.mapping_end?
+          key = parse_node
+
+          if key.is_a?(YAML::Nodes::Scalar) && @evaluator.conditional?(key.value)
+            match, state = @evaluator.evaluate(key.value, state)
+
+            if match
+              @pull_parser.read_mapping_start
+              parse_mapping_noclose(mapping)
+            else
+              @pull_parser.skip
+            end
+          else
+            value = parse_node
+            update_mapping(mapping, key, value)
           end
         end
+
+        @pull_parser.read_next # Consume MAPPING_END
+      rescue err : ConditionEvaluator::Error
+        ::raise Error.new(err.message, @pull_parser.start_line, @pull_parser.start_column, @path)
       end
 
-      # Forward `YAML::PullParser` methods to the currently active parser.
-
-      {% for fwd in %w[
-        kind tag value
-        anchor scalar_anchor sequence_anchor mapping_anchor alias_anchor
-        skip
-        line_number column_number
-        problem? problem_mark? problem_line_number problem_column_number
-        context? context_mark? context_line_number context_column_number
-      ].map(&.id) %}
-        # Forwards `#{{ fwd }}` to the currently active parser.
-        def {{ fwd }}
-          @parsers.last.{{ fwd }}
-        end
-      {% end %}
-
-      # Reads the next token from the currently active parser.  If the parser
-      # hits its end, and is not the main inner parser (The one of the root
-      # YAML file), it is transparently removed.  In this case, the parser that
-      # originally pulled the dependency in is resumed.
-      def read_next
-        kind = @parsers.last.read_next
-
-        # Have we reached the end of an inner parser?
-        if @parsers.size > 1 && kind.document_end?
-          @parsers.pop # Eat the document end.
-          return read_next # Recurse, do the same checks again.
+      # Adds the *key*-*value* pair to *mapping*.
+      protected def update_mapping(mapping, key, value)
+        if key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar) && key.value == "<<"
+          value = load_dependency(value.value)
         end
 
-        kind
+        add_to_mapping(mapping, key, value)
       end
 
-      # Enters a dependency, which is effectively an external file.
-      # **Do not call this by yourself.**
-      #
-      # Called by `InnerParser#read_next`.
-      def enter_dependency!(path : String) : LibYAML::EventType
-        if @parsers.size > MAX_DEPTH
-          @parsers.last.raise "Max dependency depth of #{MAX_DEPTH} exceeded"
+      protected def add_to_mapping(mapping, key, value)
+        if value.is_a?(Hash)
+          mapping.merge!(value)
+        elsif value.is_a?(Array) && value.all?(&.is_a?(Hash))
+          value.each do |elem|
+            mapping.merge!(elem.as(Hash))
+          end
+        else
+          mapping[key] = value
         end
-
-        base_path = @parsers.last.path
-        content, full_path = @loader.load(base_path, path)
-        child = InnerParser.new(@variables, content, full_path, self)
-
-        @parsers << child # Set the new parser as active
-        child.read_prelude
-        child.kind
-      end
-
-      # Does nothing.
-      def finalize
-        # We never initialized the YAML parser for this, so do nothing.
       end
     end
   end

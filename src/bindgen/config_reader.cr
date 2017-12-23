@@ -17,7 +17,9 @@ module Bindgen
     # See also `.from_file`.
     def self.from_yaml(klass : Class, content : String | IO, path : String, variables : VariableHash? = nil)
       vars = Variables.build(variables)
-      Parser.new(vars, content, path).construct(klass)
+      evaluator = ConditionEvaluator.new(vars)
+      parser = Parser.new(content, evaluator, path)
+      klass.new(YAML::ParseContext.new, parser.parse.nodes.first)
     end
 
     # Same as `.from_yaml`, but reads the file at *path* directly.

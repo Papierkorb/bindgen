@@ -24,12 +24,16 @@ private class YamlThing
 end
 
 private macro parse(content, type = YamlThing)
-  Bindgen::ConfigReader::Parser.new(
-    variables: vars, # From the describe block
-    content: {{ content }},
-    path: "root.yml",
-    loader: MemoryLoader.new(files), # From the describe block
-  ).construct({{ type }})
+  {{ type }}.new(
+    YAML::ParseContext.new,
+    Bindgen::ConfigReader::Parser.new(
+      # Using `vars` from the describe block
+      evaluator: Bindgen::ConfigReader::ConditionEvaluator.new(vars),
+      content: {{ content }},
+      path: "root.yml",
+      loader: MemoryLoader.new(files), # From the describe block
+    ).parse.nodes.first,
+  )
 end
 
 # Also tests InnerParser.
@@ -166,7 +170,7 @@ describe Bindgen::ConfigReader::Parser do
 
     context "fails" do
       it "for elsif without if" do
-        expect_raises(Bindgen::ConfigReader::Parser::Error, /elsif without preceding if/) do
+        expect_raises(Bindgen::ConfigReader::Parser::Error, /elsif-branch without if-branch/) do
           parse(%<
             foo: bar
             elsif_foo_is_bar: { }
@@ -175,7 +179,7 @@ describe Bindgen::ConfigReader::Parser do
       end
 
       it "for else without if" do
-        expect_raises(Bindgen::ConfigReader::Parser::Error, /else without preceding if/) do
+        expect_raises(Bindgen::ConfigReader::Parser::Error, /else-branch without if-branch/) do
           parse(%<
             foo: bar
             else: { }
