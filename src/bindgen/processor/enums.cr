@@ -90,13 +90,13 @@ module Bindgen
       end
 
 
-      # Prepends an underscore to *key* if it doesn't start with a letter or an
-      # underscore.  If *key* is empty returns "_".
       private def fixed_constant_name(key : String) : String
         if key.empty?
-          "_"
-        elsif !key[0].ascii_letter? && key[0] != '_'
-          "_#{key}"
+          "Unnamed"
+        elsif key[0].number?
+          "Digit#{key}"
+        elsif key[0] == '_'
+          "Underscore#{key[1..-1]}"
         else
           key
         end

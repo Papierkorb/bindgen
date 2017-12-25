@@ -92,6 +92,7 @@ describe Bindgen::Processor::Enums do
       "Bar" => 22i64,
       "PrefixBaz" => 23i64,
       "Prefix" => 30i64,
+      "_" => 40i64,
     }
   )
 
@@ -208,14 +209,15 @@ describe Bindgen::Processor::Enums do
     context "prefix: Prefix" do
       it "corrects constant names" do
         lookup(graph, "PrefixFixable").origin.values.should eq({
-          "_1" => 10i64,
-          "_12" => 11i64,
-          "_13" => 12i64,
+          "Digit1" => 10i64,
+          "Underscore1" => 11i64,
+          "Digit1_2" => 12i64,
           "Foo" => 20i64,
           "Foo_2" => 21i64,
           "Bar" => 22i64,
           "Baz" => 23i64,
-          "_" => 30i64,
+          "Unnamed" => 30i64,
+          "Underscore" => 40i64,
         })
       end
     end
@@ -223,14 +225,15 @@ describe Bindgen::Processor::Enums do
     context "prefix: false" do
       it "corrects constant names" do
         lookup(graph, "Fixable").origin.values.should eq({
-          "_1" => 10i64,
-          "_12" => 11i64,
+          "Digit1" => 10i64,
+          "Underscore1" => 11i64,
           "Prefix1" => 12i64,
           "PrefixFoo" => 20i64,
           "Foo" => 21i64,
           "Bar" => 22i64,
           "PrefixBaz" => 23i64,
           "Prefix" => 30i64,
+          "Underscore" => 40i64,
         })
       end
     end
