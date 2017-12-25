@@ -44,7 +44,7 @@ module Bindgen
       # Removes the common *prefix* from all *fields*.  If *prefix* is `true`,
       # finds the common prefix of *fields* automatically.
       private def remove_key_prefix(prefix : String | Bool, fields)
-        return fields if prefix == false
+        return fix_constant_names(fields) if prefix == false
 
         if prefix == true # Auto prefix detection
           prefix = Util::Prefix.common(fields.keys)
@@ -54,18 +54,58 @@ module Bindgen
         remove_hash_key_prefix(prefix.as(Int32 | String), fields)
       end
 
+      # Removes the first *prefix* characters from each key in *hash*.
       private def remove_hash_key_prefix(prefix : Int32, hash)
-        hash.map do |key, value|
-          { key[prefix..-1], value }
-        end.to_h
+        transform_keys_unique(hash) do |key|
+          key[prefix..-1]
+        end
       end
 
+      # Removes the *prefix* of each key in *hash*, but only for those key
+      # starting with *prefix*.
       private def remove_hash_key_prefix(prefix : String, hash)
+        transform_keys_unique(hash) do |key|
+          if key.starts_with?(prefix)
+            key[prefix.size..-1]
+          else
+            key
+          end
+        end
+      end
+
+      # Yields all keys in *hash* and returns a new hash with the yield
+      # returned new keys.  Keys are tracked to make sure they're unique.
+      # Keys are afterwards sent through `#fixed_constant_name`.
+      private def transform_keys_unique(hash : Hash(K, _)) forall K
+        seen = Hash(K, Int32).new(default_value: 0)
+
         hash.map do |key, value|
-          key = key[prefix.size..-1] if key.starts_with?(prefix)
+          key = fixed_constant_name(yield(key))
+
+          count = (seen[key] += 1)
+          key = "#{key}_#{count}" if count > 1 # Make sure keys are unique
 
           { key, value }
         end.to_h
+      end
+
+
+      # Prepends an underscore to *key* if it doesn't start with a letter or an
+      # underscore.  If *key* is empty returns "_".
+      private def fixed_constant_name(key : String) : String
+        if key.empty?
+          "_"
+        elsif !key[0].ascii_letter? && key[0] != '_'
+          "_#{key}"
+        else
+          key
+        end
+      end
+
+      # Maps the keys in *hash* using `#fixed_constant_name`.
+      private def fix_constant_names(hash)
+        # Will fix the name by itself.
+        transform_keys_unique(hash, &.itself)
       end
     end
   end

@@ -40,6 +40,10 @@ describe Bindgen::Processor::Enums do
     prefix_uppercased_string:
       destination: PrefixUppercasedString
       prefix: "UPPER_"
+    prefix_fixable:
+      destination: PrefixFixable
+      prefix: "Prefix"
+    fixable: Fixable
   YAML
 
   flags_enum = Bindgen::Parser::Enum.new(
@@ -75,6 +79,22 @@ describe Bindgen::Processor::Enums do
     }
   )
 
+  fixable_enum = Bindgen::Parser::Enum.new(
+    name: "fixable_enum",
+    type: "int",
+    isFlags: false,
+    values: {
+      "1" => 10i64,
+      "_1" => 11i64,
+      "Prefix1" => 12i64,
+      "PrefixFoo" => 20i64,
+      "Foo" => 21i64,
+      "Bar" => 22i64,
+      "PrefixBaz" => 23i64,
+      "Prefix" => 30i64,
+    }
+  )
+
   db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
   doc = Bindgen::Parser::Document.new(
     enums: {
@@ -90,6 +110,8 @@ describe Bindgen::Processor::Enums do
       "prefix_uppercased_true" => uppercased_enum,
       "prefix_uppercased_false" => uppercased_enum,
       "prefix_uppercased_string" => uppercased_enum,
+      "prefix_fixable" => fixable_enum,
+      "fixable" => fixable_enum,
     },
   )
 
@@ -177,6 +199,38 @@ describe Bindgen::Processor::Enums do
           "FirstOne" => 1i64,
           "SecondOne" => 2i64,
           "ThirdOne" => 3i64,
+        })
+      end
+    end
+  end
+
+  context "fixing constant-name behaviour" do
+    context "prefix: Prefix" do
+      it "corrects constant names" do
+        lookup(graph, "PrefixFixable").origin.values.should eq({
+          "_1" => 10i64,
+          "_12" => 11i64,
+          "_13" => 12i64,
+          "Foo" => 20i64,
+          "Foo_2" => 21i64,
+          "Bar" => 22i64,
+          "Baz" => 23i64,
+          "_" => 30i64,
+        })
+      end
+    end
+
+    context "prefix: false" do
+      it "corrects constant names" do
+        lookup(graph, "Fixable").origin.values.should eq({
+          "_1" => 10i64,
+          "_12" => 11i64,
+          "Prefix1" => 12i64,
+          "PrefixFoo" => 20i64,
+          "Foo" => 21i64,
+          "Bar" => 22i64,
+          "PrefixBaz" => 23i64,
+          "Prefix" => 30i64,
         })
       end
     end
