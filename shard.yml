@@ -1,6 +1,6 @@
 name: bindgen
 version: 0.6.1
-crystal: 0.24.1
+crystal: 0.24.2
 
 description: C/C++/Qt binding and wrapper generator
 
