@@ -65,7 +65,7 @@ module Bindgen
     def find(config : PathConfig, additional = nil) : String?
       search_paths = get_search_paths(config)
       checkers = config.checks.map do |check_config|
-        Checker.create(check_config, !config.kind.directory?)
+        Checker.create(check_config, !config.kind.directory?).as(Checker)
       end
 
       finder = create_match_finder(search_paths, config, checkers)

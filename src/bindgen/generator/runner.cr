@@ -8,7 +8,7 @@ module Bindgen
 
       def initialize(config : Configuration, db : TypeDatabase)
         @generators = config.generators.map do |name, gen_config|
-          Generator.create_by_name(Generator::ERROR_KIND, name, config, gen_config, db)
+          Generator.create_by_name(Generator::ERROR_KIND, name, config, gen_config, db).as(Generator::Base)
         end
       end
 
