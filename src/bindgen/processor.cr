@@ -37,6 +37,6 @@ module Bindgen
       "sanity_check",
     ]
 
-    extend CreateByName(Processor::Base)
+    extend Util::CreateByName(Processor::Base)
   end
 end
