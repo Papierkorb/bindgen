@@ -65,6 +65,9 @@ module Bindgen
     def find(config : PathConfig, additional = nil) : String?
       search_paths = get_search_paths(config)
       checkers = config.checks.map do |check_config|
+        # The explicit cast .as(Checker) should not be necessary because
+        # Checker.create is already declared as returning Checker (and not one
+        # of its subclasses). Could be a Crystal bug.
         Checker.create(check_config, !config.kind.directory?).as(Checker)
       end
 
