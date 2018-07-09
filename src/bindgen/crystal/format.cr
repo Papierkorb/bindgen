@@ -97,7 +97,7 @@ module Bindgen
         if enumeration.flags?
           "#{enum_name}#{format_flags_enum(enumeration.values, value)}"
         else
-          if key = enumeration.values.key?(value)
+          if key = enumeration.values.key_for?(value)
             "#{enum_name}::#{key}"
           else
             "#{enum_name}.from_value(#{value})"
@@ -115,7 +115,7 @@ module Bindgen
           next if (bitmask & value) == 0
 
           # Does a name exist?
-          if name = values.key?(value)
+          if name = values.key_for?(value)
             names << name
           else # There's no name, fallback!
             return ".from_value(#{bitmask})"

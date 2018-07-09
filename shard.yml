@@ -1,6 +1,6 @@
 name: bindgen
 version: 0.6.1
-crystal: 0.24.2
+crystal: 0.25.0
 
 description: C/C++/Qt binding and wrapper generator
 
@@ -18,6 +18,6 @@ targets:
 
 # Required as bindgen will be used as a tool on its own.
 scripts:
-  postinstall: crystal deps
+  postinstall: shards
 
 license: GPLv3

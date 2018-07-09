@@ -1,6 +1,6 @@
 require "./graph"
 require "./generator/base"
-require "./generator/*"
+require "./util/*"
 
 module Bindgen
   # Contains generator classes.  A generator takes a fully proccessed
@@ -12,6 +12,6 @@ module Bindgen
     # Kind to use for errors in `.create_by_name`
     ERROR_KIND = "generator"
 
-    extend CreateByName(Generator::Base)
+    extend Util::CreateByName(Generator::Base)
   end
 end

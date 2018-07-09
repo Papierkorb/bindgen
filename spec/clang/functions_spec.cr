@@ -21,7 +21,7 @@ describe "clang tool macros feature" do
           isPure: false,
           isExternC: false,
           className: "::",
-          arguments: [ ] of JSON::Type,
+          arguments: [ ] of JSON::Any::Type,
           returnType: { isVoid: true },
         },
         {
@@ -62,7 +62,7 @@ describe "clang tool macros feature" do
           isPure: false,
           isExternC: true,
           className: "::",
-          arguments: [ ] of JSON::Type,
+          arguments: [ ] of JSON::Any::Type,
           returnType: { fullName: "int" },
         },
         {
@@ -74,7 +74,7 @@ describe "clang tool macros feature" do
           isPure: false,
           isExternC: true,
           className: "::",
-          arguments: [ ] of JSON::Type,
+          arguments: [ ] of JSON::Any::Type,
           returnType: { fullName: "int" },
         },
       ]

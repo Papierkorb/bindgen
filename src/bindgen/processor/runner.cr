@@ -8,7 +8,7 @@ module Bindgen
 
       def initialize(config : Configuration, db : TypeDatabase)
         @processors = config.processors.map do |name|
-          Processor.create_by_name(Processor::ERROR_KIND, name, config, db)
+          Processor.create_by_name(Processor::ERROR_KIND, name, config, db).as(Processor::Base)
         end
       end
 

@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 class ClangValidationError < Exception
-  getter document : JSON::Type
+  getter document : JSON::Any::Type
 
   def initialize(@document, path, message)
     super("At #{path}: #{message}")
@@ -43,9 +43,9 @@ end
 private def traverse_path(document, path)
   path.to_s.split('.').reduce(document) do |base, part|
     if index = part.to_i?
-      base.as(Array)[index]
+      base.as(Array)[index].raw
     else
-      base.as(Hash)[part]
+      base.as(Hash)[part].raw
     end
   end
 rescue error
@@ -59,7 +59,9 @@ private def check_partial_value(original, expected, path)
     raise ClangValidationError.new(original, path, "Expected a Hash, but got a #{expected.class}") if hash.nil?
 
     expected.each do |key, expected_child|
-      check_partial_value(hash[key.to_s]?, expected_child, "#{path}.#{key}")
+      value = hash[key.to_s]?
+      value = value.raw if value
+      check_partial_value(value, expected_child, "#{path}.#{key}")
     end
   when Array, Tuple
     array = original.as?(Array)
@@ -70,7 +72,7 @@ private def check_partial_value(original, expected, path)
     end
 
     expected.each_with_index do |expected_child, index|
-      check_partial_value(array[index], expected_child, "#{path}.#{index}")
+      check_partial_value(array[index].raw, expected_child, "#{path}.#{index}")
     end
   else
     if original != expected

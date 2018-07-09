@@ -7,7 +7,7 @@ module Bindgen
 
       def initialize(@config : AnyOfCheck, @is_file : Bool)
         @children = @config.any_of.map do |child|
-          Checker.create(child, @is_file)
+          Checker.create(child, @is_file).as(Checker)
         end
       end
 
