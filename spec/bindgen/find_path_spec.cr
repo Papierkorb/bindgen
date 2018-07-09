@@ -544,18 +544,4 @@ describe Bindgen::FindPath do
       })
     end
   end
-
-  context "Dir.glob bug" do
-    it "fails if #5118 has been fixed" do
-      # TODO: Remove this spec once it fails and the issue has been fixed.
-      # See https://github.com/crystal-lang/crystal/issues/5118
-      # See Bindgen::FindPath#run_path_try(path : String, ...)
-
-      expect_raises(ArgumentError, /empty glob pattern/i){ Dir["/"] }
-      Dir["/usr/.."].should eq([ ] of String)
-      Dir["/usr/."].should eq([ ] of String)
-      Dir["*/.."].should eq([ ] of String)
-      Dir["*/../*"].should eq([ ] of String)
-    end
-  end
 end
