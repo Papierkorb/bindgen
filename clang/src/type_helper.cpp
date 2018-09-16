@@ -1,6 +1,6 @@
 #include "type_helper.hpp"
 
-#include "clang/Tooling/Core/QualTypeNames.h"
+#include "clang/AST/QualTypeNames.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
