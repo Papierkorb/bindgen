@@ -150,10 +150,17 @@ end
 # Find all LLVM and clang libraries, and link to all of them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
+  res = [] of String
   paths
-    .flat_map{|path| Dir["#{path}/lib#{prefix}*.a"]}
-    .map{|path| File.basename(path)[/^lib([^.]+)\.a$/, 1]}
+    .map{|p| File.expand_path(p)}
     .uniq
+    .flat_map{|path| Dir["#{path}/lib#{prefix}*.so"]}
+    .each do |path|
+      if File.basename(path) =~ /^lib([^.]+)\.so$/
+        res << $1
+      end
+    end
+  res.uniq
 end
 
 llvm_libs = find_libraries(system_libs, "LLVM")
@@ -166,7 +173,7 @@ print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
 libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}
-includes = system_includes.map{|x| "-I#{x}"}
+includes = system_includes.map{|p| File.expand_path(p)}.map{|x| "-I#{x}"}
 
 puts "CLANG_LIBS := " + libs.join(" ")
 puts "CLANG_INCLUDES := " + includes.join(" ")
