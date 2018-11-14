@@ -93,7 +93,7 @@ module BindgenHelper
   abstract class SequentialContainer(T)
     include Indexable(T)
 
-    # `#unsafe_at` and `#size` will be implemented by the wrapper class.
+    # `#unsafe_fetch` and `#size` will be implemented by the wrapper class.
 
     # Adds an element at the end.  Implemented by the wrapper.
     abstract def push(value)
