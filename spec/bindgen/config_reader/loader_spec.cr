@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 private def with_dependency(content)
   name = "loader_spec_#{rand 1..1_000_000}"
-  full_path = "#{Tempfile.dirname}/#{name}.yml"
+  full_path = "#{Dir.tempdir}/#{name}.yml"
   File.write(full_path, content)
   yield name, full_path
 
@@ -12,13 +12,13 @@ end
 
 describe Bindgen::ConfigReader::Loader do
   subject = Bindgen::ConfigReader::Loader.new
-  base_file = "#{Tempfile.dirname}/the_root.yml" # Fake path
+  base_file = "#{Dir.tempdir}/the_root.yml" # Fake path
 
   describe "#load" do
     context "with .yml suffix" do
       it "loads the dependency" do
         with_dependency "Okay" do |name|
-          subject.load(base_file, "#{name}.yml").should eq({ "Okay", "#{Tempfile.dirname}/#{name}.yml" })
+          subject.load(base_file, "#{name}.yml").should eq({ "Okay", "#{Dir.tempdir}/#{name}.yml" })
         end
       end
 
@@ -50,7 +50,7 @@ describe Bindgen::ConfigReader::Loader do
     context "without .yml suffix" do
       it "loads the dependency" do
         with_dependency "Okay" do |name|
-          subject.load(base_file, name).should eq({ "Okay", "#{Tempfile.dirname}/#{name}.yml" })
+          subject.load(base_file, name).should eq({ "Okay", "#{Dir.tempdir}/#{name}.yml" })
         end
       end
 

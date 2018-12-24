@@ -49,7 +49,7 @@ module Bindgen
       private def generate_source_file
         result = nil
 
-        Tempfile.open("bindgen") do |file|
+        File.tempfile("bindgen") do |file|
           @config.files.each do |path|
             path = Util.template(path, replacement: nil)
             file.puts %{#include #{path.inspect}}
