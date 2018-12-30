@@ -12,7 +12,7 @@ end
 # key-word arguments are checked for equality in the returned JSON document.
 # The check allows partial document comparisons.
 def clang_tool(cpp_code, arguments, **checks)
-  file = Tempfile.new("bindgen-clang-test")
+  file = File.tempfile("bindgen-clang-test")
   file.puts(cpp_code)
   file.flush
 
