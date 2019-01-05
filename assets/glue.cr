@@ -32,7 +32,7 @@
 # This file will *not* be run by bindgen directly.  Instead, its contents after
 # the following marker are copied into the target module.
 
-# ######### SNIP ##########
+########## SNIP ##########
 
 # Native bindings.  Mostly generated.
 lib Binding

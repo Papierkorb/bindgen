@@ -41,6 +41,10 @@ def print_help_and_bail
   exit 1
 end
 
+def log(message : String)
+  STDERR.puts message
+end
+
 # Find clang++ binary, through user setting, or automatically.
 if binary = ENV["CLANG"]?
   unless Process.find_executable(binary)
@@ -106,8 +110,8 @@ def shell_split(line : String)
 end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
-cppflags = shell_split(raw_cppflags)[1..-1]
-ldflags = shell_split(raw_ldflags)[1..-1]
+cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV["CPPFLAGS"] || "")
+ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV["LDFLAGS"] || "")
 
 #
 system_includes = [] of String
@@ -125,12 +129,21 @@ while index < flags.size
     resource_dir = flags[index + 1]
     system_includes << "#{resource_dir}/../../../include"
     index += 1
+  when "-lto_library"
+    to_library = flags[index + 1]
+    system_libs << to_library.split("/lib/")[0] + "/lib/"
+    index += 1
   when /^-L/
-    system_libs << flags[index][2..-1]
+    l = flags[index][2..-1]
+    l += "/" if l !~ /\/$/
+    system_libs << l
   end
 
   index += 1
 end
+
+system_libs.uniq!
+system_includes.uniq!
 
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
@@ -151,8 +164,10 @@ end
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
   paths
-    .flat_map{|path| Dir["#{path}/lib#{prefix}*.a"]}
-    .map{|path| File.basename(path)[/^lib([^.]+)\.a$/, 1]}
+    .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
+    .map { |path| File.basename(path) }
+    .reject { |path| path !~ /^lib([^.]+)\.a$/ }
+    .map { |path| path[/^lib([^.]+)\.a$/, 1] }
     .uniq
 end
 
