@@ -7,16 +7,16 @@ module Bindgen
       PLATFORM = Graph::Platform::Cpp
 
       CONSTANT_TYPES = {
-        Bool => "bool",
-        UInt8 => "uint8_t",
-        UInt16 => "uint16_t",
-        UInt32 => "uint32_t",
-        UInt64 => "uint64_t",
-        Int8 => "int8_t",
-        Int16 => "int16_t",
-        Int32 => "int32_t",
-        Int64 => "int64_t",
-        String => "const char *",
+        Bool    => "bool",
+        UInt8   => "uint8_t",
+        UInt16  => "uint16_t",
+        UInt32  => "uint32_t",
+        UInt64  => "uint64_t",
+        Int8    => "int8_t",
+        Int16   => "int16_t",
+        Int32   => "int32_t",
+        Int64   => "int64_t",
+        String  => "const char *",
         Float32 => "float",
         Float64 => "double",
       }

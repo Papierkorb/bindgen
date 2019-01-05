@@ -1,4 +1,4 @@
-require  "../spec_helper"
+require "../spec_helper"
 
 describe Bindgen::FindPath do
   root_dir = "#{__DIR__}/.." # spec/
@@ -24,7 +24,7 @@ describe Bindgen::FindPath do
       YAML
 
       vars = {
-        "SKIPPED" => "Already-Set",
+        "SKIPPED"     => "Already-Set",
         "NOT_SKIPPED" => "", # Empty == nil
       }
 
@@ -33,8 +33,8 @@ describe Bindgen::FindPath do
 
       errors.empty?.should be_true
       vars.should eq({
-        "SUCCESS" => "#{root_dir}/bindgen",
-        "SKIPPED" => "Already-Set",
+        "SUCCESS"     => "#{root_dir}/bindgen",
+        "SKIPPED"     => "Already-Set",
         "NOT_SKIPPED" => "#{root_dir}/bindgen/find_path",
       })
     end
@@ -51,11 +51,11 @@ describe Bindgen::FindPath do
         try: [ "ThisFails" ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
-      vars.should eq({ "SUCCESS" => "#{root_dir}/bindgen" })
+      vars.should eq({"SUCCESS" => "#{root_dir}/bindgen"})
       errors.size.should eq(1)
       error = errors.first
 
@@ -77,13 +77,13 @@ describe Bindgen::FindPath do
           - path: find_path_spec.cr
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
 
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/bindgen" })
+      vars.should eq({"TEST" => "#{root_dir}/bindgen"})
     end
   end
 
@@ -95,14 +95,14 @@ describe Bindgen::FindPath do
       ENV_VAR:   { try: [ "{PREVIOUS}" ] }
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
       vars.should eq({
-        "PREVIOUS" => "#{root_dir}/bindgen",
-        "ENV_VAR" => "#{root_dir}/bindgen",
+        "PREVIOUS"  => "#{root_dir}/bindgen",
+        "ENV_VAR"   => "#{root_dir}/bindgen",
         "EXPANSION" => root_dir,
       })
     end
@@ -120,14 +120,14 @@ describe Bindgen::FindPath do
         try: [ { shell: "#{print_bin} '{PREVIOUS}\\\\n'" } ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
       vars.should eq({
-        "PREVIOUS" => "#{root_dir}/bindgen",
-        "ENV_VAR" => "#{root_dir}/bindgen",
+        "PREVIOUS"  => "#{root_dir}/bindgen",
+        "ENV_VAR"   => "#{root_dir}/bindgen",
         "EXPANSION" => root_dir,
       })
     end
@@ -138,7 +138,7 @@ describe Bindgen::FindPath do
         FAILS: { try: [ { shell: "#{print_bin} '/lib\\\\n'; false" } ] }
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
@@ -159,7 +159,7 @@ describe Bindgen::FindPath do
             - path: doesnt_exist
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
@@ -177,11 +177,11 @@ describe Bindgen::FindPath do
         TEST: { try: [ { shell: "#{print_bin} '%\\\\nFooBar\\\\n'" } ] }
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
-        vars.should eq({ "TEST" => root_dir })
+        vars.should eq({"TEST" => root_dir})
         errors.empty?.should be_true
       end
 
@@ -190,7 +190,7 @@ describe Bindgen::FindPath do
         TEST: { try: [ { shell: "#{print_bin} '\\\\n'" } ] }
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
@@ -206,7 +206,7 @@ describe Bindgen::FindPath do
         TEST: { try: [ { shell: "#{print_bin} ''" } ] }
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
@@ -228,11 +228,11 @@ describe Bindgen::FindPath do
                 regex: "^DIR=(.*)"
           YAML
 
-          vars = { } of String => String
+          vars = {} of String => String
           subject = Bindgen::FindPath.new(root_dir, vars)
           errors = subject.find_all!(config)
 
-          vars.should eq({ "TEST" => root_dir })
+          vars.should eq({"TEST" => root_dir})
           errors.empty?.should be_true
         end
 
@@ -244,7 +244,7 @@ describe Bindgen::FindPath do
                 regex: "DIR=()"
           YAML
 
-          vars = { } of String => String
+          vars = {} of String => String
           subject = Bindgen::FindPath.new(root_dir, vars)
           errors = subject.find_all!(config)
 
@@ -265,11 +265,11 @@ describe Bindgen::FindPath do
                 regex: "^.*/spec/.*$"
           YAML
 
-          vars = { } of String => String
+          vars = {} of String => String
           subject = Bindgen::FindPath.new(root_dir, vars)
           errors = subject.find_all!(config)
 
-          vars.should eq({ "TEST" => root_dir })
+          vars.should eq({"TEST" => root_dir})
           errors.empty?.should be_true
         end
 
@@ -281,7 +281,7 @@ describe Bindgen::FindPath do
                 regex: ""
           YAML
 
-          vars = { } of String => String
+          vars = {} of String => String
           subject = Bindgen::FindPath.new(root_dir, vars)
           errors = subject.find_all!(config)
 
@@ -302,7 +302,7 @@ describe Bindgen::FindPath do
                 regex: "^/doesnt_exist/.*"
           YAML
 
-          vars = { } of String => String
+          vars = {} of String => String
           subject = Bindgen::FindPath.new(root_dir, vars)
           errors = subject.find_all!(config)
 
@@ -324,12 +324,12 @@ describe Bindgen::FindPath do
         try: [ "%/bindgen", "%/spec_helper.cr" ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/spec_helper.cr" })
+      vars.should eq({"TEST" => "#{root_dir}/spec_helper.cr"})
     end
 
     it "finds a directory" do
@@ -339,12 +339,12 @@ describe Bindgen::FindPath do
         try: [ "%/spec_helper.cr", "%/bindgen" ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/bindgen" })
+      vars.should eq({"TEST" => "#{root_dir}/bindgen"})
     end
 
     it "finds an executable file" do
@@ -357,12 +357,12 @@ describe Bindgen::FindPath do
           - "%/bindgen/find_path/fixture/tool"
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/bindgen/find_path/fixture/tool" })
+      vars.should eq({"TEST" => "#{root_dir}/bindgen/find_path/fixture/tool"})
     end
   end
 
@@ -375,12 +375,12 @@ describe Bindgen::FindPath do
         search_paths: [ "..", "%" ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/spec_helper.cr" })
+      vars.should eq({"TEST" => "#{root_dir}/spec_helper.cr"})
     end
 
     it "works with sub-directories" do
@@ -391,12 +391,12 @@ describe Bindgen::FindPath do
         search_paths: [ "%/.." ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{root_dir}/../spec/spec_helper.cr" })
+      vars.should eq({"TEST" => "#{root_dir}/../spec/spec_helper.cr"})
     end
 
     it "defaults to PATH for executables" do
@@ -406,7 +406,7 @@ describe Bindgen::FindPath do
         try: [ "DOESNT_EXIST_HOPEFULLY", "ls", "cmd.exe" ]
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
@@ -431,12 +431,12 @@ describe Bindgen::FindPath do
             - path: bindgen/find_path_spec.cr
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
         errors.empty?.should be_true
-        vars.should eq({ "TEST" => root_dir })
+        vars.should eq({"TEST" => root_dir})
       end
 
       it "supports ShellChecker" do
@@ -447,12 +447,12 @@ describe Bindgen::FindPath do
             - shell: true
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
         errors.empty?.should be_true
-        vars.should eq({ "TEST" => root_dir })
+        vars.should eq({"TEST" => root_dir})
       end
 
       it "supports AnyOfChecker" do
@@ -465,12 +465,12 @@ describe Bindgen::FindPath do
               - path: doesnt_exist.cr
         YAML
 
-        vars = { } of String => String
+        vars = {} of String => String
         subject = Bindgen::FindPath.new(root_dir, vars)
         errors = subject.find_all!(config)
 
         errors.empty?.should be_true
-        vars.should eq({ "TEST" => root_dir })
+        vars.should eq({"TEST" => root_dir})
       end
     end
   end
@@ -486,13 +486,13 @@ describe Bindgen::FindPath do
           variable: MY_VER
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
       base = "#{root_dir}/bindgen/find_path/fixture"
       errors.empty?.should be_true
-      vars.should eq({ "TEST" => "#{base}/tool-2.0", "MY_VER" => "2.0" })
+      vars.should eq({"TEST" => "#{base}/tool-2.0", "MY_VER" => "2.0"})
     end
   end
 
@@ -507,14 +507,14 @@ describe Bindgen::FindPath do
           - path: spec_helper.cr
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
       sep = Bindgen::FindPath::PATH_SEPARATOR
 
       errors.empty?.should be_true
       vars.should eq({
-        "TEST" => "#{root_dir}/integration#{sep}#{root_dir}/clang"
+        "TEST" => "#{root_dir}/integration#{sep}#{root_dir}/clang",
       })
     end
 
@@ -531,7 +531,7 @@ describe Bindgen::FindPath do
           variable: MY_VER
       YAML
 
-      vars = { } of String => String
+      vars = {} of String => String
       subject = Bindgen::FindPath.new(root_dir, vars)
       errors = subject.find_all!(config)
 
@@ -539,7 +539,7 @@ describe Bindgen::FindPath do
       base = "#{root_dir}/bindgen/find_path/fixture"
       errors.empty?.should be_true
       vars.should eq({
-        "TEST" => "#{base}/tool-2.0#{sep}#{base}/tool-1.0#{sep}#{base}/tool",
+        "TEST"   => "#{base}/tool-2.0#{sep}#{base}/tool-1.0#{sep}#{base}/tool",
         "MY_VER" => "2.0",
       })
     end

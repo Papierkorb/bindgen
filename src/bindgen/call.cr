@@ -37,7 +37,7 @@ module Bindgen
 
     # Call result type configuration.
     class Result < Expression
-    # Conversion template (`Util.template`) to get the data out of the method,
+      # Conversion template (`Util.template`) to get the data out of the method,
       # ready to be returned back.
       getter conversion : String?
 
@@ -96,7 +96,7 @@ module Bindgen
       getter default_value : Parser::DefaultValueTypes?
 
       def initialize(@type, @type_name, @name, @call, @reference = false,
-        @pointer = 0, @default_value = nil, @nilable = false)
+                     @pointer = 0, @default_value = nil, @nilable = false)
       end
     end
 
@@ -111,7 +111,7 @@ module Bindgen
       getter? block : Bool
 
       def initialize(@type, @type_name, @name, @call, @reference = false,
-        @pointer = 0, @default_value = nil, @nilable = false, @block = false)
+                     @pointer = 0, @default_value = nil, @nilable = false, @block = false)
       end
     end
 

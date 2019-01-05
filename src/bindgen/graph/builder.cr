@@ -72,7 +72,7 @@ module Bindgen
       # ditto
       def parent_and_local_name(root : Graph::Container, path : Path)
         parent = get_or_create_path_parent(root, path)
-        { parent, path.last_part }
+        {parent, path.last_part}
       end
 
       # Gets the parent of *path*, starting at *root*.  Makes sure it is a

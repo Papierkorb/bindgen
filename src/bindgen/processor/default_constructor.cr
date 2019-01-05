@@ -23,7 +23,7 @@ module Bindgen
           type: Parser::Method::Type::Constructor,
           name: "",
           class_name: klass.name,
-          arguments: [ ] of Parser::Argument,
+          arguments: [] of Parser::Argument,
           return_type: Parser::Type::EMPTY,
         )
       end
@@ -47,7 +47,7 @@ module Bindgen
       end
 
       private def has_private_constructor?(klass)
-        ctor = klass.methods.find{|method| default_constructor? method}
+        ctor = klass.methods.find { |method| default_constructor? method }
 
         if ctor
           ctor.private?

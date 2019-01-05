@@ -56,7 +56,7 @@ module Bindgen
 
       # ditto
       private def run_path_try(shell : ShellTry, search_paths) : Array(String)
-        [ run_shell_try(shell) ].compact
+        [run_shell_try(shell)].compact
       end
 
       # Helper for `#run_path_try`.
@@ -98,11 +98,11 @@ module Bindgen
       # Expands *search_paths* for *path*
       private def prefix_search_paths(search_paths, path : String) : Array(String)
         if search_paths.nil? || search_paths.empty?
-          [ path ]
+          [path]
         elsif path.starts_with?('/')
-          [ path ]
+          [path]
         else
-          search_paths.map{|x| "#{x}/#{path}"}
+          search_paths.map { |x| "#{x}/#{path}" }
         end
       end
     end

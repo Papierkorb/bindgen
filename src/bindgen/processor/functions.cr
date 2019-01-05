@@ -58,7 +58,7 @@ module Bindgen
           name = parts.last
         end
 
-        { path, name }
+        {path, name}
       end
     end
   end

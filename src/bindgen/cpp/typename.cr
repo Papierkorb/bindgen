@@ -15,7 +15,7 @@ module Bindgen
         String.build do |b|
           b << "const " if const
           b << base_name
-          
+
           if pointer > 0 || is_reference
             b << ' ' << ("*" * pointer)
             b << '&' if is_reference
@@ -25,7 +25,7 @@ module Bindgen
 
       # Formats many *results*.
       def full(results : Enumerable(Call::Expression)) : Array(String)
-        results.map{|result| full(result)}
+        results.map { |result| full(result) }
       end
     end
   end

@@ -18,13 +18,13 @@ module Bindgen
       YAML.mapping(
         # The shell command to run
         shell: {
-          type: String,
+          type:      String,
           converter: AlwaysStringConverter,
         },
 
         # An optional regex to grab the path
         regex: {
-          type: String,
+          type:    String,
           nilable: true,
         }
       )
@@ -38,25 +38,25 @@ module Bindgen
       YAML.mapping(
         # The sub-path to check for existence.
         path: {
-          type: String,
+          type:      String,
           converter: AlwaysStringConverter,
         },
 
         # What the path should be
         kind: {
-          type: Kind,
+          type:    Kind,
           default: Kind::File,
         },
 
         # Optional: What the file should contain
         contains: {
-          type: String,
+          type:    String,
           nilable: true,
         },
 
         # Treat the contains as regular expression?
         regex: {
-          type: Bool,
+          type:    Bool,
           default: false,
         },
       )
@@ -70,7 +70,7 @@ module Bindgen
       YAML.mapping(
         # The shell command to run
         shell: {
-          type: String,
+          type:      String,
           converter: AlwaysStringConverter,
         },
       )
@@ -106,47 +106,47 @@ module Bindgen
       YAML.mapping(
         # Min version string
         min: {
-          type: String,
-          nilable: true,
+          type:      String,
+          nilable:   true,
           converter: AlwaysStringConverter,
         },
 
         # Max version string
         max: {
-          type: String,
-          nilable: true,
+          type:      String,
+          nilable:   true,
           converter: AlwaysStringConverter,
         },
 
         # Variable to store the detected version string in
         variable: {
-          type: String,
+          type:    String,
           nilable: true,
         },
 
         # Which version to prefer
         prefer: {
-          type: Prefer,
+          type:    Prefer,
           default: Prefer::Highest,
         },
 
         # Fallback behaviour if the regex fails.
         fallback: {
-          type: Fallback,
+          type:    Fallback,
           default: Fallback::Fail,
         },
 
         # Regular expression to grab it from the name
         regex: {
-          type: String,
+          type:    String,
           default: "-([0-9.]+)$", # Debian-style
         },
 
         # Custom command to run to figure out the version
         command: {
-          type: String,
+          type:      String,
           converter: AlwaysStringConverter,
-          nilable: true,
+          nilable:   true,
         }
       )
 
@@ -162,7 +162,7 @@ module Bindgen
       YAML.mapping(
         # Element separator
         separator: {
-          type: String,
+          type:    String,
           default: FindPath::PATH_SEPARATOR.to_s,
         },
 
@@ -201,19 +201,19 @@ module Bindgen
       YAML.mapping(
         # Kind of file to find
         kind: {
-          type: Kind,
+          type:    Kind,
           default: Kind::Directory,
         },
 
         # Is this match optional?
         optional: {
-          type: Bool,
+          type:    Bool,
           default: false, # Mandatory by default
         },
 
         # Optional: An error message if not found
         error_message: {
-          type: String,
+          type:    String,
           nilable: true,
         },
 
@@ -225,33 +225,33 @@ module Bindgen
 
         # Search paths for relative try paths
         search_paths: {
-          type: Array(String),
+          type:    Array(String),
           nilable: true,
         },
 
         # Checks to do
         checks: {
-          type: Array(PathCheck | ShellCheck | AnyOfCheck),
+          type:    Array(PathCheck | ShellCheck | AnyOfCheck),
           default: Array(PathCheck | ShellCheck | AnyOfCheck).new,
         },
 
         # Version check to do
         version: {
-          type: VersionCheck,
+          type:    VersionCheck,
           nilable: true,
         },
 
         # List functionality
         list: {
-          type: ListConfig,
-          nilable: true,
+          type:      ListConfig,
+          nilable:   true,
           converter: ListConfigConverter,
         }
       )
 
       def initialize(
         @try, @kind = Kind::Directory, @optional = false, @error_message = nil,
-        @checks = [ ] of (PathCheck | ShellCheck)
+        @checks = [] of (PathCheck | ShellCheck)
       )
       end
     end

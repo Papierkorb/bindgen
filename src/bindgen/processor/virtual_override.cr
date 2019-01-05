@@ -75,7 +75,7 @@ module Bindgen
         structure = Graph::Struct.new(
           name: subclass_name(klass),
           parent: host,
-          fields: { "bgJump" => jump_field },
+          fields: {"bgJump" => jump_field},
           base_class: klass.origin.name,
         )
 
@@ -140,7 +140,7 @@ module Bindgen
       # *parent*.
       private def build_jumptable_struct(klass, parent)
         Graph::Struct.new(
-          fields: jumptable_fields(klass){|m| yield m},
+          fields: jumptable_fields(klass) { |m| yield m },
           name: jumptable_name(klass),
           parent: parent,
         )
@@ -149,7 +149,7 @@ module Bindgen
       # Builds the jumptable fields hash for *klass*, yielding out to let the
       # caller decide the kind of `Call::Result`.
       private def jumptable_fields(klass)
-        hsh = { } of String => Call::Result
+        hsh = {} of String => Call::Result
 
         klass.nodes.each do |node|
           if method = node.as?(Graph::Method)
@@ -196,7 +196,7 @@ module Bindgen
       private def add_jumptable_method(klass, cpp_subclass, table_name)
         typer = Cpp::Typename.new
         table_type = Parser::Type.new( # Pass by reference.
-          baseName: table_name,
+baseName: table_name,
           fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
           isConst: true,
           isReference: true,
@@ -208,13 +208,13 @@ module Bindgen
         method = Parser::Method.build(
           name: "JUMPTABLE",
           return_type: Parser::Type::VOID,
-          arguments: [ table_arg ],
+          arguments: [table_arg],
           class_name: cpp_subclass.name,
         )
 
         platforms = Graph::Platforms.flags(CrystalBinding, Cpp)
         Graph::Method.new( # Add C++ method
-          origin: method,
+origin: method,
           name: method.name,
           parent: klass.platform_specific(platforms),
         )
@@ -305,7 +305,7 @@ module Bindgen
         private def all_virtual_methods : Array(Graph::Method)
           # TODO: Support for overloaded virtual methods
           # TODO: Look through parent classes.
-          list = [ ] of Graph::Method
+          list = [] of Graph::Method
 
           @klass.nodes.each do |node|
             next unless node.is_a?(Graph::Method)

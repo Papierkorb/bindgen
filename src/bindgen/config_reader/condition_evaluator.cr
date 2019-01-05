@@ -34,23 +34,23 @@ module Bindgen
       end
 
       # Evaluates *condition_text*.
-      def evaluate(condition_text : String, state : ConditionState) : { Bool, ConditionState }
+      def evaluate(condition_text : String, state : ConditionState) : {Bool, ConditionState}
         verb = read_verb(condition_text)
-        case { state, verb }
-        when { _, Verb::If }
+        case {state, verb}
+        when {_, Verb::If}
           evaluate_condition(condition_text)
-        when { ConditionState::AwaitingIf, Verb::Elsif }
+        when {ConditionState::AwaitingIf, Verb::Elsif}
           raise Error.new(condition_text, "elsif-branch without if-branch")
-        when { ConditionState::Unmet, Verb::Elsif }
+        when {ConditionState::Unmet, Verb::Elsif}
           evaluate_condition(condition_text)
-        when { ConditionState::Met, Verb::Elsif }
-          { false, state }
-        when { ConditionState::AwaitingIf, Verb::Else }
+        when {ConditionState::Met, Verb::Elsif}
+          {false, state}
+        when {ConditionState::AwaitingIf, Verb::Else}
           raise Error.new(condition_text, "else-branch without if-branch")
-        when { ConditionState::Met, Verb::Else }
-          { false, state }
-        when { ConditionState::Unmet, Verb::Else }
-          { true, ConditionState::Met }
+        when {ConditionState::Met, Verb::Else}
+          {false, state}
+        when {ConditionState::Unmet, Verb::Else}
+          {true, ConditionState::Met}
         else # Illegal verb
           raise Error.new(condition_text, "Unknown condition verb")
         end
@@ -58,9 +58,9 @@ module Bindgen
 
       protected def evaluate_condition(condition_text : String)
         if run_condition(condition_text, *split(condition_text))
-          { true, ConditionState::Met }
+          {true, ConditionState::Met}
         else
-          { false, ConditionState::Unmet }
+          {false, ConditionState::Unmet}
         end
       end
 
@@ -92,8 +92,8 @@ module Bindgen
         value = get_value(variable)
 
         case verb
-        when "is" then value == test
-        when "isnt" then value != test
+        when "is"      then value == test
+        when "isnt"    then value != test
         when "matches" then /#{test}/.match(value) != nil
         else
           raise Error.new(text, "Unknown condition verb: #{verb} in #{text.inspect}")
@@ -114,7 +114,7 @@ module Bindgen
           verb = m[2]
           value = m[3]
 
-          { variable, verb, value }
+          {variable, verb, value}
         else
           raise Error.new(text, "Malformed condition key: #{text.inspect}")
         end

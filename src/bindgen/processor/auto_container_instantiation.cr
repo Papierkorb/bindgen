@@ -45,7 +45,7 @@ module Bindgen
       # *type*.
       private def container_type_arguments(type)
         case type
-        when .sequential? then 1
+        when .sequential?  then 1
         when .associative? then 2
         else
           raise "BUG: Missing case for #{type.inspect}"

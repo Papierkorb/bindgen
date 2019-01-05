@@ -29,7 +29,7 @@ module Bindgen
     def type_pointer_depth(type : Parser::Type) : Int32
       depth = type.pointer
       depth -= 1 if type.reference?
-      { depth, 0 }.max
+      {depth, 0}.max
     end
 
     # Is *type* available in Crystal?  It will be if any of:
@@ -55,13 +55,13 @@ module Bindgen
         ptr = 0
       elsif pass_by.pointer?
         is_ref = false
-        ptr = { ptr, 1 }.max
+        ptr = {ptr, 1}.max
       elsif pass_by.value?
         is_ref = false
         ptr = 0
       end
 
-      { is_ref, ptr }
+      {is_ref, ptr}
     end
   end
 end

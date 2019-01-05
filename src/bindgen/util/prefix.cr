@@ -12,7 +12,7 @@ module Bindgen
         max_prefix_len = strings.min_of(&.size).not_nil!
         first_uncommon = (1..max_prefix_len).find(max_prefix_len) do |len|
           prefix = strings.first.to_slice[0, len]
-          is_common = strings.all?{|str| str.to_slice[0, len] == prefix}
+          is_common = strings.all? { |str| str.to_slice[0, len] == prefix }
           !is_common
         end
 

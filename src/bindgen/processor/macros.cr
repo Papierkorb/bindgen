@@ -71,7 +71,7 @@ module Bindgen
 
       # Builds an enumeration type out of *config* and *macros*.
       private def build_enum(config, macros, name) : Parser::Enum
-        values = { } of String => Int64
+        values = {} of String => Int64
 
         macros.each do |define, match|
           name = Util.pattern_rewrite(config.name, match).downcase.camelcase

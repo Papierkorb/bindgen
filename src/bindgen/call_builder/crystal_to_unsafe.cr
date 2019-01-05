@@ -16,7 +16,7 @@ module Bindgen
           origin: method,
           name: METHOD_NAME,
           result: result,
-          arguments: [ ] of Call::Argument,
+          arguments: [] of Call::Argument,
           body: Body.new(use_pointerof),
         )
       end
@@ -26,7 +26,7 @@ module Bindgen
           name: METHOD_NAME,
           class_name: klass.name,
           return_type: klass.as_type,
-          arguments: [ ] of Parser::Argument,
+          arguments: [] of Parser::Argument,
         )
       end
 

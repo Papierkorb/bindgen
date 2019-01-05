@@ -5,7 +5,7 @@ module Bindgen
       JSON.mapping(
         # Type part
         kind: {
-          type: Kind,
+          type:    Kind,
           default: Kind::Class,
         },
         isConst: Bool,
@@ -17,12 +17,12 @@ module Bindgen
         baseName: String,
         fullName: String,
         nilable: {
-          type: Bool,
-          key: "acceptsNull",
+          type:    Bool,
+          key:     "acceptsNull",
           default: false,
         },
         template: {
-          type: Template,
+          type:    Template,
           nilable: true,
         },
 

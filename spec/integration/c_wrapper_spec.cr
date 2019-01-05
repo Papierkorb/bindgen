@@ -148,12 +148,12 @@ describe "C-specific functionality" do
 
           # Constructors
           ctor_arguments = {{
-            Test::Buffer.methods.select(&.name.== "initialize").map do |meth|
-              (meth.args.map(&.name.stringify).stringify + " of String").id
-            end
-          }}
-          ctor_arguments.includes?([ ] of String).should be_true # Default one
-          ctor_arguments.includes?([ "string" ]).should be_true # One with arguments
+                             Test::Buffer.methods.select(&.name.== "initialize").map do |meth|
+                               (meth.args.map(&.name.stringify).stringify + " of String").id
+                             end
+                           }}
+          ctor_arguments.includes?([] of String).should be_true # Default one
+          ctor_arguments.includes?(["string"]).should be_true   # One with arguments
 
           # Member methods
           instance_methods.includes?("size").should be_true
@@ -186,8 +186,8 @@ describe "C-specific functionality" do
         it "does normal Crystal method name rewriting" do
           buffer = Test::Buffer.new
           buffer.empty?.should be_true # Question getter
-          buffer.size = 32 # Setter
-          buffer.size.should eq(32) # Getter
+          buffer.size = 32             # Setter
+          buffer.size.should eq(32)    # Getter
         end
       end
 

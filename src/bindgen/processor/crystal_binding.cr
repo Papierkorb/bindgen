@@ -21,7 +21,7 @@ module Bindgen
       def initialize(_config, db)
         super
         @builder = CallBuilder::CrystalBinding.new(db)
-        @aliases = { } of String => Graph::Node
+        @aliases = {} of String => Graph::Node
       end
 
       def process(graph : Graph::Container, _doc : Parser::Document)
@@ -101,7 +101,7 @@ module Bindgen
       # Makes sure all types in *call* are have an alias to `Void`.
       private def add_type_aliases(call)
         add_type_alias call.result
-        call.arguments.each{|arg| add_type_alias(arg)}
+        call.arguments.each { |arg| add_type_alias(arg) }
       end
 
       # Adds an `alias` for *expr* into the known aliases list.
@@ -119,7 +119,7 @@ module Bindgen
         end
 
         @aliases[expr.type_name] = Graph::Alias.new( # `alias EXPR_NAME = Void`
-          origin: VOID_RESULT,
+origin: VOID_RESULT,
           name: expr.type_name,
           parent: nil,
         )

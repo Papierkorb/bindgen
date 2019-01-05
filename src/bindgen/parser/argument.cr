@@ -7,7 +7,7 @@ module Bindgen
       JSON.mapping(
         # `Type` part
         kind: {
-          type: Kind,
+          type:    Kind,
           default: Kind::Class,
         },
         isConst: Bool,
@@ -19,12 +19,12 @@ module Bindgen
         baseName: String,
         fullName: String,
         nilable: {
-          type: Bool,
-          key: "acceptsNull",
+          type:    Bool,
+          key:     "acceptsNull",
           default: false,
         },
         template: {
-          type: Template,
+          type:    Template,
           nilable: true,
         },
 
@@ -33,8 +33,8 @@ module Bindgen
         isVariadic: Bool,
         name: String,
         value: {
-          type: DefaultValueTypes,
-          nilable: true,
+          type:      DefaultValueTypes,
+          nilable:   true,
           converter: ValueConverter,
         },
       )
@@ -42,7 +42,7 @@ module Bindgen
       def initialize(
         @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,
         @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false,
-        @value = nil, @nilable = false, @isVariadic = false,
+        @value = nil, @nilable = false, @isVariadic = false
       )
       end
 
@@ -130,7 +130,7 @@ module Bindgen
 
       # Checks if the type-part of this equals the type-part of *other*.
       def type_equals?(other : Type)
-        {% for i in %i[ baseName fullName isConst isReference isMove isBuiltin isVoid pointer template ] %}
+        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer template] %}
           return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 

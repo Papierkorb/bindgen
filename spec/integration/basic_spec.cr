@@ -24,10 +24,10 @@ describe "a basic C++ wrapper" do
           {{
             Test::AdderWrap.methods.any? do |m|
               m.name == "initialize" && \
-              m.args.size == 1 && \
-              m.args.any? do |a|
-                a.name.stringify == "unwrap"
-              end
+                 m.args.size == 1 && \
+                 m.args.any? do |a|
+                  a.name.stringify == "unwrap"
+                end
             end
           }}.should be_true
         end

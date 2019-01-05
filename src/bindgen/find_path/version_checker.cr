@@ -4,9 +4,9 @@ module Bindgen
     # instantiated in the `PathConfig#checks` array, but only through
     # `PathConfig#version`.
     class VersionChecker < Checker
-      alias Candidates = Array({ String, String })
+      alias Candidates = Array({String, String})
 
-      LOWEST_POSSIBLE = " "
+      LOWEST_POSSIBLE  = " "
       HIGHEST_POSSIBLE = "~"
 
       # Stores all candidates
@@ -17,7 +17,7 @@ module Bindgen
 
       # Returns the list of sorted candidates, from the best candidate first
       # down to worse candidates.
-      def sorted_candidates : Array({ String, String })
+      def sorted_candidates : Array({String, String})
         list = @candidates.sort_by!(&.first)
 
         if @config.prefer.lowest?
@@ -32,10 +32,10 @@ module Bindgen
         @candidates.sort_by!(&.first)
 
         tuple = if @config.prefer.lowest?
-          @candidates.first?
-        else
-          @candidates.last?
-        end
+                  @candidates.first?
+                else
+                  @candidates.last?
+                end
 
         tuple.last if tuple # Unpack the path if we found anything.
       end
@@ -55,7 +55,7 @@ module Bindgen
         end
 
         # Accept!
-        @candidates << { version_string, path }
+        @candidates << {version_string, path}
         true
       end
 

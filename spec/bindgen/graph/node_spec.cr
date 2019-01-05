@@ -18,7 +18,7 @@ describe Bindgen::Graph::Node do
         node = TestNode.new(parent)
 
         node.parent.should be(parent)
-        parent.nodes.should eq([ node ])
+        parent.nodes.should eq([node])
       end
     end
 
@@ -35,7 +35,7 @@ describe Bindgen::Graph::Node do
       node = TestNode.new
       node.set_tag("foo", "bar")
 
-      node.tags.should eq({ "foo" => "bar" })
+      node.tags.should eq({"foo" => "bar"})
     end
 
     context "if the tag is already set" do
@@ -87,7 +87,7 @@ describe Bindgen::Graph::Node do
       mod_b = Bindgen::Graph::Namespace.new("B", mod_a)
       node = TestNode.new(mod_b)
 
-      node.full_path.should eq([ mod_a, mod_b, node ])
+      node.full_path.should eq([mod_a, mod_b, node])
     end
 
     it "omits PlatformSpecifics" do
@@ -100,7 +100,7 @@ describe Bindgen::Graph::Node do
       specific_c = specific_b.platform_specific(Bindgen::Graph::Platform::Crystal)
       node = TestNode.new(mod_b)
 
-      node.full_path.should eq([ mod_a, mod_b, node ])
+      node.full_path.should eq([mod_a, mod_b, node])
     end
   end
 

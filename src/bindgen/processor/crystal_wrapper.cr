@@ -71,7 +71,7 @@ module Bindgen
           name: "",
           class_name: klass.name,
           return_type: Parser::Type::EMPTY,
-          arguments: [ unwrap_arg ],
+          arguments: [unwrap_arg],
         )
 
         host = klass.platform_specific(PLATFORM)

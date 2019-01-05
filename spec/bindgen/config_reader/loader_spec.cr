@@ -5,7 +5,6 @@ private def with_dependency(content)
   full_path = "#{Dir.tempdir}/#{name}.yml"
   File.write(full_path, content)
   yield name, full_path
-
 ensure
   File.delete full_path.not_nil!
 end
@@ -18,7 +17,7 @@ describe Bindgen::ConfigReader::Loader do
     context "with .yml suffix" do
       it "loads the dependency" do
         with_dependency "Okay" do |name|
-          subject.load(base_file, "#{name}.yml").should eq({ "Okay", "#{Dir.tempdir}/#{name}.yml" })
+          subject.load(base_file, "#{name}.yml").should eq({"Okay", "#{Dir.tempdir}/#{name}.yml"})
         end
       end
 
@@ -50,7 +49,7 @@ describe Bindgen::ConfigReader::Loader do
     context "without .yml suffix" do
       it "loads the dependency" do
         with_dependency "Okay" do |name|
-          subject.load(base_file, name).should eq({ "Okay", "#{Dir.tempdir}/#{name}.yml" })
+          subject.load(base_file, name).should eq({"Okay", "#{Dir.tempdir}/#{name}.yml"})
         end
       end
 

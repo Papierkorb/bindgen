@@ -16,7 +16,7 @@ module Bindgen
       #
       # Before you use tags, check if you can get the information you require
       # on some other way, e.g. infer through other existing properties.
-      getter tags = { } of String => String
+      getter tags = {} of String => String
 
       def initialize(@name, parent : Container? = nil)
         @parent = parent
@@ -56,7 +56,7 @@ module Bindgen
       # one was encountered while traversing.
       def full_path : Array(Node)
         p = @parent
-        path = [ self ] of Node
+        path = [self] of Node
 
         while p # Iterate over all parents
           path << p unless p.is_a?(PlatformSpecific)

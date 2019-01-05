@@ -69,8 +69,8 @@ raw_cppflags = output[-2]
 raw_ldflags = output[-1]
 
 # Shell-split
-def shell_split(line)
-  list = [ ] of String
+def shell_split(line : String)
+  list = [] of String
   skip_next = false
   in_string = false
   offset = 0
@@ -110,8 +110,8 @@ cppflags = shell_split(raw_cppflags)[1..-1]
 ldflags = shell_split(raw_ldflags)[1..-1]
 
 #
-system_includes = [ ] of String
-system_libs = [ ] of String
+system_includes = [] of String
+system_libs = [] of String
 
 # Interpret the argument lists
 flags = cppflags + ldflags
@@ -165,8 +165,8 @@ print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 # Libraries must precede their dependencies.  By putting the whole list twice
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
-libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}
-includes = system_includes.map{|x| "-I#{x}"}
+libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
+includes = system_includes.map { |x| "-I#{x}" }
 
 puts "CLANG_LIBS := " + libs.join(" ")
 puts "CLANG_INCLUDES := " + includes.join(" ")

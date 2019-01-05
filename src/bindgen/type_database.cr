@@ -2,13 +2,12 @@ module Bindgen
   # Database of type mapping data for wrapper-code generation.  Configuration
   # for common (and built-in) C/C++ types is automatically loaded and added.
   class TypeDatabase
-
     # Describes different styles of argument passing.
     enum PassBy
-      Original # Keep the original type
+      Original  # Keep the original type
       Reference # Force a C++ reference
-      Pointer # Force a C++ pass-by-pointer
-      Value # Force a C++ pass-by-value
+      Pointer   # Force a C++ pass-by-pointer
+      Value     # Force a C++ pass-by-value
     end
 
     # Configuration of types, used in `Configuration#types` (The `types:` map
@@ -17,95 +16,95 @@ module Bindgen
       YAML.mapping(
         # Ignore any and all methods using this type anywhere.
         ignore: {
-          type: Bool,
+          type:    Bool,
           default: false,
         },
 
         # Semantics of the type (Kind overwrite)
         kind: {
-          type: Parser::Type::Kind,
+          type:    Parser::Type::Kind,
           default: Parser::Type::Kind::Class,
         },
 
         # Will copy the definition of the other rule into this one.
         alias_for: {
-          type: String,
+          type:    String,
           nilable: true,
         },
 
         # The crystal name of this type.
-        crystal_type: { type: String, nilable: true },
+        crystal_type: {type: String, nilable: true},
 
         # The C++ type to pass it around.
-        cpp_type: { type: String, nilable: true },
+        cpp_type: {type: String, nilable: true},
 
         # The type used in Crystal, but only in the `lib` binding.
-        binding_type: { type: String, nilable: true },
+        binding_type: {type: String, nilable: true},
 
         # Template code ran to turn the real C++ type into the crystal type.
-        from_cpp: { type: String, nilable: true },
+        from_cpp: {type: String, nilable: true},
 
         # Template code ran to turn the crystal type into the real C++ type.
-        to_cpp: { type: String, nilable: true },
+        to_cpp: {type: String, nilable: true},
 
         # Converter for this type in Crystal.  Takes precedence over the
         # `#to_crystal` and `#from_crystal` fields.
-        converter: { type: String, nilable: true },
+        converter: {type: String, nilable: true},
 
         # Template code ran to turn the binding type to Crystal.
-        to_crystal: { type: String, nilable: true },
+        to_crystal: {type: String, nilable: true},
 
         # Template code ran to turn the Crystal type for the binding.
-        from_crystal: { type: String, nilable: true },
+        from_crystal: {type: String, nilable: true},
 
         # How to pass this type to C++?
         pass_by: {
-          type: PassBy,
+          type:    PassBy,
           default: PassBy::Original,
         },
 
         # How to pass this type from Crystal?
         wrapper_pass_by: { # Defaults to `@pass_by`
-          type: PassBy,
+          type:    PassBy,
           nilable: true,
         },
 
         # If sub-classing of this type is allowed, if it's wrapped and has
         # virtual methods.
         sub_class: {
-          type: Bool,
+          type:    Bool,
           default: true,
         },
 
         # If the structure (as in, its fields) shall be tried to replicated in Crystal.
         # This doesn't support inheritance!
         copy_structure: {
-          type: Bool,
+          type:    Bool,
           default: false,
         },
 
         # Treat this type as built-in type in C++ and Crystal.
         builtin: {
-          type: Bool,
+          type:    Bool,
           default: false,
         },
 
         # If to generate a wrapper in Crystal.
         generate_wrapper: {
-          type: Bool,
+          type:    Bool,
           default: true,
         },
 
         # If to generate bindings in C++ and Crystal.
         generate_binding: {
-          type: Bool,
+          type:    Bool,
           default: true,
         },
 
         # Which methods to filter out.
         ignore_methods: {
-          type: Array(String),
-          default: [ ] of String,
+          type:    Array(String),
+          default: [] of String,
         }
       )
 
@@ -119,8 +118,8 @@ module Bindgen
         @kind = Parser::Type::Kind::Class, @ignore = false,
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
-        @generate_binding = true, @builtin = false, @ignore_methods = [ ] of String,
-        @graph_node = nil, @alias_for = nil,
+        @generate_binding = true, @builtin = false, @ignore_methods = [] of String,
+        @graph_node = nil, @alias_for = nil
       )
       end
 
@@ -184,7 +183,6 @@ module Bindgen
     getter cookbook : Cpp::Cookbook
 
     def initialize(config : Configuration, cookbook : String | Cpp::Cookbook, with_builtins = true)
-
       if with_builtins
         builtins = self.class.load_builtins
         config = builtins.merge(config)
@@ -256,7 +254,7 @@ module Bindgen
 
     # Helper, equivalent to calling `#[type]?.try(&.x) || default`
     def try_or(type : Parser::Type | String, default)
-      result = self[type]?.try{|x| yield x}
+      result = self[type]?.try { |x| yield x }
 
       if result.nil?
         default

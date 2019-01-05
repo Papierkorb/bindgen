@@ -34,19 +34,19 @@ module Bindgen
 
         target_type = @db.try_or(type, type.base_name, &.binding_type)
         case resolve_long(target_type)
-        when "UInt8" then as_number(value, &.to_u8)
-        when "UInt16" then as_number(value, &.to_u16)
-        when "UInt32" then as_number(value, &.to_u32)
-        when "UInt64" then as_number(value, &.to_u64)
-        when "Int8" then as_number(value, &.to_i8)
-        when "Int16" then as_number(value, &.to_i16)
-        when "Int32" then as_number(value, &.to_i32)
-        when "Int64" then as_number(value, &.to_i64)
+        when "UInt8"   then as_number(value, &.to_u8)
+        when "UInt16"  then as_number(value, &.to_u16)
+        when "UInt32"  then as_number(value, &.to_u32)
+        when "UInt64"  then as_number(value, &.to_u64)
+        when "Int8"    then as_number(value, &.to_i8)
+        when "Int16"   then as_number(value, &.to_i16)
+        when "Int32"   then as_number(value, &.to_i32)
+        when "Int64"   then as_number(value, &.to_i64)
         when "Float32" then as_number(value, &.to_f32)
         when "Float64" then as_number(value, &.to_f64)
-        when "String" then value.to_s
-        when "Bool" then !!value
-        when "Nil" then nil
+        when "String"  then value.to_s
+        when "Bool"    then !!value
+        when "Nil"     then nil
         else
           raise "Can't convert #{value.inspect} of #{value.class} to #{target_type}"
         end
@@ -56,8 +56,8 @@ module Bindgen
         case value
         when Number then yield(value)
         when String then yield(value) # Responds to `#to_i` variants
-        when Bool then yield(value ? 1 : 0)
-        when nil then nil
+        when Bool   then yield(value ? 1 : 0)
+        when nil    then nil
         end
       end
     end

@@ -17,11 +17,11 @@ module Bindgen
     end
 
     DEPTH_MULTIPLIER = 2
-    JUSTIFY_OFFSET = 2
+    JUSTIFY_OFFSET   = 2
     HEAP_COLUMN_SIZE = 8
 
     # Collected stages
-    getter stages = { } of String => Timing
+    getter stages = {} of String => Timing
 
     # Garbage collector statistics *before* any measures.
     getter before : GC::Stats
@@ -86,7 +86,7 @@ module Bindgen
           child_size = child.max_name_length(depth + 1)
         end
 
-        { name_size, child_size }.max
+        {name_size, child_size}.max
       end
     end
 
@@ -96,7 +96,7 @@ module Bindgen
         indent,
         "Stage".ljust(justification - indent.size),
         "Heap".ljust(HEAP_COLUMN_SIZE),
-        " Duration"
+        " Duration",
       }
 
       header.join.colorize.mode(:bold)

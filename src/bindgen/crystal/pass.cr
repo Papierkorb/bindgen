@@ -64,7 +64,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          { is_ref, ptr, type_name, template, false }
+          {is_ref, ptr, type_name, template, false}
         end
       end
 
@@ -77,7 +77,7 @@ module Bindgen
         # opposite direction, so we have to reverse it.
         types = args[1..-1]
         types << args.first
-        names = types.map{|t| to_wrapper(t).type_name.as(String)}.join(", ")
+        names = types.map { |t| to_wrapper(t).type_name.as(String) }.join(", ")
 
         "Proc(#{names})"
       end
@@ -99,7 +99,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          { is_ref, ptr, type_name, nil, nilable }
+          {is_ref, ptr, type_name, nil, nilable}
         end
       end
 
@@ -126,7 +126,7 @@ module Bindgen
           type: type,
           type_name: type_name,
           reference: is_ref,
-          pointer: { 0, ptr }.max,
+          pointer: {0, ptr}.max,
           conversion: template,
           nilable: nilable,
         )
@@ -154,7 +154,7 @@ module Bindgen
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
-          { is_ref, ptr, type_name, template, false }
+          {is_ref, ptr, type_name, template, false}
         end
       end
 
@@ -180,7 +180,7 @@ module Bindgen
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
 
-          { is_ref, ptr, type_name, template, nilable }
+          {is_ref, ptr, type_name, template, nilable}
         end
       end
 
@@ -209,7 +209,7 @@ module Bindgen
           type: type,
           type_name: type_name,
           reference: is_ref,
-          pointer: { 0, ptr }.max,
+          pointer: {0, ptr}.max,
           conversion: template,
           nilable: nilable,
         )

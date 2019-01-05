@@ -8,7 +8,7 @@ module Bindgen
       # Node path.  If `nil`, the path points to itself.
       getter nodes : Array(String)?
 
-      def initialize(@nodes = [ ] of String)
+      def initialize(@nodes = [] of String)
       end
 
       # Returns the path parts in *range*.  If `#nodes` is nil, the returneed
@@ -77,9 +77,9 @@ module Bindgen
         end
 
         if target.parent
-          Path.new([ "" ] + target.full_path.map(&.name))
+          Path.new([""] + target.full_path.map(&.name))
         else # Self-path lookup on the root.
-          Path.new([ ] of String)
+          Path.new([] of String)
         end
       end
 
@@ -110,7 +110,7 @@ module Bindgen
       # BUG: Doesn't support nested generics, like `Foo(Bar(Baz))::Quux`.
       def self.from(path : String) : Path
         if path == "::"
-          new([ "" ])
+          new([""])
         else
           new(path.gsub(/\([^)]+\)/, "").split("::"))
         end
@@ -135,14 +135,14 @@ module Bindgen
         if node == wants # It wants itself.  Nothing to do.
           Path.new(nil)
         elsif node.parent == wants.parent # !!
-          Path.new([ wants.name ]) # Locally qualified name suffices
+          Path.new([wants.name])          # Locally qualified name suffices
         else
           wants_path = wants.full_path
           common, index = last_common(node.full_path, wants_path)
 
-          if common # We have a common ancestor node
+          if common            # We have a common ancestor node
             if common == wants # *node* is inside *wants*
-              Path.new([ wants.name ])
+              Path.new([wants.name])
             else # !!
               Path.new(wants_path[(index + 1)..-1].map(&.name))
             end
@@ -154,7 +154,7 @@ module Bindgen
 
       # Returns the global path to *node*.
       def self.global(node : Graph::Node) : Path
-        new([ "" ] + node.full_path.map(&.name))
+        new([""] + node.full_path.map(&.name))
       end
 
       # Does a local look-up starting at *base* for *path*.  The look-up will
@@ -217,7 +217,7 @@ module Bindgen
       # `PlatformSpecific` containers automatically.
       private def find_in_container(container, name)
         container.nodes.each do |node|
-          if node.is_a?(PlatformSpecific) # Support platform-specific
+          if node.is_a?(PlatformSpecific)            # Support platform-specific
             if found = find_in_container(node, name) # Recurse
               return found
             end
@@ -235,15 +235,15 @@ module Bindgen
           base = root
 
           if path.size < 2
-            return { root, nil }
+            return {root, nil}
           elsif path[1] != base.name # Make sure we go into our namespace
-            return { nil, path }
+            return {nil, path}
           end
 
           path = path[2..-1] # Skip first two elements
         end
 
-        { base, path }
+        {base, path}
       end
 
       # Finds the last common element in the lists *a* and *b*, and returns it.
@@ -262,7 +262,7 @@ module Bindgen
           end
         end
 
-        { found, index }
+        {found, index}
       end
     end
   end

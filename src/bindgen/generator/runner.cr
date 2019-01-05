@@ -19,7 +19,7 @@ module Bindgen
         @generators.each do |instance|
           stat_name = instance.class.name.sub(/.*::/, "").underscore
 
-          stats.measure(stat_name){ instance.write_all(graph) }
+          stats.measure(stat_name) { instance.write_all(graph) }
           stats.measure("#{stat_name} build") do
             run_build_step(instance.config)
           end

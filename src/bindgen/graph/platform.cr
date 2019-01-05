@@ -14,9 +14,9 @@ module Bindgen
       # Returns this platform as flags type.
       def as_flag : Platforms
         case self
-        when Crystal then Platforms::Crystal
+        when Crystal        then Platforms::Crystal
         when CrystalBinding then Platforms::CrystalBinding
-        when Cpp then Platforms::Cpp
+        when Cpp            then Platforms::Cpp
         else
           raise "Unreachable"
         end

@@ -32,7 +32,7 @@
 # This file will *not* be run by bindgen directly.  Instead, its contents after
 # the following marker are copied into the target module.
 
-########## SNIP ##########
+# ######### SNIP ##########
 
 # Native bindings.  Mostly generated.
 lib Binding
@@ -106,7 +106,7 @@ module BindgenHelper
 
     # Adds all *elements* at the end of the container, retaining their order.
     def concat(values : Enumerable(T)) : self
-      values.each{|v| push(v)}
+      values.each { |v| push(v) }
       self
     end
 

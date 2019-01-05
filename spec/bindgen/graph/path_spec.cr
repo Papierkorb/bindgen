@@ -13,7 +13,7 @@ describe Bindgen::Graph::Path do
     end
 
     it "returns a sub-path" do
-      path(%w[ a b c d ])[1..2].nodes.should eq(%w[ b c ])
+      path(%w[a b c d])[1..2].nodes.should eq(%w[b c])
     end
   end
 
@@ -26,12 +26,12 @@ describe Bindgen::Graph::Path do
 
     context "single element path" do
       it "returns the global path" do
-        path(%w[ a ]).parent.nodes.try(&.empty?).should be_true
+        path(%w[a]).parent.nodes.try(&.empty?).should be_true
       end
     end
 
     it "returns the path of the parent" do
-      path(%w[ a b c d ]).parent.nodes.should eq(%w[ a b c ])
+      path(%w[a b c d]).parent.nodes.should eq(%w[a b c])
     end
   end
 
@@ -44,12 +44,12 @@ describe Bindgen::Graph::Path do
 
     context "single element path" do
       it "returns the same path" do
-        path(%w[ a ]).last.nodes.should eq(%w[ a ])
+        path(%w[a]).last.nodes.should eq(%w[a])
       end
     end
 
     it "returns the last path part" do
-      path(%w[ a b c d ]).last.nodes.should eq(%w[ d ])
+      path(%w[a b c d]).last.nodes.should eq(%w[d])
     end
   end
 
@@ -64,12 +64,12 @@ describe Bindgen::Graph::Path do
 
     context "single element path" do
       it "returns that element" do
-        path(%w[ a ]).last_part.should eq("a")
+        path(%w[a]).last_part.should eq("a")
       end
     end
 
     it "returns the last path part" do
-      path(%w[ a b c d ]).last_part.should eq("d")
+      path(%w[a b c d]).last_part.should eq("d")
     end
   end
 
@@ -82,13 +82,13 @@ describe Bindgen::Graph::Path do
 
     context "on a local path" do
       it "returns false" do
-        path(%w[ a b ]).self?.should be_false
+        path(%w[a b]).self?.should be_false
       end
     end
 
     context "on a global path" do
       it "returns false" do
-        path([ "", "a", "b" ]).self?.should be_false
+        path(["", "a", "b"]).self?.should be_false
       end
     end
   end
@@ -102,13 +102,13 @@ describe Bindgen::Graph::Path do
 
     context "on a local path" do
       it "returns false" do
-        path(%w[ a b ]).global?.should be_false
+        path(%w[a b]).global?.should be_false
       end
     end
 
     context "on a global path" do
       it "returns true" do
-        path([ "", "a", "b" ]).global?.should be_true
+        path(["", "a", "b"]).global?.should be_true
       end
     end
   end
@@ -122,13 +122,13 @@ describe Bindgen::Graph::Path do
 
     context "on a local path" do
       it "returns true" do
-        path(%w[ a b ]).local?.should be_true
+        path(%w[a b]).local?.should be_true
       end
     end
 
     context "on a global path" do
       it "returns false" do
-        path([ "", "a", "b" ]).local?.should be_false
+        path(["", "a", "b"]).local?.should be_false
       end
     end
   end
@@ -142,7 +142,7 @@ describe Bindgen::Graph::Path do
 
     context "given a global path" do
       it "returns self without checks" do
-        subject = path([ "", "Doesnt", "Actually", "Exist" ])
+        subject = path(["", "Doesnt", "Actually", "Exist"])
         subject.to_global(root).should eq(subject)
       end
     end
@@ -155,12 +155,12 @@ describe Bindgen::Graph::Path do
 
     context "given a local path" do
       it "returns a global path" do
-        path(%w[ C D ]).to_global(mod_b).should eq(path([ "", "A", "B", "C", "D" ]))
+        path(%w[C D]).to_global(mod_b).should eq(path(["", "A", "B", "C", "D"]))
       end
 
       it "raises if the local path doesn't exist" do
         expect_raises(Exception, /does not exist/i) do
-          path(%w[ Unknown ]).to_global(mod_b)
+          path(%w[Unknown]).to_global(mod_b)
         end
       end
     end
@@ -175,13 +175,13 @@ describe Bindgen::Graph::Path do
 
     context "given a local path" do
       it "returns The::Path" do
-        path(%w[ The Path ]).to_s.should eq("The::Path")
+        path(%w[The Path]).to_s.should eq("The::Path")
       end
     end
 
     context "given a global path" do
       it "returns ::The::Path" do
-        path([ "", "The", "Path" ]).to_s.should eq("::The::Path")
+        path(["", "The", "Path"]).to_s.should eq("::The::Path")
       end
     end
   end
@@ -195,38 +195,38 @@ describe Bindgen::Graph::Path do
 
     context "given a local path" do
       it "returns The::Path" do
-        path(%w[ The Path ]).inspect.should eq("The::Path")
+        path(%w[The Path]).inspect.should eq("The::Path")
       end
     end
 
     context "given a global path" do
       it "returns ::The::Path" do
-        path([ "", "The", "Path" ]).inspect.should eq("::The::Path")
+        path(["", "The", "Path"]).inspect.should eq("::The::Path")
       end
     end
   end
 
   describe ".from(String)" do
     it "works with normal paths" do
-      path("Foo::Bar").nodes.should eq(%w[ Foo Bar ])
+      path("Foo::Bar").nodes.should eq(%w[Foo Bar])
     end
 
     it "works with generics paths" do
-      path("Foo(Stuff)::Bar").nodes.should eq(%w[ Foo Bar ])
+      path("Foo(Stuff)::Bar").nodes.should eq(%w[Foo Bar])
     end
 
     it "builds a global path" do
-      path("::Foo::Bar").nodes.should eq([ "", "Foo", "Bar" ])
+      path("::Foo::Bar").nodes.should eq(["", "Foo", "Bar"])
     end
 
     it "builds the global path" do
-      path("::").nodes.should eq([ "" ])
+      path("::").nodes.should eq([""])
     end
   end
 
   describe ".from(Enumerable)" do
     it "uses the list" do
-      path({ "Foo", "Bar" }).nodes.should eq(%w[ Foo Bar ])
+      path({"Foo", "Bar"}).nodes.should eq(%w[Foo Bar])
     end
   end
 
@@ -301,7 +301,7 @@ describe Bindgen::Graph::Path do
       s = Bindgen::Graph::Namespace.new("S")
       t = Bindgen::Graph::Namespace.new("T", s)
 
-      Bindgen::Graph::Path.global(t).nodes.should eq([ "", "S", "T" ])
+      Bindgen::Graph::Path.global(t).nodes.should eq(["", "S", "T"])
     end
   end
 

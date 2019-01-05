@@ -1,7 +1,7 @@
 require "spec"
 require "../src/bindgen/library"
 
-### Helpers
+# ## Helpers
 
 def watchdog(deadline = 10.seconds)
   # alarm() / SIGALRM doesn't trigger reliably :(
@@ -62,6 +62,6 @@ module Parser
   end
 
   def self.method(name : String, class_name : String, result : Bindgen::Parser::Type, type = Bindgen::Parser::Method::Type::MemberMethod)
-    method(name, class_name, result, [ ] of Bindgen::Parser::Argument, type)
+    method(name, class_name, result, [] of Bindgen::Parser::Argument, type)
   end
 end
