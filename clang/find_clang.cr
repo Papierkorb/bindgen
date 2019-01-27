@@ -70,7 +70,7 @@ raw_ldflags = output[-1]
 
 # Shell-split
 def shell_split(line)
-  list = [ ] of String
+  list = [] of String
   skip_next = false
   in_string = false
   offset = 0
@@ -106,12 +106,12 @@ def shell_split(line)
 end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
-cppflags = shell_split(raw_cppflags)[1..-1]
-ldflags = shell_split(raw_ldflags)[1..-1]
+cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
+ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS", ""))
 
 #
-system_includes = [ ] of String
-system_libs = [ ] of String
+system_includes = [] of String
+system_libs = [] of String
 
 # Interpret the argument lists
 flags = cppflags + ldflags
@@ -132,6 +132,12 @@ while index < flags.size
   index += 1
 end
 
+# Clean libs
+system_libs.uniq!
+system_libs.map! { |path| path.gsub(/\/$/, "") }
+system_includes.uniq!
+system_includes.map! { |path| path.gsub(/\/$/, "") }
+
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
 output_code = String.build do |b|
@@ -151,8 +157,8 @@ end
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
   paths
-    .flat_map{|path| Dir["#{path}/lib#{prefix}*.a"]}
-    .map{|path| File.basename(path)[/^lib([^.]+)\.a$/, 1]}
+    .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
+    .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] }
     .uniq
 end
 
@@ -165,8 +171,8 @@ print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 # Libraries must precede their dependencies.  By putting the whole list twice
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
-libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}
-includes = system_includes.map{|x| "-I#{x}"}
+libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
+includes = system_includes.map { |x| "-I#{x}" }
 
 puts "CLANG_LIBS := " + libs.join(" ")
 puts "CLANG_INCLUDES := " + includes.join(" ")
