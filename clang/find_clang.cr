@@ -110,8 +110,8 @@ def shell_split(line : String)
 end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
-cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV["CPPFLAGS"] || "")
-ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV["LDFLAGS"] || "")
+cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
+ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS"], ""))
 
 #
 system_includes = [] of String
