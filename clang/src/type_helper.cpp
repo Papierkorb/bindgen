@@ -179,7 +179,7 @@ bool TypeHelper::readValue(LiteralData &literal, const clang::QualType &qt,
 }
 
 void TypeHelper::addFunctionParameters(const clang::FunctionDecl *func, Method &m) {
-	for (int i = 0; i < func->getNumParams(); i++) {
+	for (unsigned i = 0; i < func->getNumParams(); i++) {
 		Argument arg = TypeHelper::processFunctionParameter(func->parameters()[i]);
 
 		if (arg.hasDefault && m.firstDefaultArgument < 0)
