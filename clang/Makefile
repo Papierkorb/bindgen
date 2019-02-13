@@ -3,7 +3,7 @@ include Makefile.variables
 
 LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lcurses -ltinfo -lpcre
 DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
-CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
+CXXFLAGS := -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
 
 HEADERS  := $(wildcard include/*.hpp)
 SOURCES  := $(wildcard src/*.cpp)
