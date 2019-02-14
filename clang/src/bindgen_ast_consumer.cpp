@@ -11,8 +11,10 @@
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
-BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler)
-	: m_compiler(compiler), m_functionHandler(nullptr), m_macros(macros), m_matchFinder(m_matchFinderOpts)
+static clang::ast_matchers::MatchFinder::MatchFinderOptions OPTS = clang::ast_matchers::MatchFinder::MatchFinderOptions();
+
+BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler, clang::ast_matchers::MatchFinder::MatchFinderOptions opts)
+	: m_compiler(compiler), m_functionHandler(nullptr), m_macros(macros), m_matchFinder(opts)
 {
 	using namespace clang::ast_matchers;
 
