@@ -121,9 +121,9 @@ while index < flags.size
   when "-internal-isystem"
     system_includes << flags[index + 1]
     index += 1
-  when "-resource-dir" # Find paths on Ubuntu
+  when "-resource-dir"
     resource_dir = flags[index + 1]
-    system_includes << "#{resource_dir}/../../../include"
+    system_includes << "#{resource_dir}"
     index += 1
   when /^-L/
     system_libs << flags[index][2..-1]
@@ -131,6 +131,17 @@ while index < flags.size
 
   index += 1
 end
+
+system_includes.map! do |p|
+  path = File.expand_path(p)
+  unless Dir.exists?(path)
+    new_path = File.join("/usr", path)
+    path = new_path if Dir.exists?(new_path)
+  end
+  path
+end
+
+system_includes.select! {|p| p =~ /include/ && Dir.exists?(p)}
 
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
