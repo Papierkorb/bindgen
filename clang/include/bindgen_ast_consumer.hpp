@@ -7,7 +7,7 @@ class FunctionMatchHandler;
 
 class BindgenASTConsumer : public clang::ASTConsumer {
 public:
-	BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler, clang::ast_matchers::MatchFinder::MatchFinderOptions opts);
+	BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler);
 
 	~BindgenASTConsumer() override;
 
@@ -25,6 +25,7 @@ private:
 	std::vector<EnumMatchHandler *> m_enumHandlers;
 	FunctionMatchHandler *m_functionHandler;
 	std::vector<Macro> &m_macros;
+	clang::ast_matchers::MatchFinder::MatchFinderOptions m_matchFinderOpts;
 	clang::ast_matchers::MatchFinder m_matchFinder;
 };
 
