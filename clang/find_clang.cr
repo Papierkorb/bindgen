@@ -42,19 +42,16 @@ def print_help_and_bail
 end
 
 # Find clang++ binary, through user setting, or automatically.
-if binary = ENV["CLANG"]?
-  unless Process.find_executable(binary)
-    print_help_and_bail
-  end
-
-  clang_binary = binary
-elsif binary = find_clang_binary
-  clang_binary = binary
-else
-  print_help_and_bail
-end
+clang_binary = ENV["CLANG"]? || find_clang_binary
+print_help_and_bail unless clang_binary && Process.find_executable(clang_binary)
 
 STDERR.puts "Using clang binary #{clang_binary.inspect}"
+
+# Find llvm-config binary
+llvm_config = ENV["LLVM_CONFIG"]
+print_help_and_bail unless Process.find_executable(llvm_config)
+
+STDERR.puts "Using clang binary #{llvm_config.inspect}"
 
 # Ask clang the paths it uses.
 output = `#{clang_binary} -### #{__DIR__}/src/bindgen.cpp 2>&1`.lines
@@ -66,7 +63,6 @@ end
 
 # Untangle the output
 raw_cppflags = output[-2]
-raw_ldflags = output[-1]
 
 # Shell-split
 def shell_split(line)
@@ -107,34 +103,26 @@ end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
 cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
-ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS", ""))
 
-#
 system_includes = [] of String
-system_libs = [] of String
 
 # Interpret the argument lists
-flags = cppflags + ldflags
 index = 0
-while index < flags.size
-  case flags[index]
+while index < cppflags.size
+  case cppflags[index]
   when "-internal-isystem"
-    system_includes << flags[index + 1]
+    system_includes << cppflags[index + 1]
     index += 1
   when "-resource-dir" # Find paths on Ubuntu
-    resource_dir = flags[index + 1]
+    resource_dir = cppflags[index + 1]
     system_includes << "#{resource_dir}/../../../include"
     index += 1
-  when /^-L/
-    system_libs << flags[index][2..-1]
   end
 
   index += 1
 end
 
 # Clean libs
-system_libs.uniq!
-system_libs.map! { |path| path.gsub(/\/$/, "") }
 system_includes.uniq!
 system_includes.map! { |path| path.gsub(/\/$/, "") }
 
@@ -153,27 +141,5 @@ if !File.exists?(output_path) || File.read(output_path) != output_code
   File.write(output_path, output_code)
 end
 
-# Find all LLVM and clang libraries, and link to all of them.  We don't need
-# all of them - Which totally helps with keeping linking times low.
-def find_libraries(paths, prefix)
-  paths
-    .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
-    .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] }
-    .uniq
-end
-
-llvm_libs = find_libraries(system_libs, "LLVM")
-clang_libs = find_libraries(system_libs, "clang")
-
-# Try to provide the user with an error if we can't find it.
-print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
-
-# Libraries must precede their dependencies.  By putting the whole list twice
-# into the compiler, we ensure this.  The probably laziest dependency resolution
-# algorithm in existence.
-libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
-includes = system_includes.map { |x| "-I#{x}" }
-
-puts "CLANG_LIBS := " + libs.join(" ")
-puts "CLANG_INCLUDES := " + includes.join(" ")
 puts "CLANG_BINARY := " + clang_binary
+puts "LLVM_CONFIG := " + llvm_config

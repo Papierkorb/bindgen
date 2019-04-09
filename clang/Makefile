@@ -1,10 +1,14 @@
 IGNORE   := $(shell crystal run find_clang.cr > Makefile.variables)
 include Makefile.variables
 
+LLVM_LIBS := $(shell $(LLVM_CONFIG) --system-libs --libs core)
+LLVM_INCLUDE_DIR := $(shell $(LLVM_CONFIG) --includedir)
+LLVM_LDFLAGS  := $(shell $(LLVM_CONFIG) --ldflags)
 # NOTE: No -ltinfo on OSX
-LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lcurses -ltinfo -lpcre
+CLANG_LIBS := -lclang -lclangAST -lclangBasic -lclangFrontend -lclangLex -lclangTooling -lclangDriver -lclangParse -lclangASTMatchers
+LIBS     := $(LLVM_LIBS) $(CLANG_LIBS) -ldl -pthread -lz -lcurses -ltinfo -lpcre
 DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
-CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
+CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude -I$(LLVM_INCLUDE_DIR)
 
 HEADERS  := $(wildcard include/*.hpp)
 SOURCES  := $(wildcard src/*.cpp)
@@ -23,6 +27,6 @@ build/%.o: src/%.cpp $(HEADERS)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 $(BINARY): $(OBJECTS)
-	$(CXX) -o $(BINARY) $(OBJECTS) $(LIBS)
+	$(CXX) -o $(BINARY) $(OBJECTS) $(LIBS) $(LLVM_LDFLAGS)
 
 .PHONY: clean
