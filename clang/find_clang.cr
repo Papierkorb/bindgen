@@ -73,7 +73,7 @@ raw_cppflags = output[-2]
 raw_ldflags = output[-1]
 
 # Shell-split
-def shell_split(line : String)
+def shell_split(line)
   list = [] of String
   skip_next = false
   in_string = false
@@ -111,7 +111,7 @@ end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
 cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
-ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS"], ""))
+ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS", ""))
 
 #
 system_includes = [] of String
@@ -142,8 +142,11 @@ while index < flags.size
   index += 1
 end
 
+# Clean libs
 system_libs.uniq!
+system_libs.map! { |path| path.gsub(/\/$/, "") }
 system_includes.uniq!
+system_includes.map! { |path| path.gsub(/\/$/, "") }
 
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
@@ -165,9 +168,7 @@ end
 def find_libraries(paths, prefix)
   paths
     .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
-    .map { |path| File.basename(path) }
-    .reject { |path| path !~ /^lib([^.]+)\.a$/ }
-    .map { |path| path[/^lib([^.]+)\.a$/, 1] }
+    .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] }
     .uniq
 end
 
