@@ -6,7 +6,7 @@ set -e
 set -x
 
 apt-get update
-apt-get install --yes apt-transport-https
+apt-get install --yes apt-transport-https curl
 
 cat <<EOF > /etc/apt/sources.list.d/clang.list
 deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-${CLANG_VERSION} main
@@ -24,7 +24,9 @@ if [ ! -f /etc/lsb-release ]; then
   apt-get install gnupg --yes
 fi
 
-apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54
+# apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54 15CF4D18AF4F7421
+curl -sL "https://keybase.io/crystal/pgp_keys.asc" | apt-key add -
+
 apt-get install --yes --allow-unauthenticated \
   build-essential \
   crystal libxml2-dev zlib1g-dev libncurses-dev libgc-dev libyaml-dev \
