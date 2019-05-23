@@ -34,7 +34,12 @@ module Bindgen
         puts "struct #{structure.name}"
         indented do
           structure.fields.each do |name, type|
-            puts "#{name} : #{type.type_name}"
+            # can't use Void as a struct field type
+            if type.type_name == "Void"
+              puts "#{name} : #{type.type_name}*"
+            else
+              puts "#{name} : #{type.type_name}"
+            end
           end
         end
         puts "end"
