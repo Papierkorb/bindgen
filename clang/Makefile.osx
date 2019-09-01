@@ -1,0 +1,20 @@
+LIBS := $(LLVM_LD_FLAGS) $(CLANG_LIBS) -ldl -lz -lcurses -lpcre
+DEFINES := -D__LLVM_VERSION_$(LLVM_VERSION)
+CXXFLAGS := $(LLVM_CXX_FLAGS) $(DEFINES) -Iinclude $(CLANG_INCLUDES)
+
+# If OSX
+ifeq ($(UNAME_S),Darwin)
+
+	ifeq ($(LLVM_VERSION), 4)
+		# No -pthread on OSX for LLVM 4
+	else
+		# Add -pthread if over 4
+		LIBS += -pthread
+	endif # end ifeq ($(LLVM_VERSION), 4)
+
+else # If not OSX
+
+	# Add -ltinfo and -pthread
+	LIBS += -ltinfo -pthread
+
+endif # end ifeq ($(UNAME_S),Darwin)

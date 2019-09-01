@@ -1,12 +1,21 @@
 #include "type_helper.hpp"
 
+# if defined(__LLVM_VERSION_6) || defined(__LLVM_VERSION_8)
+#include "clang/AST/QualTypeNames.h"
+# else
 #include "clang/Tooling/Core/QualTypeNames.h"
+# endif
+
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 
+# if defined(__LLVM_VERSION_6) || defined(__LLVM_VERSION_8)
+#include "clang_type_name_llvm_8.hpp"
+# else
 #include "clang_type_name.hpp"
+# endif
 
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
 	const clang::ClassTemplateSpecializationDecl *decl);

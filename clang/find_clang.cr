@@ -4,6 +4,7 @@
 # Also outputs all LLVM and Clang libraries to link to.  Provides diagnostics
 # to standard error.  Called by the `Makefile`.
 
+require "json"
 require "yaml"
 require "../src/bindgen/util"
 require "../src/bindgen/find_path"
@@ -24,19 +25,39 @@ def find_clang_binary : String?
   path_finder.find(clang_find_config)
 end
 
+def find_llvm_config_binary(search_paths = Array(String).new) : String?
+  config_yaml = {
+    "kind" => "Executable",
+    "try"  => [
+      "llvm-config",
+    ],
+    "version" => {
+      "min"     => "4.0.0",
+      "command" => "% --version",
+      "regex"   => "([0-9.]+)",
+    },
+    "search_paths" => search_paths.map { |path| path.gsub(/(lib|include)$/, "bin") },
+  }.to_yaml
+
+  llvm_find_config = Bindgen::FindPath::PathConfig.from_yaml(config_yaml)
+
+  path_finder = Bindgen::FindPath.new(__DIR__)
+  path_finder.find(llvm_find_config)
+end
+
 def print_help_and_bail
-  STDERR.puts <<-HELP
+  STDERR.puts <<-END
   You're missing the LLVM and/or Clang development libraries.
   Please install these:
     ArchLinux: pacman -S llvm clang gc libyaml
     Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev llvm-4.0-dev libpcre3-dev
     CentOS: yum install crystal libyaml-devel gc-devel pcre-devel zlib-devel clang-devel
-    Mac OS: HELP WANTED!
+    Mac OS: brew install crystal bdw-gc gmp libevent libxml2 libyaml llvm
 
   If you've installed these in a non-standard location, do one of these:
     1) Make the CLANG environment variable point to your `clang++` executable
     2) Add the `clang++` executable to your PATH
-  HELP
+  END
 
   exit 1
 end
@@ -67,10 +88,6 @@ if output.size < 2 # Sanity check
   STDERR.puts "Unexpected output: Expected at least two lines."
   exit 1
 end
-
-# Untangle the output
-raw_cppflags = output[-2]
-raw_ldflags = output[-1]
 
 # Shell-split
 def shell_split(line)
@@ -109,9 +126,16 @@ def shell_split(line)
   end
 end
 
-# Shell split the strings.  Remove first of each, as this is the program name.
-cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
-ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS", ""))
+# Untangle the output
+raw_cppflags = output[-2].gsub(/^\s+"|\s+"$/, "")
+raw_ldflags = output[-1].gsub(/^\s+"|\s+"$/, "")
+
+cppflags = raw_cppflags.split(/"\s+"/)
+  .concat(shell_split(ENV.fetch("CPPFLAGS", "")))
+  .uniq
+ldflags = raw_ldflags.split(/"\s+"/)
+  .concat(shell_split(ENV.fetch("LDFLAGS", "")))
+  .uniq
 
 #
 system_includes = [] of String
@@ -127,7 +151,7 @@ while index < flags.size
     index += 1
   when "-resource-dir" # Find paths on Ubuntu
     resource_dir = flags[index + 1]
-    system_includes << "#{resource_dir}/../../../include"
+    system_includes << File.expand_path("#{resource_dir}/../../../include")
     index += 1
   when "-lto_library"
     to_library = flags[index + 1]
@@ -144,9 +168,9 @@ end
 
 # Clean libs
 system_libs.uniq!
-system_libs.map! { |path| path.gsub(/\/$/, "") }
+system_libs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
 system_includes.uniq!
-system_includes.map! { |path| path.gsub(/\/$/, "") }
+system_includes.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
 
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
@@ -182,8 +206,23 @@ print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
 libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
-includes = system_includes.map { |x| "-I#{x}" }
+includes = system_includes.map { |x| "-I#{File.expand_path(x)}" }
 
 puts "CLANG_LIBS := " + libs.join(" ")
 puts "CLANG_INCLUDES := " + includes.join(" ")
 puts "CLANG_BINARY := " + clang_binary
+
+# Find llvm config if we are using llvm
+llvm_config_binary = find_llvm_config_binary(system_libs)
+
+# Get flags from llvm
+if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
+  llvm_version = `#{llvm_config_binary} --version`.chomp
+
+  puts "LLVM_CONFIG_BINARY := #{llvm_config_binary}"
+  puts "LLVM_VERSION := " + llvm_version.split(/\./).first
+  puts "LLVM_VERSION_FULL := #{llvm_version}"
+  puts "LLVM_CXX_FLAGS := " + `#{llvm_config_binary} --cxxflags`.chomp
+    # .gsub(/-fno-exceptions/, "")
+  puts "LLVM_LD_FLAGS := " + `#{llvm_config_binary} --ldflags`.chomp
+end
