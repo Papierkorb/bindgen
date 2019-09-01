@@ -1,13 +1,11 @@
 IGNORE   := $(shell crystal run find_clang.cr > Makefile.variables)
 include Makefile.variables
 
-UNAME_S := $(shell uname -s)
-
-# If OSX
-ifeq ($(UNAME_S),Darwin)
-	include Makefile.osx
+# If LLVM is present
+ifdef LLVM_VERSION
+	include Makefile.llvm
 else
-	LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lcurses -lpcre
+	LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lcurses -lpcre -ltinfo
 	DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 	CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
 endif # end ifeq ($(UNAME_S),Darwin)

@@ -9,12 +9,16 @@ require "yaml"
 require "../src/bindgen/util"
 require "../src/bindgen/find_path"
 
+UNAME_S = `uname -s`.chomp
+
 def find_clang_binary : String?
   clang_find_config = Bindgen::FindPath::PathConfig.from_yaml <<-YAML
   kind: Executable
   try:
     - "clang++"
     - "clang++-*"
+  seach_paths:
+    - /usr/bin/
   version:
     min: "4.0.0"
     command: "% --version"
@@ -202,10 +206,24 @@ clang_libs = find_libraries(system_libs, "clang")
 # Try to provide the user with an error if we can't find it.
 print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 
-# Libraries must precede their dependencies.  By putting the whole list twice
-# into the compiler, we ensure this.  The probably laziest dependency resolution
-# algorithm in existence.
-libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
+# Libraries must precede their dependencies. We can use the
+# --start-group and --end-group wrappers in linux to get
+# the correct order
+def get_lib_args(libs_list)
+  libs = Array(String).new
+  if UNAME_S == "Darwin"
+    libs.concat libs_list.map { |x| "-l#{x}" }
+  else
+    libs << "-Wl,--start-group"
+    libs.concat libs_list.map { |x| "-l#{x}" }
+    libs << "-Wl,--start-group"
+  end
+  libs
+end
+
+libs = get_lib_args(clang_libs)
+libs += get_lib_args(llvm_libs)
+
 includes = system_includes.map { |x| "-I#{File.expand_path(x)}" }
 
 puts "CLANG_LIBS := " + libs.join(" ")
@@ -223,6 +241,9 @@ if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
   puts "LLVM_VERSION := " + llvm_version.split(/\./).first
   puts "LLVM_VERSION_FULL := #{llvm_version}"
   puts "LLVM_CXX_FLAGS := " + `#{llvm_config_binary} --cxxflags`.chomp
-    # .gsub(/-fno-exceptions/, "")
+    .gsub(/-fno-exceptions/, "")
+    .gsub(/-W[^alp].+\s/, "")
+    .gsub(/\s+/," ")
   puts "LLVM_LD_FLAGS := " + `#{llvm_config_binary} --ldflags`.chomp
+    .gsub(/\s+/," ")
 end

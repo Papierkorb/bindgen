@@ -30,4 +30,6 @@ curl -sL "https://keybase.io/crystal/pgp_keys.asc" | apt-key add -
 apt-get install --yes --allow-unauthenticated \
   build-essential \
   crystal libxml2-dev zlib1g-dev libncurses-dev libgc-dev libyaml-dev \
-  clang-${CLANG_VERSION} libclang-${CLANG_VERSION}-dev llvm-${CLANG_VERSION}-dev libpcre3-dev
+  llvm-${CLANG_VERSION} llvm-${CLANG_VERSION}-dev \
+  clang-${CLANG_VERSION} libclang-${CLANG_VERSION}-dev \
+  libpcre3-dev
