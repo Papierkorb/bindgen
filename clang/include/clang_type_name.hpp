@@ -443,7 +443,7 @@ namespace ClangTypeName {
                                 bool WithGlobalNsPrefix) {
    // In case of myType* we need to strip the pointer first, fully
    // qualify and attach the pointer once again.
-   if (isa<PointerType>(QT.getTypePtr())) {
+   if (isa<clang::PointerType>(QT.getTypePtr())) {
      // Get the qualifiers.
      Qualifiers Quals = QT.getQualifiers();
      QT = getFullyQualifiedType(QT->getPointeeType(), Ctx, WithGlobalNsPrefix);

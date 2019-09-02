@@ -243,7 +243,7 @@ if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
   puts "LLVM_CXX_FLAGS := " + `#{llvm_config_binary} --cxxflags`.chomp
     .gsub(/-fno-exceptions/, "")
     .gsub(/-W[^alp].+\s/, "")
-    .gsub(/\s+/," ")
+    .gsub(/\s+/, " ")
   puts "LLVM_LD_FLAGS := " + `#{llvm_config_binary} --ldflags`.chomp
-    .gsub(/\s+/," ")
+    .gsub(/\s+/, " ")
 end

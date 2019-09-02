@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 class ClangValidationError < Exception
-  getter document : JSON::Any::Type
+  getter document : JSON::Any::Type | UInt64
 
   def initialize(@document, path, message)
     super("At #{path}: #{message}")
@@ -21,6 +21,7 @@ def clang_tool(cpp_code, arguments, **checks)
   command = "#{tool} #{file.path} #{arguments} -- " \
             "-x c++ -std=c++11 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS " \
             "-Wno-implicitly-unsigned-literal"
+
   puts "Command: #{command}" if ENV["VERBOSE"]?
   json_doc = `#{command}`
 
@@ -60,7 +61,13 @@ private def check_partial_value(original, expected, path)
 
     expected.each do |key, expected_child|
       value = hash[key.to_s]?
-      value = value.raw if value
+
+      if !value.nil? && expected_child.is_a?(UInt64) && value.raw.is_a?(Int64)
+        value = value.raw.as(Int64).to_u64
+      else
+        value = value.raw if value
+      end
+
       check_partial_value(value, expected_child, "#{path}.#{key}")
     end
   when Array, Tuple

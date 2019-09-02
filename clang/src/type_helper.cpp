@@ -11,7 +11,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 
-# if defined(__LLVM_VERSION_6) || defined(__LLVM_VERSION_8)
+# if defined(__LLVM_VERSION_8)
 #include "clang_type_name_llvm_8.hpp"
 # else
 #include "clang_type_name.hpp"
