@@ -18,8 +18,5 @@ targets:
 
 # Required as bindgen will be used as a tool on its own.
 scripts:
-  postinstall: |-
-    shards && make -C clang clean && make -C clang && \
-    mkdir -p bin && crystal build src/bindgen.cr -o bin/bindgen
-
+  postinstall: shards
 license: GPLv3
