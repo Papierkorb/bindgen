@@ -48,13 +48,12 @@ llvm_map_components_to_libnames(llvm_libs all)
 ######################
 
 # Find crystal bin
-# Find crystal bin
-if(NOT EXISTS crystal_bin)
+if(NOT EXISTS ${crystal_bin})
   find_program(crystal_bin crystal)
   message(STATUS "Found crystal exec: ${crystal_bin}")
 endif()
 
-if(NOT EXISTS shards_bin)
+if(NOT EXISTS ${shards_bin})
   find_program(shards_bin shards)
   message(STATUS "Found shards exec: ${shards_bin}")
 endif()
