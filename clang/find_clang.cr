@@ -222,6 +222,12 @@ def get_lib_args(libs_list)
 end
 
 libs = get_lib_args(clang_libs)
+
+if ARGV[0]? && ARGV[0] == "--clang-libs"
+  STDOUT << libs.map { |l| l.gsub(/-l/, "") }.join(";")
+  exit
+end
+
 libs += get_lib_args(llvm_libs)
 
 includes = system_includes.map { |x| "-I#{File.expand_path(x)}" }
