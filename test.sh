@@ -2,7 +2,9 @@
 set -ex
 
 run_test(){
-  docker run --rm bindgen-test:$1 ci/run.sh
+  local code_name=$1
+  local clang_ver=$2
+  docker run --rm bindgen-test:${code_name}-${clang_ver} ci/run.sh
 }
 
 build_docker() {
@@ -16,29 +18,14 @@ build_archlinux() {
   docker build . -f ci/Dockerfile.archlinux -t bindgen-test:archlinux
 }
 
-build_images() {
-  build_docker "xenial" "4.0"
-  build_docker "xenial" "5.0"
-  build_docker "xenial" "6.0"
-
-  build_docker "stretch" "4.0"
-  build_docker "stretch" "5.0"
-  build_docker "stretch" "6.0"
-
-  build_archlinux
+test_archlinux() {
+  docker run --rm bindgen-test:archlinux ci/run.sh
 }
 
-run_tests() {
-  run_test "xenial-4.0"
-  run_test "xenial-5.0"
-  run_test "xenial-6.0"
-
-  run_test "stretch-4.0"
-  run_test "stretch-5.0"
-  run_test "stretch-6.0"
-
-  run_test "archlinux"
-}
-
-build_images
-run_tests
+for code_name in "xenial" "stretch"; do
+  for clang_ver in "4.0" "5.0" "6.0"; do
+    echo "${code_name}-${clang_ver}"
+    build_docker ${code_name} ${clang_ver}
+    run_test ${code_name} ${clang_ver}
+  done
+done

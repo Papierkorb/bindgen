@@ -32,4 +32,4 @@ apt-get install --yes --allow-unauthenticated \
   crystal libxml2-dev zlib1g-dev libncurses-dev libgc-dev libyaml-dev \
   llvm-${CLANG_VERSION} llvm-${CLANG_VERSION}-dev \
   clang-${CLANG_VERSION} libclang-${CLANG_VERSION}-dev \
-  libpcre3-dev
+  libpcre3-dev cmake libedit-dev

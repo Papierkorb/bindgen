@@ -201,7 +201,18 @@ def find_libraries(paths, prefix)
 end
 
 llvm_libs = find_libraries(system_libs, "LLVM")
+
+if ARGV[0]? && ARGV[0] == "--llvm-libs"
+  STDOUT << get_lib_args(llvm_libs).join(";")
+  exit
+end
+
 clang_libs = find_libraries(system_libs, "clang")
+
+if ARGV[0]? && ARGV[0] == "--clang-libs"
+  STDOUT << get_lib_args(clang_libs).join(";")
+  exit
+end
 
 # Try to provide the user with an error if we can't find it.
 print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
@@ -222,11 +233,6 @@ def get_lib_args(libs_list)
 end
 
 libs = get_lib_args(clang_libs)
-
-if ARGV[0]? && ARGV[0] == "--clang-libs"
-  STDOUT << libs.map { |l| l.gsub(/-l/, "") }.join(";")
-  exit
-end
 
 libs += get_lib_args(llvm_libs)
 
