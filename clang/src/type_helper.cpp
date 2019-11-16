@@ -1,9 +1,9 @@
 #include "type_helper.hpp"
 
-# if defined(__LLVM_VERSION_6) || defined(__LLVM_VERSION_8)
-#include "clang/AST/QualTypeNames.h"
+# if defined(__LLVM_VERSION_4) || defined(__LLVM_VERSION_5)
+  #include "clang/Tooling/Core/QualTypeNames.h"
 # else
-#include "clang/Tooling/Core/QualTypeNames.h"
+  #include "clang/AST/QualTypeNames.h"
 # endif
 
 #include "clang/AST/Type.h"
@@ -12,9 +12,9 @@
 #include "clang/AST/ExprCXX.h"
 
 # if defined(__LLVM_VERSION_8)
-#include "clang_type_name_llvm_8.hpp"
+  #include "clang_type_name_llvm_8.hpp"
 # else
-#include "clang_type_name.hpp"
+  #include "clang_type_name.hpp"
 # endif
 
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,

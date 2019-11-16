@@ -63,10 +63,10 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
-# if defined(__LLVM_VERSION_6)
- #include "clang/AST/QualTypeNames.h"
-# else
+# if defined(__LLVM_VERSION_5) || defined(__LLVM_VERSION_4)
  #include "clang/Tooling/Core/QualTypeNames.h"
+# else
+ #include "clang/AST/QualTypeNames.h"
 # endif
 
  #include "clang/AST/DeclTemplate.h"

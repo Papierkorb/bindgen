@@ -22,7 +22,10 @@ add_definitions(-D__LLVM_VERSION_${LLVM_VER})
 
 
 # Find the LLVM clang++ path
+message(STATUS "LLVM Tools Dir: ${LLVM_TOOLS_BINARY_DIR}")
+
 find_program(clang_bin "clang++" PATHS: ${LLVM_TOOLS_BINARY_DIR})
+message(STATUS "Found clang bin: ${clang_bin}")
 set(CMAKE_CXX_COMPILER ${clang_bin})
 message(STATUS "Using clang++ exec: ${CMAKE_CXX_COMPILER}")
 
@@ -99,6 +102,8 @@ endif ()
 message(STATUS "CMake System Name: ${CMAKE_SYSTEM_NAME}")
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+  include_directories(/usr/local/include)
+
   # for MacOS X or iOS, watchOS, tvOS (since 3.10.3)
   if (${LLVM_PACKAGE_VERSION} VERSION_GREATER "4")
     # Enable threads if LLVM over 4
