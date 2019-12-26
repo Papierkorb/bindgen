@@ -106,8 +106,8 @@ def shell_split(line : String)
 end
 
 # Shell split the strings.  Remove first of each, as this is the program name.
-cppflags = shell_split(raw_cppflags)[1..-1]
-ldflags = shell_split(raw_ldflags)[1..-1]
+cppflags = shell_split(raw_cppflags)[1..-1] + shell_split(ENV.fetch("CPPFLAGS", ""))
+ldflags = shell_split(raw_ldflags)[1..-1] + shell_split(ENV.fetch("LDFLAGS", ""))
 
 #
 system_includes = [] of String
@@ -132,6 +132,12 @@ while index < flags.size
   index += 1
 end
 
+# Clean libs
+system_libs.uniq!
+system_libs.map! { |path| path.gsub(/\/$/, "") }
+system_includes.uniq!
+system_includes.map! { |path| path.gsub(/\/$/, "") }
+
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
 output_code = String.build do |b|
@@ -151,8 +157,8 @@ end
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
   paths
-    .flat_map{|path| Dir["#{path}/lib#{prefix}*.a"]}
-    .map{|path| File.basename(path)[/^lib([^.]+)\.a$/, 1]}
+    .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
+    .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] }
     .uniq
 end
 
