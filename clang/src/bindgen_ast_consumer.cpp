@@ -99,6 +99,9 @@ void BindgenASTConsumer::serializeAndOutput() {
 
 	stream << "macros" << JsonStream::Separator << this->m_macros;  // "macros": [ ... ]
 	stream << JsonStream::ObjectEnd; // }
+
+	// FIXME: Currently the process crashes during clang's Parser destructor. This is a workaround.
+	exit(0);
 }
 
 void BindgenASTConsumer::serializeEnumerations(JsonStream &stream) {
