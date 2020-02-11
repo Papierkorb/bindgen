@@ -31,7 +31,7 @@ def print_help_and_bail
     ArchLinux: pacman -S llvm clang gc libyaml
     Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev llvm-4.0-dev libpcre3-dev
     CentOS: yum install crystal libyaml-devel gc-devel pcre-devel zlib-devel clang-devel
-    openSUSE: zypper install llvm clang5 libyaml-devel gc-devel pcre-devel zlib-devel clang5-devel
+    openSUSE: zypper install llvm clang libyaml-devel gc-devel pcre-devel zlib-devel clang-devel ncurses-devel
     Mac OS: HELP WANTED!
 
   If you've installed these in a non-standard location, do one of these:
