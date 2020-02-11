@@ -62,8 +62,11 @@ SOFTWARE.
  // License. See LICENSE.TXT for details.
  //
  //===----------------------------------------------------------------------===//
-
- #include "clang/Tooling/Core/QualTypeNames.h"
+ #if (__clang_major__ > 5)
+  #include "clang/AST/QualTypeNames.h"
+ #else
+  #include "clang/Tooling/Core/QualTypeNames.h"
+ #endif
  #include "clang/AST/DeclTemplate.h"
  #include "clang/AST/DeclarationName.h"
  #include "clang/AST/GlobalDecl.h"
@@ -438,7 +441,7 @@ namespace ClangTypeName {
                                 bool WithGlobalNsPrefix) {
    // In case of myType* we need to strip the pointer first, fully
    // qualify and attach the pointer once again.
-   if (isa<PointerType>(QT.getTypePtr())) {
+   if (isa<clang::PointerType>(QT.getTypePtr())) {
      // Get the qualifiers.
      Qualifiers Quals = QT.getQualifiers();
      QT = getFullyQualifiedType(QT->getPointeeType(), Ctx, WithGlobalNsPrefix);

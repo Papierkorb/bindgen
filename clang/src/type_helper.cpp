@@ -1,6 +1,10 @@
 #include "type_helper.hpp"
 
+#if (__clang_major__ > 5)
+#include "clang/AST/QualTypeNames.h"
+#else
 #include "clang/Tooling/Core/QualTypeNames.h"
+#endif
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
