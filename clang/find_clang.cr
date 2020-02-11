@@ -16,7 +16,6 @@ def find_clang_binary : String?
     - "clang++-*"
   version:
     min: "4.0.0"
-    max: "5.9.9" # newer clang does not have all required includes
     command: "% --version"
     regex: "clang version ([0-9.]+)"
   YAML
