@@ -31,11 +31,14 @@ def print_help_and_bail
     ArchLinux: pacman -S llvm clang gc libyaml
     Ubuntu: apt install clang-4.0 libclang-4.0-dev zlib1g-dev libncurses-dev libgc-dev llvm-4.0-dev libpcre3-dev
     CentOS: yum install crystal libyaml-devel gc-devel pcre-devel zlib-devel clang-devel
+    openSUSE: zypper install llvm clang libyaml-devel gc-devel pcre-devel zlib-devel clang-devel ncurses-devel
     Mac OS: HELP WANTED!
 
   If you've installed these in a non-standard location, do one of these:
     1) Make the CLANG environment variable point to your `clang++` executable
     2) Add the `clang++` executable to your PATH
+
+  If your distro does not support static libraries like openSUSE then set env BINDGEN_DYNAMIC=1
   HELP
 
   exit 1
@@ -156,10 +159,17 @@ end
 # Find all LLVM and clang libraries, and link to all of them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
-  paths
-    .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
-    .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] }
-    .uniq
+  if ENV.fetch("BINDGEN_DYNAMIC", "0") == "1"
+    paths
+      .flat_map { |path| Dir["#{path}/lib#{prefix}*.so"] }
+      .map { |path| File.basename(path)[/^lib(.+)\.so$/, 1] }
+      .uniq
+  else
+    paths
+      .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
+      .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] } # FIXME: this lead to crash for e.g. libclang_rt.msan_cxx-x86_64.a
+      .uniq
+  end
 end
 
 llvm_libs = find_libraries(system_libs, "LLVM")
