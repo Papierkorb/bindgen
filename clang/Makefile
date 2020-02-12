@@ -2,7 +2,8 @@ IGNORE   := $(shell crystal run find_clang.cr > Makefile.variables)
 include Makefile.variables
 
 # NOTE: No -ltinfo on OSX
-LIBS     := $(CLANG_LIBS) -ldl -pthread -lz -lncurses -ltinfo -lpcre
+CURSES_LIBS := ${shell pkg-config --libs-only-l ncurses}
+LIBS     := $(CLANG_LIBS) -ldl -pthread -lz $(CURSES_LIBS) -lpcre
 DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
 
