@@ -7,9 +7,9 @@ module Bindgen
     module ValueConverter
       def self.from_json(pull)
         case pull.kind
-        when :null
+        when .null?
           pull.read_null
-        when :int
+        when .int?
           # HACK: The pull parser can't distinguish Int64 from UInt64 by itself.
           integer = pull.read_int
           if pull.raw_value.starts_with?('-')
@@ -17,14 +17,14 @@ module Bindgen
           else
             integer.to_u64
           end
-        when :float
+        when .float?
           pull.read_float
-        when :bool
+        when .bool?
           pull.read_bool
-        when :string
+        when .string?
           pull.read_string
         else
-          raise "Unexpected JSON kind #{pull.kind.inspect}"
+          raise "Unexpected JSON kind #{pull.kind.inspect}: #{pull.read_raw.inspect}"
         end
       end
 
