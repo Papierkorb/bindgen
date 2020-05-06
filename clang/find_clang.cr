@@ -95,6 +95,7 @@ def shell_split(line)
       end
     when '"' # String marker
       in_string = !in_string
+    else
     end
   end
 
@@ -130,16 +131,22 @@ while index < flags.size
     index += 1
   when /^-L/
     system_libs << flags[index][2..-1]
+  else
   end
 
   index += 1
 end
 
-# Clean libs
-system_libs.uniq!
-system_libs.map! { |path| path.gsub(/\/$/, "") }
-system_includes.uniq!
-system_includes.map! { |path| path.gsub(/\/$/, "") }
+system_includes.map! do |p|
+  path = File.expand_path(p)
+  unless Dir.exists?(path)
+    new_path = File.join("/usr", path)
+    path = new_path if Dir.exists?(new_path)
+  end
+  path
+end
+
+system_includes.select! {|p| p =~ /include/ && Dir.exists?(p)}
 
 # Generate the output header file.  This will be accessed from the clang tool.
 output_path = "#{__DIR__}/include/generated.hpp"
@@ -181,8 +188,8 @@ print_help_and_bail if llvm_libs.empty? || clang_libs.empty?
 # Libraries must precede their dependencies.  By putting the whole list twice
 # into the compiler, we ensure this.  The probably laziest dependency resolution
 # algorithm in existence.
-libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map { |x| "-l#{x}" }
-includes = system_includes.map { |x| "-I#{x}" }
+libs = (clang_libs + clang_libs + llvm_libs + llvm_libs).map{|x| "-l#{x}"}
+includes = system_includes.map{|p| File.expand_path(p)}.map{|x| "-I#{x}"}
 
 puts "CLANG_LIBS := " + libs.join(" ")
 puts "CLANG_INCLUDES := " + includes.join(" ")
