@@ -3,7 +3,7 @@ include Makefile.variables
 
 # NOTE: No -ltinfo on OSX
 CURSES_LIBS := ${shell pkg-config --libs-only-l ncurses}
-LIBS     := $(CLANG_LIBS) -ldl -pthread -lz $(CURSES_LIBS) -lpcre
+LIBS     := $(CLANG_LIBS) -ldl -pthread -lz $(CURSES_LIBS) -lpcre -lclangLex
 DEFINES  := -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 CXXFLAGS := -std=c++11 $(DEFINES) -Iinclude $(CLANG_INCLUDES)
 
