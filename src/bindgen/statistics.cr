@@ -44,9 +44,10 @@ module Bindgen
     # The measured data is put into `#stages`.
     def measure(stage_name : String)
       before_gc = GC.stats
-      before = Time.now
+
+      before = {% if compare_versions("0.33.0-0", VERSION) >= 0 %} Time.local {% else %} Time.now {% end %}
       result = yield
-      after = Time.now
+      after = {% if compare_versions("0.33.0-0", VERSION) >= 0 %} Time.local {% else %} Time.now {% end %}
       after_gc = GC.stats
 
       duration = after - before
