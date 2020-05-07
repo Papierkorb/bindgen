@@ -24,6 +24,8 @@ module Bindgen
           case node.value
           when "true"  then return true
           when "false" then return false
+          else
+            raise "Unable to determine StringOrBool"
           end
         end
 

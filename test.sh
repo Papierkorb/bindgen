@@ -11,7 +11,10 @@ build_docker() {
   local code_name=$1
   local clang_ver=$2
 
-  docker build . -f ci/Dockerfile.ubuntu -t bindgen-test:${code_name}-${clang_ver} --build-arg DISTRIB_CODENAME=${code_name} --build-arg CLANG_VERSION=${clang_ver}
+  local image="bindgen-test:${code_name}-${clang_ver}"
+  docker build . -f ci/Dockerfile.ubuntu -t bindgen-test:${code_name}-${clang_ver} \
+    --build-arg DISTRIB_CODENAME=${code_name} \
+    --build-arg CLANG_VERSION=${clang_ver}
 }
 
 build_archlinux() {
