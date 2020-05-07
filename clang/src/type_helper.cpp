@@ -1,6 +1,6 @@
 #include "type_helper.hpp"
 
-# if defined(__LLVM_VERSION_4) || defined(__LLVM_VERSION_5)
+# if __clang_major__ < 6
   #include "clang/Tooling/Core/QualTypeNames.h"
 # else
   #include "clang/AST/QualTypeNames.h"

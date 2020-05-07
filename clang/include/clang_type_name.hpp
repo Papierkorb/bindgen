@@ -63,7 +63,7 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
-# if LLVM_VER < 6
+# if __clang_major__ < 6
  #include "clang/Tooling/Core/QualTypeNames.h"
 # else
  #include "clang/AST/QualTypeNames.h"
