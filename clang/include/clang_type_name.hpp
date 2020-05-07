@@ -63,7 +63,7 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
-# if defined(__LLVM_VERSION_5) || defined(__LLVM_VERSION_4)
+# if LLVM_VER < 6
  #include "clang/Tooling/Core/QualTypeNames.h"
 # else
  #include "clang/AST/QualTypeNames.h"

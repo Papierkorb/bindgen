@@ -50,7 +50,10 @@ BindgenASTConsumer::~BindgenASTConsumer() {
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
 	this->m_matchFinder.matchAST(ctx);
+// clang segfaults in 6 or newer when calling ParseAST in destructor
+#if LLVM_VER < 6
 	this->evaluateMacros(ctx);
+#endif
 	this->serializeAndOutput();
 }
 

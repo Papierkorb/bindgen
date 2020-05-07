@@ -5,7 +5,7 @@ class BindgenFrontendAction : public clang::ASTFrontendAction {
 public:
 	bool BeginInvocation(clang::CompilerInstance &ci) override;
 
-#if __clang_major__ < 5
+#if LLVM_VER < 5
 	bool BeginSourceFileAction(clang::CompilerInstance &ci, llvm::StringRef) override;
 #else
 	bool BeginSourceFileAction(clang::CompilerInstance &ci) override;
