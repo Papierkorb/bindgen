@@ -1,3 +1,5 @@
+require "json"
+
 module Bindgen
   module Parser
     alias DefaultValueTypes = Bool | UInt64 | Int64 | Float64 | String | Nil
@@ -7,9 +9,9 @@ module Bindgen
     module ValueConverter
       def self.from_json(pull)
         case pull.kind
-        when :null
+        when JSON::PullParser::Kind::Null
           pull.read_null
-        when :int
+        when JSON::PullParser::Kind::Int
           # HACK: The pull parser can't distinguish Int64 from UInt64 by itself.
           integer = pull.read_int
           if pull.raw_value.starts_with?('-')
@@ -17,14 +19,14 @@ module Bindgen
           else
             integer.to_u64
           end
-        when :float
+        when JSON::PullParser::Kind::Float
           pull.read_float
-        when :bool
+        when JSON::PullParser::Kind::Bool
           pull.read_bool
-        when :string
+        when JSON::PullParser::Kind::String
           pull.read_string
         else
-          raise "Unexpected JSON kind #{pull.kind.inspect}"
+          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind.class})"
         end
       end
 
