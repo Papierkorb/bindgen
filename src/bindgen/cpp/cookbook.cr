@@ -96,31 +96,31 @@ module Bindgen
     #
     # Configuration name is `bare-cpp`.
     class BareCppCookbook < Cookbook
-      def constructor_name(method_name : String, class_name : String)
+      def constructor_name(method_name : String, class_name : String) : String
         "new #{class_name}"
       end
 
-      def value_to_pointer(type : String)
+      def value_to_pointer(type : String) : String
         "new #{type} (%)"
       end
 
-      def value_to_reference(type : String)
+      def value_to_reference(type : String) : String | Nil
         nil # Nothing to do
       end
 
-      def reference_to_pointer(type : String)
+      def reference_to_pointer(type : String) : String
         "&(%)"
       end
 
-      def reference_to_value(type : String)
+      def reference_to_value(type : String) : String | Nil
         nil # Nothing to do
       end
 
-      def pointer_to_reference(type : String)
+      def pointer_to_reference(type : String) : String
         "*(%)"
       end
 
-      def pointer_to_value(type : String)
+      def pointer_to_value(type : String) : String
         "*(%)"
       end
     end
@@ -131,31 +131,31 @@ module Bindgen
     #
     # References are supported, although they shouldn't occur.
     class BareCCookbook < Cookbook
-      def constructor_name(method_name : String, class_name : String)
+      def constructor_name(method_name : String, class_name : String) : String
         method_name
       end
 
-      def value_to_pointer(type : String)
+      def value_to_pointer(type : String) : String
         "memcpy(malloc(sizeof(#{type})), %, sizeof(#{type}))"
       end
 
-      def value_to_reference(type : String)
+      def value_to_reference(type : String) : String?
         nil # Nothing to do
       end
 
-      def reference_to_pointer(type : String)
+      def reference_to_pointer(type : String) : String
         "&(%)"
       end
 
-      def reference_to_value(type : String)
+      def reference_to_value(type : String) : String?
         nil # Nothing to do
       end
 
-      def pointer_to_reference(type : String)
+      def pointer_to_reference(type : String) : String
         "*(%)"
       end
 
-      def pointer_to_value(type : String)
+      def pointer_to_value(type : String) : String
         "*(%)"
       end
     end
