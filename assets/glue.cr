@@ -106,7 +106,7 @@ module BindgenHelper
 
     # Adds all *elements* at the end of the container, retaining their order.
     def concat(values : Enumerable(T)) : self
-      values.each{|v| push(v)}
+      values.each { |v| push(v) }
       self
     end
 

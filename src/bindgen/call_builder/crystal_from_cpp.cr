@@ -59,7 +59,7 @@ module Bindgen
           typer = Crystal::Typename.new(@db)
           func_result = typer.full(call.result)
 
-          func_args = call.arguments.map{|arg| typer.full(arg)}
+          func_args = call.arguments.map { |arg| typer.full(arg) }
           func_args << func_result # Add return type
 
           pass_args = call.arguments.map(&.call).join(", ")

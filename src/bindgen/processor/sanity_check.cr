@@ -15,7 +15,7 @@ module Bindgen
     # * Class base-classes are reachable
     class SanityCheck < Base
       # Illegal constants in a flag enumeration
-      ILLEGAL_FLAG_ENUM = { "All", "None" }
+      ILLEGAL_FLAG_ENUM = {"All", "None"}
 
       # Regular expression for a CONSTANT
       CONSTANT_RX = /^[A-Z_][A-Z0-9_]*$/
@@ -40,7 +40,7 @@ module Bindgen
 
       def initialize(*_args)
         super
-        @errors = [ ] of Error
+        @errors = [] of Error
         @platform = Graph::Platform::Crystal
       end
 
@@ -130,7 +130,7 @@ module Bindgen
           true
         elsif @db.try_or(expr.type, false, &.builtin)
           true # Crystal built-in
-        else # Do a full look-up otherwise
+        else   # Do a full look-up otherwise
           Graph::Path.from(expr.type_name).lookup(base) != nil
         end
       end

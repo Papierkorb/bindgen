@@ -42,6 +42,7 @@ module Bindgen
       print_stats(stats) if @show_stats
 
       0 # Success!
+
     rescue err : ExitError
       err.code # Failure
     end
@@ -59,14 +60,14 @@ module Bindgen
       stats = Statistics.new
 
       if path_config = @config.find_paths
-        stats.measure("Find paths"){ find_paths(path_config) }
+        stats.measure("Find paths") { find_paths(path_config) }
       end
 
-      document = stats.measure("Parse C++"){ parse_cpp_sources }
-      graph = stats.measure("Build graph"){ build_graph(document) }
+      document = stats.measure("Parse C++") { parse_cpp_sources }
+      graph = stats.measure("Build graph") { build_graph(document) }
 
-      stats.measure("Processors"){ @processors.process(graph, document) }
-      stats.measure("Generators"){ @generators.process(graph) }
+      stats.measure("Processors") { @processors.process(graph, document) }
+      stats.measure("Generators") { @generators.process(graph) }
 
       stats.finish!
     end
@@ -106,7 +107,7 @@ module Bindgen
       graph = Graph::Namespace.new(@config.module, nil)
 
       Graph::Library.new( # Add `lib Binding`
-        name: Graph::LIB_BINDING,
+name: Graph::LIB_BINDING,
         parent: graph,
         ld_flags: templated_ld_flags,
       )
@@ -137,7 +138,7 @@ module Bindgen
 
       crystal_output = @config.generators["crystal"].output
       depth = File.dirname(crystal_output).count('/') + 1
-      project_dir = ([ ".." ] * depth).join("/")
+      project_dir = ([".."] * depth).join("/")
 
       Util.template(haystack, "\#{__DIR__}/#{project_dir}")
     end

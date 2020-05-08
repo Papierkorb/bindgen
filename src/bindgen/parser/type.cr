@@ -18,7 +18,7 @@ module Bindgen
       # Also make sure to update other methods in here and in `Argument` as required!
       JSON.mapping(
         kind: {
-          type: Kind,
+          type:    Kind,
           default: Kind::Class,
         },
         isConst: Bool,
@@ -30,12 +30,12 @@ module Bindgen
         baseName: String,
         fullName: String,
         nilable: {
-          type: Bool,
-          key: "acceptsNull",
+          type:    Bool,
+          key:     "acceptsNull",
           default: false,
         },
         template: {
-          type: Template,
+          type:    Template,
           nilable: true,
         },
       )
@@ -111,7 +111,7 @@ module Bindgen
         end
 
         new( # Build the `Type`
-          isConst: const,
+isConst: const,
           isMove: false,
           isReference: reference,
           isBuiltin: false, # Oh well
@@ -131,7 +131,7 @@ module Bindgen
       def self.proc(return_type : Type, arguments : Enumerable(Type))
         base = "CrystalProc"
 
-        template_args = [ return_type ] + arguments.to_a
+        template_args = [return_type] + arguments.to_a
         template = Template.new(
           fullName: base,
           baseName: base,
@@ -139,7 +139,7 @@ module Bindgen
         )
 
         new( # Build the `Type`
-          kind: Kind::Function,
+kind: Kind::Function,
           isConst: false,
           isMove: false,
           isReference: false,
@@ -205,7 +205,7 @@ module Bindgen
 
       # Checks if this type equals the *other* type, except for nil-ability.
       def equals_except_nil?(other : Type)
-        {% for i in %i[ baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind ] %}
+        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind] %}
         return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 

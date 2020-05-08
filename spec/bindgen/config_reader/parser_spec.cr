@@ -6,15 +6,15 @@ private class MemoryLoader < Bindgen::ConfigReader::Loader
 
   def load(base_file : String, dependency : String)
     key = "#{File.dirname(base_file)}/#{dependency}"
-    { @files[key], key }
+    {@files[key], key}
   end
 end
 
 private class YamlThing
   YAML.mapping(
-    list: { type: Array(String), nilable: true },
+    list: {type: Array(String), nilable: true},
     string: String,
-    recurse: { type: YamlThing, nilable: true },
+    recurse: {type: YamlThing, nilable: true},
   )
 
   def_equals_and_hash @list, @string, @recurse
@@ -39,8 +39,8 @@ end
 # Also tests InnerParser.
 describe Bindgen::ConfigReader::Parser do
   # Used by `.parse`
-  vars = { "foo" => "bar", "one" => "1" }
-  files = { } of String => String
+  vars = {"foo" => "bar", "one" => "1"}
+  files = {} of String => String
 
   describe "normal yaml file" do
     it "works normally" do

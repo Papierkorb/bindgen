@@ -15,7 +15,7 @@ module Bindgen
       def visit_library(library)
         puts %<@[Link(ldflags: "#{library.ld_flags}")]> if library.ld_flags
         puts "lib #{library.name}"
-        indented{ super }
+        indented { super }
         puts "end"
       end
 

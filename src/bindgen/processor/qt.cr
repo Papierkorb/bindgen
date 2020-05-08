@@ -108,7 +108,7 @@ module Bindgen
           name: "CONNECT_#{signal.name}",
           class_name: signal.class_name,
           return_type: CONNECTION_HANDLE_TYPE,
-          arguments: [ proc_arg ],
+          arguments: [proc_arg],
           crystal_name: "on_#{signal.crystal_name}"
         )
       end

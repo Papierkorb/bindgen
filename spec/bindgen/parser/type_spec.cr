@@ -9,7 +9,7 @@ describe Bindgen::Parser::Type do
     it "returns nil for base type" do # Rule 4
       parse("int").decayed.should be_nil
     end
-    
+
     it "decays pointer depth" do # Rule 3
       parse("int **").decayed.should eq(parse("int *"))
       parse("int *").decayed.should eq(parse("int"))
@@ -37,7 +37,7 @@ describe Bindgen::Parser::Type do
       type.base_name.should eq("int")
       type.full_name.should eq("const int")
     end
-    
+
     it "recognizes 'int *'" do
       type = parse("int *")
       type.const?.should be_false
@@ -46,7 +46,7 @@ describe Bindgen::Parser::Type do
       type.base_name.should eq("int")
       type.full_name.should eq("int *")
     end
-    
+
     it "recognizes 'int*'" do
       type = parse("int*")
       type.const?.should be_false
@@ -55,7 +55,7 @@ describe Bindgen::Parser::Type do
       type.base_name.should eq("int")
       type.full_name.should eq("int*")
     end
-    
+
     it "recognizes 'int &'" do
       type = parse("int &")
       type.const?.should be_false
@@ -64,7 +64,7 @@ describe Bindgen::Parser::Type do
       type.base_name.should eq("int")
       type.full_name.should eq("int &")
     end
-    
+
     it "recognizes 'int&'" do
       type = parse("int&")
       type.const?.should be_false

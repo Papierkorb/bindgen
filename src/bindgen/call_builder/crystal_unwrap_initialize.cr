@@ -14,7 +14,7 @@ module Bindgen
         target = Call.new(
           origin: method,
           name: arg.name,
-          arguments: [ ] of Call::Argument,
+          arguments: [] of Call::Argument,
           result: pass.from_binding(arg, qualified: true),
           body: Body.new,
         )
@@ -22,7 +22,7 @@ module Bindgen
         Call.new(
           origin: method,
           name: method.crystal_name,
-          arguments: [ call_arg ],
+          arguments: [call_arg],
           result: pass.from_wrapper(Parser::Type::VOID),
           body: CrystalWrapper::ConstructorBody.new(@db, target),
         )

@@ -37,7 +37,7 @@ module Bindgen
             key = key.downcase.camelcase
           end
 
-          { key, value }
+          {key, value}
         end.to_h
       end
 
@@ -85,10 +85,9 @@ module Bindgen
           count = (seen[key] += 1)
           key = "#{key}_#{count}" if count > 1 # Make sure keys are unique
 
-          { key, value }
+          {key, value}
         end.to_h
       end
-
 
       private def fixed_constant_name(key : String) : String
         if key.empty?

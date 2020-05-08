@@ -61,7 +61,7 @@ module Bindgen
       private def container_base_class(kind, *types)
         pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
-        args = types.each.map{|t| typer.full pass.to_wrapper(t)}.join(", ")
+        args = types.each.map { |t| typer.full pass.to_wrapper(t) }.join(", ")
 
         "#{kind}(#{args})"
       end
@@ -91,7 +91,7 @@ module Bindgen
         )
 
         Graph::Alias.new( # Build the `typedef`.
-          origin: origin,
+origin: origin,
           name: klass.name,
           parent: host,
         )
@@ -132,7 +132,7 @@ module Bindgen
       # Builds a full `Parser::Class` for the sequential *container* in the
       # specified *instantiation*.
       private def build_sequential_class(container, var_type : Parser::Type) : Parser::Class
-        klass = container_class(container, { var_type })
+        klass = container_class(container, {var_type})
 
         klass.methods << default_constructor_method(klass)
         klass.methods << access_method(container, klass.name, var_type)
@@ -162,7 +162,7 @@ module Bindgen
           class_name: klass.name,
           name: "",
           return_type: klass.as_type,
-          arguments: [ ] of Parser::Argument,
+          arguments: [] of Parser::Argument,
         )
       end
 
@@ -174,7 +174,7 @@ module Bindgen
         Parser::Method.build(
           name: container.access_method,
           class_name: klass_name,
-          arguments: [ idx_arg ],
+          arguments: [idx_arg],
           return_type: var_type,
           crystal_name: "unsafe_fetch", # Will implement `Indexable#unsafe_fetch`
         )
@@ -186,7 +186,7 @@ module Bindgen
         Parser::Method.build(
           name: container.push_method,
           class_name: klass_name,
-          arguments: [ var_arg ],
+          arguments: [var_arg],
           return_type: Parser::Type::VOID,
           crystal_name: "push",
         )
@@ -197,7 +197,7 @@ module Bindgen
         Parser::Method.build(
           name: container.size_method,
           class_name: klass_name,
-          arguments: [ ] of Parser::Argument,
+          arguments: [] of Parser::Argument,
           return_type: Parser::Type.builtin_type(CPP_INTEGER_TYPE),
           crystal_name: "size", # `Indexable#size`
         )

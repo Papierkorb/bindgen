@@ -21,7 +21,7 @@ module Bindgen
         klass.abstract = klass.origin.abstract?
 
         # Find all non-private, wrapped bases.
-        bases = klass.origin.bases.reject{|b| b.private? || b.virtual?}
+        bases = klass.origin.bases.reject { |b| b.private? || b.virtual? }
         wrapped = wrapped_classes(bases)
 
         unless wrapped.empty?
@@ -67,7 +67,7 @@ module Bindgen
         wrapped.flat_map do |base|
           base.origin.wrappable_methods.select do |method|
             next unless method.virtual?
-            next if known_virtuals.any?{|known| known.equals_virtually?(method)}
+            next if known_virtuals.any? { |known| known.equals_virtually?(method) }
 
             true
           end
@@ -105,7 +105,7 @@ module Bindgen
         Parser::Method.build(
           name: "AS_#{to.mangled_name}",
           return_type: to.origin.as_type(pointer: 1),
-          arguments: [ ] of Parser::Argument,
+          arguments: [] of Parser::Argument,
           class_name: from.origin.name,
           crystal_name: "as_#{demodulized}",
         )
@@ -113,7 +113,7 @@ module Bindgen
 
       # Finds all wrapped classes in *bases*.
       private def wrapped_classes(bases) : Array(Graph::Class)
-        nodes = [ ] of Graph::Class
+        nodes = [] of Graph::Class
 
         bases.each do |base|
           # Ask the type database for the graph node.  The `Graph::Builder` set
@@ -198,9 +198,9 @@ module Bindgen
           isDestructible: klass.destructible?,
           name: "#{klass.name}Impl",
           byteSize: klass.byteSize,
-          bases: [ base ],
+          bases: [base],
           fields: klass.fields.dup,
-          methods: klass.methods.map{|m| unabstract_method(m)},
+          methods: klass.methods.map { |m| unabstract_method(m) },
         )
       end
 

@@ -74,8 +74,8 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool-2.0")
       subject.candidates.should eq([
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
       ])
     end
   end
@@ -89,9 +89,9 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool-2.0")
       subject.candidates.should eq([
-        { " ", "tool" },
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
+        {" ", "tool"},
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
       ])
     end
 
@@ -104,9 +104,9 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool-1.0")
       subject.candidates.should eq([
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
-        { "~", "tool" },
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
+        {"~", "tool"},
       ])
     end
   end
@@ -120,9 +120,9 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool")
       subject.candidates.should eq([
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
-        { "~", "tool" },
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
+        {"~", "tool"},
       ])
     end
 
@@ -135,9 +135,9 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool")
       subject.candidates.should eq([
-        { " ", "tool" },
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
+        {" ", "tool"},
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
       ])
     end
   end
@@ -152,9 +152,9 @@ describe Bindgen::FindPath::VersionChecker do
 
       subject.best_candidate.should eq("tool")
       subject.candidates.should eq([
-        { "1.0", "tool-1.0" },
-        { "2.0", "tool-2.0" },
-        { "3.0", "tool" },
+        {"1.0", "tool-1.0"},
+        {"2.0", "tool-2.0"},
+        {"3.0", "tool"},
       ])
     end
   end

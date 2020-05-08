@@ -39,7 +39,7 @@ module Bindgen
         if expansion && replacement != nil # Support `%` expansion
           replacement
         elsif env_var && env.responds_to?(:[]?) # Support `{ENV}` expansion
-          if alternative == '%' # Support `{DOESNT_EXIST|%}`
+          if alternative == '%'                 # Support `{DOESNT_EXIST|%}`
             alternative = replacement
           elsif alternative.try(&.includes?('%'))
             # Support `{DOESNT_EXIST|Foo % Bar}`
@@ -64,7 +64,7 @@ module Bindgen
 
     # Mangles a list of type-names into a combined string.
     def self.mangle_type_names(full_type_names : String)
-      full_type_names.map{|x| mangle_type_name x}.join("_")
+      full_type_names.map { |x| mangle_type_name x }.join("_")
     end
 
     # Formats the *bytes* amount as nice string.

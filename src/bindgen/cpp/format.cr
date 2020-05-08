@@ -10,7 +10,7 @@ module Bindgen
 
       # Formats *arguments* as `type name, ...`
       def argument_list(arguments : Enumerable(Call::Argument)) : String
-        arguments.map_with_index{|arg, idx| argument(arg, idx)}.join(", ")
+        arguments.map_with_index { |arg, idx| argument(arg, idx) }.join(", ")
       end
 
       # Returns a C++ function pointer type, matching *method*.
@@ -20,7 +20,7 @@ module Bindgen
 
         typer = Typename.new
         result = typer.full(call.result)
-        arguments = call.arguments.map{|arg| typer.full arg}.join(", ")
+        arguments = call.arguments.map { |arg| typer.full arg }.join(", ")
         "#{result}(#{prefix}*)(#{arguments})"
       end
     end

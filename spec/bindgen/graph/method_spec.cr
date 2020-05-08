@@ -8,7 +8,7 @@ describe Bindgen::Graph::Method do
     name: "some_member",
     class_name: "SomeClass",
     return_type: Bindgen::Parser::Type::VOID,
-    arguments: [ Bindgen::Parser::Argument.new("some_arg", int_type) ],
+    arguments: [Bindgen::Parser::Argument.new("some_arg", int_type)],
   )
 
   static_method = Bindgen::Parser::Method.build(
@@ -16,7 +16,7 @@ describe Bindgen::Graph::Method do
     name: "some_static",
     class_name: "SomeClass",
     return_type: Bindgen::Parser::Type::VOID,
-    arguments: [ ] of Bindgen::Parser::Argument,
+    arguments: [] of Bindgen::Parser::Argument,
   )
 
   constructor_method = Bindgen::Parser::Method.build(
@@ -24,12 +24,12 @@ describe Bindgen::Graph::Method do
     name: "",
     class_name: "SomeClass",
     return_type: Bindgen::Parser::Type::VOID,
-    arguments: [ ] of Bindgen::Parser::Argument,
+    arguments: [] of Bindgen::Parser::Argument,
   )
 
   parser_klass = Bindgen::Parser::Class.new(
     name: "Foo",
-    methods: [ member_method, static_method ],
+    methods: [member_method, static_method],
   )
 
   describe "#parent_class" do

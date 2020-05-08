@@ -6,9 +6,9 @@ module Bindgen
       alias Collection = Hash(String, Enum)
 
       JSON.mapping(
-        name: String, # Name of the enumeration type.
-        type: String, # C++ type name, to be mapped later.
-        isFlags: Bool, # Is this enumeration a flag type?
+        name: String,                # Name of the enumeration type.
+        type: String,                # C++ type name, to be mapped later.
+        isFlags: Bool,               # Is this enumeration a flag type?
         values: Hash(String, Int64), # Enum fields
       )
 

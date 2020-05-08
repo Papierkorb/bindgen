@@ -5,10 +5,10 @@ module Bindgen
       # Creates the correct checker for the *config*.
       def self.create(config, is_file) : Checker
         case config
-        when PathCheck then PathChecker.new(config, is_file)
+        when PathCheck  then PathChecker.new(config, is_file)
         when ShellCheck then ShellChecker.new(config)
         when AnyOfCheck then AnyOfChecker.new(config, is_file)
-        else raise "BUG: Unreachable!"
+        else                 raise "BUG: Unreachable!"
         end
       end
 

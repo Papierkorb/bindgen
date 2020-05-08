@@ -18,7 +18,7 @@ module Bindgen
         methods: Array(Method),
       )
 
-      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [ ] of BaseClass, @fields = [ ] of Field, @methods = [ ] of Method)
+      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field, @methods = [] of Method)
       end
 
       # Is this a `class`?  Opposite of `#struct?`.
@@ -81,7 +81,7 @@ module Bindgen
           isVirtual: true, # Hopefully.
           isPure: false,
           className: @name,
-          arguments: [ ] of Argument,
+          arguments: [] of Argument,
           firstDefaultArgument: nil,
           returnType: Type::VOID,
         )
@@ -94,15 +94,15 @@ module Bindgen
       # Note: This is a memoized getter.  Thus it's cheap to call it multiple
       # times.
       getter wrap_methods : Array(Method) do
-        list = [ ] of Method
+        list = [] of Method
 
         # Collect all method variants
         each_wrappable_method do |method|
-          method.variants{|m| list << m}
+          method.variants { |m| list << m }
         end
 
         # And make sure there are no duplicates.
-        Util.uniq_by(list){|a, b| a.equals_except_const?(b) || a.equals_virtually?(b)}
+        Util.uniq_by(list) { |a, b| a.equals_except_const?(b) || a.equals_virtually?(b) }
       end
 
       # Yields each wrappable method without any further processing.
@@ -113,8 +113,8 @@ module Bindgen
       def each_wrappable_method
         @methods.each do |method|
           next if method.private?
-          next if method.operator? # TODO: Support Operators!
-          next if method.copy_constructor? # TODO: Support copy constructors!
+          next if method.operator?           # TODO: Support Operators!
+          next if method.copy_constructor?   # TODO: Support copy constructors!
           next if method.has_move_semantics? # Move semantics are hard to wrap.
 
           # Don't try to wrap copy-constructors in an abstract class.
@@ -126,8 +126,8 @@ module Bindgen
 
       # Non-yielding version of `#each_wrappable_method`
       def wrappable_methods
-        list = [ ] of Method
-        each_wrappable_method{|m| list << m}
+        list = [] of Method
+        each_wrappable_method { |m| list << m }
         list
       end
 

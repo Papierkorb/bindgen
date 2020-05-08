@@ -6,10 +6,10 @@ module Bindgen
       private def find_matching(regex : String, list : Enumerable(T)) : Array(Tuple(T, Regex::MatchData))
         rx = /^#{regex}$/
 
-        matching = [ ] of { T, Regex::MatchData }
+        matching = [] of {T, Regex::MatchData}
         list.each do |element|
           if match = rx.match(element.name)
-            matching << { element, match }
+            matching << {element, match}
           end
         end
 

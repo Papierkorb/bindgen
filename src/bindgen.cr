@@ -7,21 +7,21 @@ require "toka"
 class CliOptions
   Toka.mapping({
     stats: { # --stats, -s
-      type: Bool,
-      default: false,
+      type:        Bool,
+      default:     false,
       description: "Show runtime statistics",
     },
 
     var: { # --var, -v
-      type: Hash(String, String),
-      value_name: "NAME=VALUE",
+      type:        Hash(String, String),
+      value_name:  "NAME=VALUE",
       description: "Add variable.  Overrides builtins.",
     },
 
     chdir: { # Hack to make Crystal find paths by itself.
-      type: String?,
+      type:        String?,
       description: "Change into the directory before proceeding",
-      short: false,
+      short:       false,
     },
   }, {
     banner: "bindgen [options] <configuration.yml>",

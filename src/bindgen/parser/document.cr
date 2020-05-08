@@ -7,7 +7,7 @@ module Bindgen
         classes: Class::Collection,
         macros: Macro::Collection,
         functions: {
-          type: Method::Collection,
+          type:    Method::Collection,
           default: Method::Collection.new,
         },
       )
@@ -15,7 +15,7 @@ module Bindgen
       # For testing purposes.
       def initialize(
         @enums = Enum::Collection.new, @classes = Class::Collection.new,
-        @macros = Macro::Collection.new, @functions = Method::Collection.new,
+        @macros = Macro::Collection.new, @functions = Method::Collection.new
       )
       end
     end
