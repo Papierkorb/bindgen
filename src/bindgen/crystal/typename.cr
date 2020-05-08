@@ -20,17 +20,17 @@ module Bindgen
       # type shall be looked-up in the `lib Binding` (= `true`), or not.
       def wrapper(type : Parser::Type)
         rules = @db[type]?
-        return { type.base_name, true } if rules.nil?
+        return {type.base_name, true} if rules.nil?
 
         # Only copied `struct`s reside in `Binding`!
         is_copied = rules.copy_structure
 
         if name = rules.crystal_type
-          { name, false }
+          {name, false}
         elsif name = rules.binding_type
-          { name, is_copied }
+          {name, is_copied}
         else
-          { type.base_name, true }
+          {type.base_name, true}
         end
       end
 
@@ -48,15 +48,15 @@ module Bindgen
       # The type-name of *type* for use in a binding.
       def binding(type : Parser::Type)
         rules = @db[type]?
-        return { type.base_name, !type.builtin? } if rules.nil?
+        return {type.base_name, !type.builtin?} if rules.nil?
 
         in_lib = rules.copy_structure # Copied structures end up in Binding
         in_lib ||= !rules.kind.enum? && !rules.builtin && !type.builtin?
 
         if name = rules.lib_type
-          { name, in_lib }
+          {name, in_lib}
         else
-          { type.base_name, in_lib }
+          {type.base_name, in_lib}
         end
       end
     end

@@ -10,7 +10,6 @@ require "./binding/ioctl"
 size = Ioctl::Binding::Winsize.new
 
 # Use ioctl() to tell us the terminal window size:
-Ioctl.ioctl(STDOUT.fd, Ioctl::TIOCGWINSZ, pointerof(size));
-
+Ioctl.ioctl(STDOUT.fd, Ioctl::TIOCGWINSZ, pointerof(size))
 # And output what we've got:
 puts "Your terminal size is #{size.ws_col}x#{size.ws_row}."

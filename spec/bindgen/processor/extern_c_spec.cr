@@ -20,7 +20,7 @@ describe Bindgen::Processor::ExternC do
   extern_c_void_func = Bindgen::Parser::Method.new(
     name: "foo",
     className: "",
-    arguments: [ ] of Bindgen::Parser::Argument,
+    arguments: [] of Bindgen::Parser::Argument,
     returnType: Bindgen::Parser::Type::VOID,
     isExternC: true,
   )
@@ -30,7 +30,7 @@ describe Bindgen::Processor::ExternC do
   dummy_call = Bindgen::Call.new(
     name: "foo",
     result: void_result,
-    arguments: [ ] of Bindgen::Call::Argument,
+    arguments: [] of Bindgen::Call::Argument,
     body: Bindgen::Call::EmptyBody.new,
     origin: extern_c_void_func,
   )
@@ -45,7 +45,7 @@ describe Bindgen::Processor::ExternC do
       origin: Bindgen::Parser::Method.new(
         name: "foo",
         className: "",
-        arguments: [ ] of Bindgen::Parser::Argument,
+        arguments: [] of Bindgen::Parser::Argument,
         returnType: Bindgen::Parser::Type::VOID,
         isExternC: false,
       )

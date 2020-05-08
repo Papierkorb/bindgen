@@ -1,4 +1,4 @@
-require  "../../spec_helper"
+require "../../spec_helper"
 
 describe Bindgen::FindPath::Kind do
   this_binary = Process.executable_path.not_nil!

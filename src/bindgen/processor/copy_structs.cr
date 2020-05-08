@@ -39,7 +39,7 @@ module Bindgen
       private def copy_structure(klass, root)
         typename = Crystal::Typename.new(@db)
         Graph::Struct.new( # Add the struct into the graph
-          name: typename.binding(klass.as_type).first.camelcase,
+name: typename.binding(klass.as_type).first.camelcase,
           fields: fields_to_graph(klass.fields),
           parent: root,
         )
@@ -47,7 +47,7 @@ module Bindgen
 
       # Turns *fields* into a hash of `Call::Result`s we can store in the graph.
       private def fields_to_graph(fields : Enumerable(Parser::Field))
-        calls = { } of String => Call::Result
+        calls = {} of String => Call::Result
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 

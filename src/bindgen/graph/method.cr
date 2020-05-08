@@ -21,7 +21,7 @@ module Bindgen
       getter origin : Parser::Method
 
       # Calls for the various `Generator`s
-      getter calls = { } of Platform => Call
+      getter calls = {} of Platform => Call
 
       def initialize(@origin, name, parent = nil)
         super(name, parent)

@@ -51,7 +51,8 @@ module Bindgen
       # syntax.
       def self.build(
         name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String,
-        type = Parser::Method::Type::MemberMethod, crystal_name = nil) : self
+        type = Parser::Method::Type::MemberMethod, crystal_name = nil
+      ) : self
         method = Parser::Method.new(
           type: type,
           access: Parser::AccessSpecifier::Public,
@@ -124,7 +125,7 @@ module Bindgen
           end
 
           args = @arguments[0...idx]
-          if without_until = args.rindex{|arg| !arg.has_exposed_default?}
+          if without_until = args.rindex { |arg| !arg.has_exposed_default? }
             args.map_with_index! do |arg, idx|
               if idx <= without_until
                 arg.without_default
@@ -157,18 +158,18 @@ module Bindgen
 
       # Non-yielding version of `#variants`.
       def variants : Array(Method)
-        list = [ ] of Method
-        variants{|variant| list << variant}
+        list = [] of Method
+        variants { |variant| list << variant }
         list
       end
 
       # Finds the indices in `@arguments` `#variants` should yield.
       private def find_variant_splits
         first_default = @firstDefaultArgument
-        return { @arguments.size } if first_default.nil?
+        return {@arguments.size} if first_default.nil?
 
         # If we're here, the method has default arguments.
-        splits = [ ] of Int32
+        splits = [] of Int32
         seen_non_exposed = false
 
         # Split if the argument has a default value (In C++), but its default
@@ -274,7 +275,7 @@ module Bindgen
       def equals_except_const?(other : Method) : Bool
         # Note: Don't look at the return type for this, as it'll likely be
         # `const` itself too for the `const` method version.
-        {% for i in %i[ type name className isVirtual isPure ] %}
+        {% for i in %i[type name className isVirtual isPure] %}
         return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 
@@ -293,7 +294,7 @@ module Bindgen
       def equals_virtually?(other : Method) : Bool
         # Don't check if they're both pure or not: One may not in an abstract
         # base.
-        {% for i in %i[ type name isVirtual isConst returnType ] %}
+        {% for i in %i[type name isVirtual isConst returnType] %}
         return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 
@@ -350,7 +351,7 @@ module Bindgen
       def filtered?(db : TypeDatabase) : Bool
         return true if private?
         return true if db[@returnType]?.try(&.ignore?)
-        return true if @arguments.any?{|arg| db[arg]?.try(&.ignore?)}
+        return true if @arguments.any? { |arg| db[arg]?.try(&.ignore?) }
 
         if list = db[@className]?.try(&.ignore_methods)
           return true if list.includes?(@name)
@@ -360,7 +361,7 @@ module Bindgen
         # the value directly, or a const-reference to it.
         pass_by_value_violation = @arguments.any? do |arg|
           pass_by = db.try_or(arg, TypeDatabase::PassBy::Original, &.pass_by)
-          next false unless pass_by.value? # Is it explicitly by-value?
+          next false unless pass_by.value?           # Is it explicitly by-value?
           next true if arg.reference? && !arg.const? # Not const-ref - Violation!
           pointer_depth = arg.pointer
           pointer_depth -= 1 if arg.reference?
@@ -389,20 +390,20 @@ module Bindgen
         name = Util.mangle_type_name(@name)
 
         case self
-        when .constructor? then "#{name}_CONSTRUCT"
+        when .constructor?      then "#{name}_CONSTRUCT"
         when .copy_constructor? then "#{name}_COPY"
-        when .operator? then operator_name
-        when .static_method? then "#{name}_STATIC"
-        when .destructor? then "#{name}_DESTROY"
-        else name
+        when .operator?         then operator_name
+        when .static_method?    then "#{name}_STATIC"
+        when .destructor?       then "#{name}_DESTROY"
+        else                         name
         end
       end
 
       # Name of the operator method in C++ and Crystal bindings.
       private def operator_name
         case @name
-        when "operator<" then "OPERATOR_lt"
-        when "operator>" then "OPERATOR_gt"
+        when "operator<"  then "OPERATOR_lt"
+        when "operator>"  then "OPERATOR_gt"
         when "operator<=" then "OPERATOR_le"
         when "operator>=" then "OPERATOR_ge"
         when "operator==" then "OPERATOR_eq"
@@ -427,7 +428,7 @@ module Bindgen
       # Keeps the class name, access, constness, virtuality and type of this
       # method.
       def merge(other : Method) : Method
-        args = [ ] of Argument
+        args = [] of Argument
 
         @arguments.zip(other.arguments) do |l, r|
           args << l.merge(r)

@@ -103,7 +103,7 @@ module Bindgen
       end
 
       private def build_class(name, config, wrapper, list) : Parser::Class
-        bases = [ ] of Parser::BaseClass
+        bases = [] of Parser::BaseClass
 
         if base_name = wrapper.inherit_from
           bases << build_baseclass(base_name)

@@ -16,15 +16,15 @@ module Bindgen
 
       # Arguments for the tool binary
       def arguments(input_file)
-        classes = @classes.flat_map{|x| [ "-c", "#{x}" ] }
-        enums = @enums.flat_map{|x| [ "-e", "#{x}" ] }
-        flags = @config.flags.map{|x| Util.template(x, replacement: nil)}
-        defines = @config.defines.map{|x| "-D#{x}"}
-        includes = template_include_paths.map{|x| "-I#{x}"}
-        macros = [ "-m", @macros.join('|').inspect ]
-        functions = [ "-f", @functions.join('|').inspect ]
+        classes = @classes.flat_map { |x| ["-c", "#{x}"] }
+        enums = @enums.flat_map { |x| ["-e", "#{x}"] }
+        flags = @config.flags.map { |x| Util.template(x, replacement: nil) }
+        defines = @config.defines.map { |x| "-D#{x}" }
+        includes = template_include_paths.map { |x| "-I#{x}" }
+        macros = ["-m", @macros.join('|').inspect]
+        functions = ["-f", @functions.join('|').inspect]
 
-        [ input_file ] + classes + enums + macros + functions + [ "--" ] + flags + defines + includes
+        [input_file] + classes + enums + macros + functions + ["--"] + flags + defines + includes
       end
 
       # Calls the clang tool and returns its output as string.

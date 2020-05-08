@@ -16,7 +16,8 @@ describe Bindgen::FindPath::PathChecker do
   context "is_file: true" do
     context "contains: String, regex: false" do
       it "checks that the file contains the string" do
-        run_check( # ABSOLUTELY\dCONTAINS\dTHIS
+        # ABSOLUTELY\dCONTAINS\dTHIS
+        run_check(
           true,
           <<-YAML
           path: This/Is/Ignored.cr
@@ -28,7 +29,8 @@ describe Bindgen::FindPath::PathChecker do
 
     context "contains: String, regex: true" do
       it "checks that the file matches the regex" do
-        run_check( # Find This Number: 1337
+        # Find This Number: 1337
+        run_check(
           true,
           <<-YAML
           path: This/Is/Ignored.cr
@@ -71,7 +73,8 @@ describe Bindgen::FindPath::PathChecker do
 
       context "contains: String, regex: false" do
         it "checks that the file contains the string" do
-          run_check( # ABSOLUTELY\dCONTAINS\dTHIS
+          # ABSOLUTELY\dCONTAINS\dTHIS
+          run_check(
             false,
             <<-YAML
             path: bindgen/find_path/path_checker_spec.cr
@@ -91,7 +94,8 @@ describe Bindgen::FindPath::PathChecker do
 
       context "contains: String, regex: true" do
         it "checks that the file matches the regex" do
-          run_check( # Find This Number: 1337
+          # Find This Number: 1337
+          run_check(
             false,
             <<-YAML
             path: bindgen/find_path/path_checker_spec.cr

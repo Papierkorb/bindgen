@@ -23,14 +23,14 @@ module Bindgen
 
         # The type of the evaluated macro body
         type: {
-          type: Type,
+          type:    Type,
           nilable: true,
         },
 
         # If the macro was successfully evaluated, the parsed value.
         evaluated: {
-          type: DefaultValueTypes,
-          nilable: true,
+          type:      DefaultValueTypes,
+          nilable:   true,
           converter: ValueConverter,
         },
       )

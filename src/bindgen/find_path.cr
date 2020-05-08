@@ -40,15 +40,15 @@ module Bindgen
     # If *additional* is given, additional variables set by matches are stored
     # within it.  If no *additional* is given, these variables are lost.
     def find_all(config : Configuration) : Array(Error)
-      errors = [ ] of Error
+      errors = [] of Error
 
       config.each do |name, single|
         next if has_value?(name)
 
-        additional = { } of String => String
+        additional = {} of String => String
         if result = find(single, additional)
           yield(name, result)
-          additional.each{|k, v| yield(k, v)}
+          additional.each { |k, v| yield(k, v) }
         else
           errors << Error.new(name, single)
         end
@@ -108,9 +108,9 @@ module Bindgen
 
       if paths.nil?
         if config.kind.executable?
-          paths = [ ENV["PATH"] ]
+          paths = [ENV["PATH"]]
         else
-          paths = [ ] of String
+          paths = [] of String
         end
       end
 

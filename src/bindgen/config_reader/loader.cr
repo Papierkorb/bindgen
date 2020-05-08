@@ -30,7 +30,7 @@ module Bindgen
         base_path = File.dirname(base_file)
         target_path = "#{base_path}/#{dependency}"
 
-        { File.read(target_path), target_path }
+        {File.read(target_path), target_path}
       end
 
       # Does a sanity check on the depdency path.  Absolute paths and paths

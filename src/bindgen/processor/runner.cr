@@ -18,7 +18,7 @@ module Bindgen
 
         @processors.each do |instance|
           stat_name = instance.class.name.sub(/.*::/, "").underscore
-          stats.measure(stat_name){ instance.process(graph, doc) }
+          stats.measure(stat_name) { instance.process(graph, doc) }
         end
 
         stats

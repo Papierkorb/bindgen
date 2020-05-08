@@ -51,8 +51,8 @@ describe Bindgen::Processor::Enums do
     type: "int",
     isFlags: true,
     values: {
-      "Flags_One" => 1i64,
-      "Flags_Two" => 2i64,
+      "Flags_One"       => 1i64,
+      "Flags_Two"       => 2i64,
       "Different_Three" => 3i64,
     }
   )
@@ -62,8 +62,8 @@ describe Bindgen::Processor::Enums do
     type: "int",
     isFlags: false,
     values: {
-      "Normal_One" => 1i64,
-      "Normal_Two" => 2i64,
+      "Normal_One"   => 1i64,
+      "Normal_Two"   => 2i64,
       "Normal_Three" => 3i64,
     }
   )
@@ -73,9 +73,9 @@ describe Bindgen::Processor::Enums do
     type: "int",
     isFlags: false,
     values: {
-      "UPPER_FIRST_ONE" => 1i64,
+      "UPPER_FIRST_ONE"  => 1i64,
       "UPPER_SECOND_ONE" => 2i64,
-      "UPPER_THIRD_ONE" => 3i64,
+      "UPPER_THIRD_ONE"  => 3i64,
     }
   )
 
@@ -84,35 +84,35 @@ describe Bindgen::Processor::Enums do
     type: "int",
     isFlags: false,
     values: {
-      "1" => 10i64,
-      "_1" => 11i64,
-      "Prefix1" => 12i64,
+      "1"         => 10i64,
+      "_1"        => 11i64,
+      "Prefix1"   => 12i64,
       "PrefixFoo" => 20i64,
-      "Foo" => 21i64,
-      "Bar" => 22i64,
+      "Foo"       => 21i64,
+      "Bar"       => 22i64,
       "PrefixBaz" => 23i64,
-      "Prefix" => 30i64,
-      "_" => 40i64,
+      "Prefix"    => 30i64,
+      "_"         => 40i64,
     }
   )
 
   db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
   doc = Bindgen::Parser::Document.new(
     enums: {
-      "base_module" => normal_enum,
-      "sub_module" => flags_enum,
-      "flags_unset_true" => flags_enum,
-      "flags_unset_false" => normal_enum,
-      "flags_true" => normal_enum,
-      "flags_false" => flags_enum,
-      "prefix_true" => normal_enum,
-      "prefix_false" => normal_enum,
-      "prefix_string" => flags_enum,
-      "prefix_uppercased_true" => uppercased_enum,
-      "prefix_uppercased_false" => uppercased_enum,
+      "base_module"              => normal_enum,
+      "sub_module"               => flags_enum,
+      "flags_unset_true"         => flags_enum,
+      "flags_unset_false"        => normal_enum,
+      "flags_true"               => normal_enum,
+      "flags_false"              => flags_enum,
+      "prefix_true"              => normal_enum,
+      "prefix_false"             => normal_enum,
+      "prefix_string"            => flags_enum,
+      "prefix_uppercased_true"   => uppercased_enum,
+      "prefix_uppercased_false"  => uppercased_enum,
       "prefix_uppercased_string" => uppercased_enum,
-      "prefix_fixable" => fixable_enum,
-      "fixable" => fixable_enum,
+      "prefix_fixable"           => fixable_enum,
+      "fixable"                  => fixable_enum,
     },
   )
 
@@ -157,17 +157,17 @@ describe Bindgen::Processor::Enums do
     context "prefix: true" do
       it "removes the common prefix automatically" do
         lookup(graph, "PrefixTrue").origin.values.should eq({
-          "One" => 1i64, # Will remove "Normal_"
-          "Two" => 2i64,
+          "One"   => 1i64, # Will remove "Normal_"
+          "Two"   => 2i64,
           "Three" => 3i64,
         })
       end
 
       it "camel-cases the constant names" do
         lookup(graph, "PrefixUppercasedTrue").origin.values.should eq({
-          "FirstOne" => 1i64,
+          "FirstOne"  => 1i64,
           "SecondOne" => 2i64,
-          "ThirdOne" => 3i64,
+          "ThirdOne"  => 3i64,
         })
       end
     end
@@ -179,9 +179,9 @@ describe Bindgen::Processor::Enums do
 
       it "camel-cases the constant names" do
         lookup(graph, "PrefixUppercasedFalse").origin.values.should eq({
-          "UpperFirstOne" => 1i64,
+          "UpperFirstOne"  => 1i64,
           "UpperSecondOne" => 2i64,
-          "UpperThirdOne" => 3i64,
+          "UpperThirdOne"  => 3i64,
         })
       end
     end
@@ -189,17 +189,17 @@ describe Bindgen::Processor::Enums do
     context "prefix: String" do
       it "removes matching prefix only" do
         lookup(graph, "PrefixString").origin.values.should eq({
-          "One" => 1i64, # Will remove "Flags_"
-          "Two" => 2i64,
+          "One"             => 1i64, # Will remove "Flags_"
+          "Two"             => 2i64,
           "Different_Three" => 3i64, # Leaves different prefix alone
         })
       end
 
       it "camel-cases the constant names" do
         lookup(graph, "PrefixUppercasedString").origin.values.should eq({
-          "FirstOne" => 1i64,
+          "FirstOne"  => 1i64,
           "SecondOne" => 2i64,
-          "ThirdOne" => 3i64,
+          "ThirdOne"  => 3i64,
         })
       end
     end
@@ -209,15 +209,15 @@ describe Bindgen::Processor::Enums do
     context "prefix: Prefix" do
       it "corrects constant names" do
         lookup(graph, "PrefixFixable").origin.values.should eq({
-          "Digit1" => 10i64,
+          "Digit1"      => 10i64,
           "Underscore1" => 11i64,
-          "Digit1_2" => 12i64,
-          "Foo" => 20i64,
-          "Foo_2" => 21i64,
-          "Bar" => 22i64,
-          "Baz" => 23i64,
-          "Unnamed" => 30i64,
-          "Underscore" => 40i64,
+          "Digit1_2"    => 12i64,
+          "Foo"         => 20i64,
+          "Foo_2"       => 21i64,
+          "Bar"         => 22i64,
+          "Baz"         => 23i64,
+          "Unnamed"     => 30i64,
+          "Underscore"  => 40i64,
         })
       end
     end
@@ -225,15 +225,15 @@ describe Bindgen::Processor::Enums do
     context "prefix: false" do
       it "corrects constant names" do
         lookup(graph, "Fixable").origin.values.should eq({
-          "Digit1" => 10i64,
+          "Digit1"      => 10i64,
           "Underscore1" => 11i64,
-          "Prefix1" => 12i64,
-          "PrefixFoo" => 20i64,
-          "Foo" => 21i64,
-          "Bar" => 22i64,
-          "PrefixBaz" => 23i64,
-          "Prefix" => 30i64,
-          "Underscore" => 40i64,
+          "Prefix1"     => 12i64,
+          "PrefixFoo"   => 20i64,
+          "Foo"         => 21i64,
+          "Bar"         => 22i64,
+          "PrefixBaz"   => 23i64,
+          "Prefix"      => 30i64,
+          "Underscore"  => 40i64,
         })
       end
     end

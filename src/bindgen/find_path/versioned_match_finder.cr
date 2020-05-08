@@ -37,7 +37,7 @@ module Bindgen
       private def store_additional_variables(candidates)
         if variable_name = @version_check.variable
           candidates.first?.try do |version, _|
-            @additional_variables = { variable_name => version }
+            @additional_variables = {variable_name => version}
           end
         end
       end

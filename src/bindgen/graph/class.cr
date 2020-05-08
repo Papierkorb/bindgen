@@ -38,7 +38,7 @@ module Bindgen
 
       # Crystal instance vars in this class.  Will be ignored by the C++ code
       # paths.
-      getter instance_variables = { } of String => Call::Result
+      getter instance_variables = {} of String => Call::Result
 
       def initialize(@origin, name, parent = nil)
         super(name, parent)

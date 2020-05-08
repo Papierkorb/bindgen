@@ -1,4 +1,4 @@
-require  "../../spec_helper"
+require "../../spec_helper"
 
 private def run_check(yaml)
   config = Bindgen::FindPath::ShellCheck.from_yaml(yaml)

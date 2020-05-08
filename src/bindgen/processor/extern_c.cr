@@ -26,7 +26,7 @@ module Bindgen
       def visit_method(method)
         return unless method.origin.extern_c? # Rule 1
 
-        return if method.tag?(Graph::Method::EXPLICIT_BIND_TAG) # Rule 5
+        return if method.tag?(Graph::Method::EXPLICIT_BIND_TAG)  # Rule 5
         unless method.tag?(Graph::Method::REMOVABLE_BINDING_TAG) # Rule 4
           return if method.calls[Graph::Platform::CrystalBinding]?
           return if method.calls[Graph::Platform::Cpp]?
@@ -39,7 +39,7 @@ module Bindgen
         end
 
         return if pass.to_crystal(method.origin.return_type).conversion != nil # Rule 3
-        return if any_arg_uses_conversion # Rule 2
+        return if any_arg_uses_conversion                                      # Rule 2
 
         # If we end up here, the method can be bound to directly.
         method.set_tag(Graph::Method::EXPLICIT_BIND_TAG, method.origin.name)

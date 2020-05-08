@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 # Line prefixes to look out for in `.relocate_line_reports`
-SPEC_METHODS = { "it(", "context(", "describe(" }
+SPEC_METHODS = {"it(", "context(", "describe("}
 
 # Builds the project in configuration `NAME.yml`, expecting to yield the files
 # `tmp/NAME.cr`, `tmp/NAME.cpp` and `tmp/NAME.o`.  Additionally, this macro will

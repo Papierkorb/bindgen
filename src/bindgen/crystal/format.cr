@@ -107,7 +107,7 @@ module Bindgen
 
       # Generates the flag-list of an enum.
       private def format_flags_enum(values, bitmask) : String
-        names = [ ] of String
+        names = [] of String
 
         # Find all names of all set bits in *bitmask*
         (0...64).each do |bit_idx|
@@ -131,7 +131,7 @@ module Bindgen
 
       # Returns `true` if *type_name* is a Crystal floating-type.
       def floating_type?(type_name) : Bool
-        { "Float32", "Float64" }.includes?(type_name)
+        {"Float32", "Float64"}.includes?(type_name)
       end
 
       # Returns the literal-suffix for Crystal code, to signify a literal
@@ -140,14 +140,14 @@ module Bindgen
       # If *type_name* is unknown, returns `nil`.
       def number_literal_suffix(type_name) : String?
         case type_name
-        when "UInt8" then "u8"
-        when "UInt16" then "u16"
-        when "UInt32" then "u32"
-        when "UInt64" then "u64"
-        when "Int8" then "i8"
-        when "Int16" then "i16"
-        when "Int32" then "" # Default type, don't clutter
-        when "Int64" then "i64"
+        when "UInt8"   then "u8"
+        when "UInt16"  then "u16"
+        when "UInt32"  then "u32"
+        when "UInt64"  then "u64"
+        when "Int8"    then "i8"
+        when "Int16"   then "i16"
+        when "Int32"   then "" # Default type, don't clutter
+        when "Int64"   then "i64"
         when "Float32" then "f32"
         when "Float64" then "f64"
         else

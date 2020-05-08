@@ -38,7 +38,7 @@ describe Bindgen::TypeDatabase do
     context "aliasing" do
       it "detects simple alias-loops" do
         expect_raises(Exception, /recursive type-alias/i) do
-          watchdog(1.second){ db["Recursive"]? }
+          watchdog(1.second) { db["Recursive"]? }
         end
       end
 

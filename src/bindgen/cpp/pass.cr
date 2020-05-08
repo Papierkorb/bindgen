@@ -36,7 +36,7 @@ module Bindgen
         inner_args = proc_type.template.not_nil!.arguments
 
         # Arguments go C++ -> Crystal, but the result goes Crystal -> C++!
-        proc_types = inner_args[1..-1].map{|t| to_crystal(t).as(Call::Result)}
+        proc_types = inner_args[1..-1].map { |t| to_crystal(t).as(Call::Result) }
         proc_types.unshift to_cpp(inner_args.first)
 
         proc_args = typer.full(proc_types).join(", ")

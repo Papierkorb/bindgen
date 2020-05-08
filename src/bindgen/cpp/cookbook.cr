@@ -179,7 +179,6 @@ module Bindgen
     #
     # References are supported, although they shouldn't occur.
     class BoehmGcCCookbook < BareCCookbook
-
       # Rely on `#finalize` for this.
       # def constructor_name(method_name : String, class_name : String)
 

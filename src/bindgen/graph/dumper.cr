@@ -20,7 +20,7 @@ module Bindgen
 
       def visit_platform_specific(specific)
         puts node_header(specific)
-        indented{ super }
+        indented { super }
       end
 
       def visit_alias(alias_name)
@@ -33,7 +33,7 @@ module Bindgen
 
       def visit_class(klass)
         puts node_header(klass)
-        indented{ super }
+        indented { super }
       end
 
       def visit_enum(enumeration)
@@ -45,11 +45,11 @@ module Bindgen
 
       def visit_library(library)
         puts node_header(library)
-        indented{ super }
+        indented { super }
       end
 
       def visit_method(method)
-        args = method.origin.arguments.map{|arg| "#{arg.full_name} #{arg.name}"}.join(", ")
+        args = method.origin.arguments.map { |arg| "#{arg.full_name} #{arg.name}" }.join(", ")
         puts "#{node_header(method)}(#{args}) : #{method.origin.return_type.full_name}"
 
         indented do
@@ -63,13 +63,13 @@ module Bindgen
 
       # Returns a dump-able string for the *call* on *platform*
       private def call_to_s(platform, call)
-        args = call.arguments.map{|arg| "#{arg.type_name} #{arg.name}"}.join(", ")
+        args = call.arguments.map { |arg| "#{arg.type_name} #{arg.name}" }.join(", ")
         "#{platform}: #{call.name}(#{args}) : #{call.result.type_name}"
       end
 
       def visit_namespace(ns)
         puts node_header(ns)
-        indented{ super }
+        indented { super }
       end
 
       def visit_struct(structure)
