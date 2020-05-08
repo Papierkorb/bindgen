@@ -97,7 +97,7 @@ if output.size < 2 # Sanity check
 end
 
 # Shell-split
-def shell_split(line)
+def shell_split(line : String)
   list = [] of String
   skip_next = false
   in_string = false

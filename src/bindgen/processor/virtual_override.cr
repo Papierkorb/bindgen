@@ -195,8 +195,9 @@ module Bindgen
       # jumptable struct to C++.
       private def add_jumptable_method(klass, cpp_subclass, table_name)
         typer = Cpp::Typename.new
-        table_type = Parser::Type.new( # Pass by reference.
-baseName: table_name,
+        # Pass by reference.
+        table_type = Parser::Type.new(
+          baseName: table_name,
           fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
           isConst: true,
           isReference: true,
@@ -213,8 +214,9 @@ baseName: table_name,
         )
 
         platforms = Graph::Platforms.flags(CrystalBinding, Cpp)
-        Graph::Method.new( # Add C++ method
-origin: method,
+        # Add C++ method
+        Graph::Method.new(
+          origin: method,
           name: method.name,
           parent: klass.platform_specific(platforms),
         )
