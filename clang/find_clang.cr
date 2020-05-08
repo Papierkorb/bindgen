@@ -72,7 +72,7 @@ raw_cppflags = output[-2]
 raw_ldflags = output[-1]
 
 # Shell-split
-def shell_split(line : String)
+def shell_split(line)
   list = [] of String
   skip_next = false
   in_string = false

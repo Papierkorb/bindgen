@@ -38,10 +38,9 @@ module Bindgen
     # Runs the tool.  Returns the process exit code.
     def run! : Int32
       stats = run_steps
-
       print_stats(stats) if @show_stats
-
       0 # Success!
+
 
     rescue err : ExitError
       err.code # Failure
@@ -106,8 +105,9 @@ module Bindgen
       builder = Graph::Builder.new(@database)
       graph = Graph::Namespace.new(@config.module, nil)
 
-      Graph::Library.new( # Add `lib Binding`
-name: Graph::LIB_BINDING,
+      # Add `lib Binding`
+      Graph::Library.new(
+        name: Graph::LIB_BINDING,
         parent: graph,
         ld_flags: templated_ld_flags,
       )
