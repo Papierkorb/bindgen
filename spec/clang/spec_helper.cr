@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 class ClangValidationError < Exception
-  getter document : JSON::Any::Type | UInt64
+  getter document : JSON::Any::Type
 
   def initialize(@document, path, message)
     super("At #{path}: #{message}")
