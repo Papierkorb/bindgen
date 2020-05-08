@@ -1,3 +1,5 @@
+require "semantic_version"
+
 module Bindgen
   class FindPath
     # Checker for a `VersionCheck`.  This is a special checker.  It can't be
@@ -82,12 +84,13 @@ module Bindgen
 
       # Does the version check
       private def check_version_string(version_string) : Bool
+        version = SemanticVersion.parse(version_string)
         if min = @config.min
-          return false if version_string < min
+          return false if version < SemanticVersion.parse(min)
         end
 
         if max = @config.max
-          return false if version_string > max
+          return false if version > SemanticVersion.parse(max)
         end
 
         true
