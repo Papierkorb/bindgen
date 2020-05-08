@@ -7,7 +7,11 @@
 #include "bindgen_frontend_action.hpp"
 
 static llvm::cl::OptionCategory BindgenCategory("bindgen options");
+#if __clang_major__ >= 10
+static const llvm::opt::OptTable& Options(clang::driver::getDriverOptTable());
+#else
 static std::unique_ptr<llvm::opt::OptTable> Options(clang::driver::createDriverOptTable());
+#endif
 // See bindgen_ast_consumer.cpp for more
 
 int main(int argc, const char **argv) {

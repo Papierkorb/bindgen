@@ -17,7 +17,7 @@ def find_clang_binary : String?
   version:
     min: "4.0.0"
     command: "% --version"
-    regex: "clang version ([0-9.]+)"
+    regex: "clang version ([0-9.]+).*"
   YAML
 
   path_finder = Bindgen::FindPath.new(__DIR__)
@@ -92,6 +92,7 @@ def shell_split(line)
       end
     when '"' # String marker
       in_string = !in_string
+    else
     end
   end
 
@@ -127,6 +128,7 @@ while index < flags.size
     index += 1
   when /^-L/
     system_libs << flags[index][2..-1]
+  else
   end
 
   index += 1
