@@ -44,9 +44,9 @@ module Bindgen
     # The measured data is put into `#stages`.
     def measure(stage_name : String)
       before_gc = GC.stats
-      before = Time.now
+      before = Time.local
       result = yield
-      after = Time.now
+      after = Time.local
       after_gc = GC.stats
 
       duration = after - before
