@@ -10,6 +10,7 @@ describe "the argument translation functionality" do
         {{ m.args.size }}.should eq(1)
         # For debugging, dump the arguments here as string.
         # {{ m.args.stringify }}
+        # {{ m.name }}
         ({{ m.args.first.restriction }}).should eq({{ type }})
         {{ m.args.first.default_value }}.should eq({{ value }})
       end

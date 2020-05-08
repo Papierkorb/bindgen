@@ -99,7 +99,7 @@ describe "clang tool macros feature" do
           isFunction: false,
           value:      "9223372036854775808",
           type:       {fullName: "unsigned long long"},
-          evaluated:  9223372036854775808u64,
+          evaluated:  -9223372036854775808,
         },
         { # It detects "unsigned long long" above, but just "long" here.
           name:       "EVALUATE_LARGE_INT64",

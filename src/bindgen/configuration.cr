@@ -25,7 +25,7 @@ module Bindgen
           when "true"  then return true
           when "false" then return false
           else
-            raise "Unable to determine StringOrBool"
+            # its a string
           end
         end
 

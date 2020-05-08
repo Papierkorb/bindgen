@@ -18,4 +18,9 @@ library: "%/tmp/{SPEC_NAME}.o -lstdc++"
 
 parser:
   files: [ "{SPEC_NAME}.cpp" ]
-  includes: [ "%" ]
+  includes:
+    - "%"
+    # FIXME: This is not an appropriate fix, however without it fails on OSX
+    - /usr/local/include/
+    - /usr/local/Cellar/llvm@6/6.0.1_2/include/c++/v1
+    - /usr/local/Cellar/llvm@6/6.0.1_2/lib/clang/6.0.1/include

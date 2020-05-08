@@ -150,12 +150,14 @@ bool TypeHelper::valueFromApValue(LiteralData &value, const clang::APValue &apVa
 		value = apValue.getInt().getBoolValue();
 	} else if (qt->isIntegerType()) {
 		const llvm::APSInt &v = apValue.getInt();
-		int64_t i64 = v.getExtValue();
-
 		if (qt->isSignedIntegerType())
-			value = i64;
-		else // Is there better way?
-			value = static_cast<uint64_t>(i64);
+			value = v.getExtValue();
+		else {
+      value = v.getZExtValue();
+      // FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
+      // Then translate it on the other end?
+      // value = std::to_string(v.getZExtValue());
+    }
 	} else if (qt->isFloatingType()) {
 		value = apValue.getFloat().convertToDouble();
 	} else {

@@ -12,7 +12,9 @@ module Bindgen
     #
     # ```
     # class Foo < Bar # First one is inherited
-    #   def as_baz : Baz; ...; end # Later ones converted
+    #   def as_baz : Baz
+    #     ...
+    #   end # Later ones converted
     # end
     # ```
     class Inheritance < Base

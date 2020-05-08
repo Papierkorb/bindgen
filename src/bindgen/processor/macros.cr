@@ -78,7 +78,8 @@ module Bindgen
           value = define.evaluated
 
           unless value.is_a? Int
-            raise "Macro enum #{config.destination}: Value for #define #{define.name} is non-Int: #{value.inspect}"
+            raise "Macro enum #{config.destination}: " \
+                  "Value for #define #{define.name} is non-Int: #{value.inspect}"
           end
 
           values[name] = value.to_i64

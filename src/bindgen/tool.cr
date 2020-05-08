@@ -43,6 +43,7 @@ module Bindgen
 
       0 # Success!
 
+
     rescue err : ExitError
       err.code # Failure
     end

@@ -61,13 +61,7 @@ private def check_partial_value(original, expected, path)
 
     expected.each do |key, expected_child|
       value = hash[key.to_s]?
-
-      if !value.nil? && expected_child.is_a?(UInt64) && value.raw.is_a?(Int64)
-        value = value.raw.as(Int64).to_u64
-      else
-        value = value.raw if value
-      end
-
+      value = value.raw if value
       check_partial_value(value, expected_child, "#{path}.#{key}")
     end
   when Array, Tuple
