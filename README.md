@@ -1,6 +1,6 @@
 # Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png) [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen)
 
-A C/C++/Qt binding and wrapper generator.
+Standalone C, C++, and/or Qt binding and wrapper generator.
 
 ### Platform support
 
@@ -9,13 +9,16 @@ A C/C++/Qt binding and wrapper generator.
 | Arch    | System            | CI          | Clang version  |
 | ------- | ----------------- | ----------- | -------------- |
 | x86_64  | ArchLinux         | Travis      | *Rolling*      |
+| x86_64  | Debian 9          | Travis      | 6.0, 7.0       |
 | x86_64  | Debian 7          | Travis      | 4.0, 5.0       |
 | x86_64  | Ubuntu 17.04      | *None*      | 5.0            |
 | x86_64  | Ubuntu 16.04      | Travis      | 4.0, 5.0       |
 |         | Other systems     | Help wanted | ?              |
 
 You require the LLVM and Clang development libraries and headers.  If you don't
-have them already installed, bindgen will tell you.
+have them already installed, bindgen will tell you. These packages are usually
+named after the following pattern on Debian-based systems:
+`clang-7 libclang-7-dev llvm-7 llvm-7-dev`.
 
 ## Features
 
@@ -62,20 +65,21 @@ have them already installed, bindgen will tell you.
 
 * [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
 
-*Created a published, stable-y binding with bindgen?  Want to see it here?  PR!*
+*Have you created and published a usable binding with bindgen? Want to see it here? Send a PR!*
 
 # How To
 
 1. Add bindgen to your `shard.yml` and run `crystal deps`
-2. Copy `assets/bindgen_helper.hpp` into your `ext/`
-3. Copy and customize `TEMPLATE.yml`
-4. Run `lib/bindgen/tool.sh your_template.yml`
 
 ```yaml
 dependencies:
   bindgen:
     github: Papierkorb/bindgen
 ```
+
+2. Copy `assets/bindgen_helper.hpp` into your `ext/`
+3. Copy and customize `TEMPLATE.yml`
+4. Run `lib/bindgen/tool.sh your_template.yml`
 
 **Note**: If you intend to ship the generated code with your shard, you can
 replace `dependencies` with `development_dependencies`.
@@ -108,15 +112,15 @@ recommended pipeline pre-configured.
 There are three kinds of processors:
 1. *Refining* ones modify the graph in some way, without a dependency to a later
    generator.
-2. *Generation* processors add data to the graph so the later ran generators
-   have all data they need to work.
+2. *Generation* processors add data to the graph so that the generators
+   run later have all data they need to work.
 3. *Information* processors don't modify the graph, but do checks or print data
    onto the screen for debugging purposes.
 
-The order is having first *Refining*, and *Generation* processors second in the
-configured pipeline.  *Information* processors can be run at any time.
+The order in the configured pipeline is to have *Refining* processors first,
+*Generation* processors second. *Information* processors can be run at any time.
 
-The following list of processors is ordered alphabetically.
+The following processors are available, in alphabetical order:
 
 ### `AutoContainerInstantiation`
 
@@ -482,10 +486,10 @@ An exception will be raised if any of the following occur:
 
 # Architecture of bindgen
 
-Bindgen employs a pipeline inspired code architecture, which is strikingly
+Bindgen employs a pipeline-inspired code architecture, which is strikingly
 similar to what most compilers use.
 
-The code-flow is basically `Parser::Runner` to `Graph::Builder` to
+The code flow is basically `Parser::Runner` to `Graph::Builder` to
 `Processor::Runner` to `Generator::Runner`.
 
 ![Architecture flow diagram](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/architecture.png)
@@ -521,7 +525,7 @@ Which will generate a graph looking like this:
 
 ## Parser step
 
-Begin of the actual execution pipeline.  Calls out to the clang-based parser
+The beginning of the actual execution pipeline.  Calls out to the clang-based parser
 tool to read the C/C++ source code and write a JSON-formatted "database" onto
 standard output.  This is directly caught by `bindgen` and subsequently parsed
 as `Parser::Document`.
@@ -533,7 +537,7 @@ The second step takes the `Parser::Document` and transforms it into a
 
 ## Processor step
 
-The third step runs all configured processors in-order.  These work with the
+The third step runs all configured processors in order.  These work with the
 `Graph` and mostly add methods and `Call`s so they can be bound later.  But
 they're allowed to do whatever they want really, which makes it a good place
 to add more complex rewriting rules if desired.
@@ -549,8 +553,7 @@ and also don't build anything on their own.  They only write to output.
 
 ## Contributing
 
-1. Talk to `Papierkorb` in `#crystal-lang` about what you're gonna do.
-2. You got the go-ahead?  The project's in an early state: Things may change without notice under you.
+1. Open a new issue on the project to discuss what you're going to do and possibly receive comments
 3. Read the `STYLEGUIDE.md` for some tips.
 4. Then do the rest, PR and all.  You know the drill :)
 
