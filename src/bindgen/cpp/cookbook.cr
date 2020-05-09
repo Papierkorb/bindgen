@@ -164,11 +164,11 @@ module Bindgen
     #
     # Configuration name is `boehmgc-cpp`, aliased as `cpp` for convenience.
     class BoehmGcCppCookbook < BareCppCookbook
-      def constructor_name(method_name : String, class_name : String)
+      def constructor_name(method_name : String, class_name : String) : String?
         "new (UseGC) #{class_name}"
       end
 
-      def value_to_pointer(type : String)
+      def value_to_pointer(type : String) : String?
         "new (UseGC) #{type} (%)"
       end
     end
@@ -182,7 +182,7 @@ module Bindgen
       # Rely on `#finalize` for this.
       # def constructor_name(method_name : String, class_name : String)
 
-      def value_to_pointer(type : String)
+      def value_to_pointer(type : String) : String?
         "memcpy(GC_malloc(sizeof(#{type})), %, sizeof(#{type}))"
       end
     end

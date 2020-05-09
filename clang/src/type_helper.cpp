@@ -1,16 +1,21 @@
 #include "type_helper.hpp"
 
-#if (__clang_major__ > 5)
-#include "clang/AST/QualTypeNames.h"
-#else
-#include "clang/Tooling/Core/QualTypeNames.h"
-#endif
+# if __clang_major__ < 6
+  #include "clang/Tooling/Core/QualTypeNames.h"
+# else
+  #include "clang/AST/QualTypeNames.h"
+# endif
+
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 
-#include "clang_type_name.hpp"
+# if defined(__LLVM_VERSION_8)
+  #include "clang_type_name_llvm_8.hpp"
+# else
+  #include "clang_type_name.hpp"
+# endif
 
 static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
 	const clang::ClassTemplateSpecializationDecl *decl);
@@ -145,12 +150,14 @@ bool TypeHelper::valueFromApValue(LiteralData &value, const clang::APValue &apVa
 		value = apValue.getInt().getBoolValue();
 	} else if (qt->isIntegerType()) {
 		const llvm::APSInt &v = apValue.getInt();
-		int64_t i64 = v.getExtValue();
-
 		if (qt->isSignedIntegerType())
-			value = i64;
-		else // Is there better way?
-			value = static_cast<uint64_t>(i64);
+			value = v.getExtValue();
+		else {
+      value = v.getZExtValue();
+      // FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
+      // Then translate it on the other end?
+      // value = std::to_string(v.getZExtValue());
+    }
 	} else if (qt->isFloatingType()) {
 		value = apValue.getFloat().convertToDouble();
 	} else {
