@@ -121,9 +121,15 @@ module Bindgen
           type:    Util::Tribool,
           default: Util::Tribool.unset,
         },
+
+        # Camelcase translation
+        camelcase: {
+          type: Bool,
+          default: true
+        },
       )
 
-      def initialize(@destination, @prefix = false, @flags = Util::Tribool.unset)
+      def initialize(@destination, @prefix = false, @flags = Util::Tribool.unset, @camelcase = true)
       end
     end
 

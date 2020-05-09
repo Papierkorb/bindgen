@@ -26,15 +26,21 @@ module Bindgen
           name: enumeration.name,
           type: enumeration.type, # Make configurable?
           isFlags: is_flags,
-          values: camelcase_fields(fields),
+          values: camelcase_fields(config, fields),
         )
       end
 
       # CamelCases all field names, if they're not already camel-cased.
-      private def camelcase_fields(fields)
+      private def camelcase_fields(config, fields)
         fields.map do |key, value|
-          unless key[0]?.try(&.uppercase?) && key[1]?.try(&.lowercase?)
-            key = key.downcase.camelcase
+          if config.camelcase
+            unless key[0]?.try(&.uppercase?) && key[1]?.try(&.lowercase?)
+              key = key.downcase.camelcase
+            end
+          else
+            if key[0]?.try(&.lowercase?)
+              key = key.capitalize
+            end
           end
 
           {key, value}
