@@ -412,9 +412,9 @@ describe Bindgen::FindPath do
 
       errors.empty?.should be_true
       {% if flag?(:windows) %}
-        vars.should eq({ "TEST" => Process.find_executable("cmd") })
+        vars.should eq({"TEST" => Process.find_executable("cmd")})
       {% else %}
-        vars.should eq({ "TEST" => Process.find_executable("ls") })
+        vars.should eq({"TEST" => Process.find_executable("ls")})
       {% end %}
     end
 

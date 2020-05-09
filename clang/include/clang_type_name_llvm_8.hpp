@@ -52,7 +52,7 @@ SOFTWARE.
 
    ========================                            ======================= */
 
-//===------- QualTypeNames.cpp - Generate Complete QualType Names ---------===//
+ //===------- QualTypeNames.cpp - Generate Complete QualType Names ---------===//
  //
  //                     The LLVM Compiler Infrastructure
  //
@@ -63,12 +63,7 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
-# if __clang_major__ < 6
- #include "clang/Tooling/Core/QualTypeNames.h"
-# else
  #include "clang/AST/QualTypeNames.h"
-# endif
-
  #include "clang/AST/DeclTemplate.h"
  #include "clang/AST/DeclarationName.h"
  #include "clang/AST/GlobalDecl.h"
@@ -479,7 +474,7 @@ namespace ClangTypeName {
      // Get the qualifiers.
      Qualifiers Quals = QT.getQualifiers();
 
-     QT = dyn_cast<SubstTemplateTypeParmType>(QT.getTypePtr())->desugar();
+     QT = cast<SubstTemplateTypeParmType>(QT.getTypePtr())->desugar();
 
      // Add back the qualifiers.
      QT = Ctx.getQualifiedType(QT, Quals);
@@ -515,7 +510,7 @@ namespace ClangTypeName {
      QT = QualType(TypePtr, 0);
    }
    if (Prefix || Keyword != ETK_None) {
-     QT = Ctx.getElaboratedType(ETK_None, Prefix, QT);
+     QT = Ctx.getElaboratedType(Keyword, Prefix, QT);
    }
    QT = Ctx.getQualifiedType(QT, PrefixQualifiers);
    return QT;

@@ -4,7 +4,7 @@ module Bindgen
     # `BINDGEN_BIN` environment variable.
     class Runner
       # Default path to the binary
-      BINARY_PATH = "#{File.dirname(__FILE__)}/../../../clang/bindgen"
+      BINARY_PATH = File.expand_path("#{File.dirname(__FILE__)}/../../../clang/bindgen")
 
       @binary_path : String
 

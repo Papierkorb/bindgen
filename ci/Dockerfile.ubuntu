@@ -7,4 +7,7 @@ ARG DISTRIB_CODENAME=xenial
 COPY . /
 
 RUN ci/install_debian.sh
-RUN make -C clang
+
+WORKDIR clang
+RUN cmake . && make
+WORKDIR /
