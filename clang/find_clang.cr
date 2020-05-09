@@ -17,7 +17,7 @@ def find_clang_binary : String?
   try:
     - "clang++"
     - "clang++-*"
-  seach_paths:
+  search_paths:
     - /usr/bin/
   version:
     min: "4.0.0"
