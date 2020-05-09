@@ -24,8 +24,9 @@ private:
 	std::vector<RecordMatchHandler *> m_classHandlers;
 	std::vector<EnumMatchHandler *> m_enumHandlers;
 	FunctionMatchHandler *m_functionHandler;
-	clang::ast_matchers::MatchFinder m_matchFinder;
 	std::vector<Macro> &m_macros;
+	clang::ast_matchers::MatchFinder::MatchFinderOptions m_matchFinderOpts;
+	clang::ast_matchers::MatchFinder m_matchFinder;
 };
 
 #endif // BINDGEN_AST_CONSUMER_HPP

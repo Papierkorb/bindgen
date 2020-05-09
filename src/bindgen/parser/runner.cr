@@ -30,7 +30,7 @@ module Bindgen
       # Calls the clang tool and returns its output as string.
       def run : String
         generate_source_file do |file|
-          binary_path = Util.template(@binary_path, replacement: nil)
+          binary_path = File.expand_path Util.template(@binary_path, replacement: nil)
           command = "#{binary_path} #{arguments(file).join(" ")}"
           puts "Runner command: #{command}" if ENV["VERBOSE"]?
 
@@ -49,7 +49,7 @@ module Bindgen
       private def generate_source_file
         result = nil
 
-        File.tempfile "bindgen" do |file|
+        File.tempfile("bindgen") do |file|
           @config.files.each do |path|
             path = Util.template(path, replacement: nil)
             file.puts %{#include #{path.inspect}}

@@ -108,7 +108,11 @@ static bool describesStringClass(const clang::CXXConstructorDecl *ctorDecl) {
 
 static bool stringLiteralFromExpression(LiteralData &literal, const clang::Expr *expr) {
 	if (const clang::MaterializeTemporaryExpr *argExpr = llvm::dyn_cast<clang::MaterializeTemporaryExpr>(expr)) {
+#if __clang_major__ >= 10
+		return stringLiteralFromExpression(literal, argExpr->getSubExpr());
+#else
 		return stringLiteralFromExpression(literal, argExpr->GetTemporaryExpr());
+#endif
 	} else if (const clang::CXXBindTemporaryExpr *bindExpr = llvm::dyn_cast<clang::CXXBindTemporaryExpr>(expr)) {
 		return stringLiteralFromExpression(literal, bindExpr->getSubExpr());
 	} else if (const clang::CastExpr *castExpr = llvm::dyn_cast<clang::CastExpr>(expr)) {
@@ -190,7 +194,7 @@ bool TypeHelper::readValue(LiteralData &literal, const clang::QualType &qt,
 }
 
 void TypeHelper::addFunctionParameters(const clang::FunctionDecl *func, Method &m) {
-	for (int i = 0; i < func->getNumParams(); i++) {
+	for (unsigned i = 0; i < func->getNumParams(); i++) {
 		Argument arg = TypeHelper::processFunctionParameter(func->parameters()[i]);
 
 		if (arg.hasDefault && m.firstDefaultArgument < 0)
