@@ -75,10 +75,7 @@ module Bindgen
         puts "@[Flags]" if enumeration.origin.flags?
         code_block "enum", enumeration.name, ":", type_name do
           enumeration.origin.values.each do |name, value|
-            unless enumeration.path_name == "Qt::Key"
-              name = name.camelcase
-            end
-            puts "#{name} = #{value}"
+            puts "#{name.camelcase} = #{value}"
           end
         end
       end
