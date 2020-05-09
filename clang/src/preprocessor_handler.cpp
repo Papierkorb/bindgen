@@ -9,7 +9,7 @@
 static llvm::cl::opt<std::string> MacroChecker("m", llvm::cl::desc("Macros to copy"), llvm::cl::value_desc("regex"));
 
 PreprocessorHandler::PreprocessorHandler(std::vector<Macro> &macros, clang::Preprocessor &preprocessor)
-		: m_macros(macros), m_preprocessor(preprocessor), m_regex(MacroChecker)
+		: m_preprocessor(preprocessor), m_macros(macros), m_regex(MacroChecker)
 {
 }
 

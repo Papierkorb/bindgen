@@ -1,3 +1,5 @@
+require "json"
+
 module Bindgen
   module Parser
     alias DefaultValueTypes = Bool | UInt64 | Int64 | Float64 | String | Nil
@@ -23,7 +25,7 @@ module Bindgen
         when JSON::PullParser::Kind::String
           pull.read_string
         else
-          raise "Unexpected JSON kind #{pull.kind.inspect}"
+          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind.to_s})"
         end
       end
 
