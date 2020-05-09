@@ -100,27 +100,27 @@ module Bindgen
         "new #{class_name}"
       end
 
-      def value_to_pointer(type : String) : String
+      def value_to_pointer(type : String) : String?
         "new #{type} (%)"
       end
 
-      def value_to_reference(type : String) : String | Nil
+      def value_to_reference(type : String) : String?
         nil # Nothing to do
       end
 
-      def reference_to_pointer(type : String) : String
+      def reference_to_pointer(type : String) : String?
         "&(%)"
       end
 
-      def reference_to_value(type : String) : String | Nil
+      def reference_to_value(type : String) : String?
         nil # Nothing to do
       end
 
-      def pointer_to_reference(type : String) : String
+      def pointer_to_reference(type : String) : String?
         "*(%)"
       end
 
-      def pointer_to_value(type : String) : String
+      def pointer_to_value(type : String) : String?
         "*(%)"
       end
     end
@@ -135,7 +135,7 @@ module Bindgen
         method_name
       end
 
-      def value_to_pointer(type : String) : String
+      def value_to_pointer(type : String) : String?
         "memcpy(malloc(sizeof(#{type})), %, sizeof(#{type}))"
       end
 
@@ -143,7 +143,7 @@ module Bindgen
         nil # Nothing to do
       end
 
-      def reference_to_pointer(type : String) : String
+      def reference_to_pointer(type : String) : String?
         "&(%)"
       end
 
@@ -151,11 +151,11 @@ module Bindgen
         nil # Nothing to do
       end
 
-      def pointer_to_reference(type : String) : String
+      def pointer_to_reference(type : String) : String?
         "*(%)"
       end
 
-      def pointer_to_value(type : String) : String
+      def pointer_to_value(type : String) : String?
         "*(%)"
       end
     end
