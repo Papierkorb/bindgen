@@ -8,11 +8,11 @@ module Bindgen
       getter parts : Array(String)
 
       def initialize(parts : Array(String | Int32))
-        @parts = parts.map{|x| x.to_s}
+        @parts = parts.map { |x| x.to_s }
       end
 
       def initialize(*parts)
-        @parts = parts.to_a.map{|x| x.to_s}
+        @parts = parts.to_a.map { |x| x.to_s }
       end
 
       def to_s(io : IO)
