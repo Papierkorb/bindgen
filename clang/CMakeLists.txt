@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(bindgen-clang)
 
-set(CMAKE_CXX_STANDARD_11)
-
 ######################
 # LLVM Setup
 ######################
@@ -17,15 +15,22 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 string(REGEX MATCH "^([0-9]+)" LLVM_VER ${LLVM_PACKAGE_VERSION})
 message(STATUS "LLVM Major version: ${LLVM_VER}")
 
+# If LLVM 10+ change std version
+if(LLVM_VER GREATER_EQUAL 10)
+  message(STATUS "Setting std version: c++14")
+  set(CMAKE_CXX_STANDARD_14)
+else()
+  set(CMAKE_CXX_STANDARD_11)
+endif()
+
 # Add llvm version definition
 add_definitions(-D__LLVM_VERSION_${LLVM_VER})
-
 
 # Find the LLVM clang++ path
 message(STATUS "LLVM Tools Dir: ${LLVM_TOOLS_BINARY_DIR}")
 
 find_program(clang_bin "clang++" PATHS: ${LLVM_TOOLS_BINARY_DIR})
-message(STATUS "Found clang bin: ${clang_bin}")
+# message(STATUS "Found clang bin: ${clang_bin}")
 set(CMAKE_CXX_COMPILER ${clang_bin})
 message(STATUS "Using clang++ exec: ${CMAKE_CXX_COMPILER}")
 
@@ -40,11 +45,9 @@ include_directories(${LLVM_INCLUDE_DIRS})
 message(STATUS "Add LLVM definitions: ${LLVM_DEFINITIONS}")
 add_definitions(${LLVM_DEFINITIONS})
 
-
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs all)
-
 
 ######################
 # Gather info
@@ -62,19 +65,30 @@ if(NOT EXISTS ${shards_bin})
 endif()
 
 # Execute find_clang.cr
+message(STATUS "Execute find_clang.cr")
+
 execute_process(
-        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr
+        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet
+        COMMAND_ECHO STDOUT
+        ERROR_VARIABLE find_clang_error
         OUTPUT_FILE ${PROJECT_SOURCE_DIR}/Makefile.variables
-        ERROR_QUIET
 )
+
+if(NOT ${find_clang_error} STREQUAL "")
+  message(FATAL_ERROR ${find_clang_error})
+endif()
 
 # Execute find_clang.cr for clang_libs
 execute_process(
-        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang-libs
+        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --clang-libs --quiet
+        COMMAND_ECHO STDOUT
         OUTPUT_VARIABLE clang_libs
-        ERROR_QUIET
+        ERROR_VARIABLE find_clang_error
 )
 
+if(NOT ${find_clang_error} STREQUAL "")
+  message(FATAL_ERROR ${find_clang_error})
+endif()
 
 ######################
 # Configure sources
@@ -91,7 +105,7 @@ add_executable(bindgen ${source_files})
 target_link_libraries(bindgen ${clang_libs})
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   message(STATUS "CLang Libs: ${clang_libs}")
-endif ()
+endif()
 
 # Link against LLVM libraries
 target_link_libraries(bindgen ${llvm_libs})
