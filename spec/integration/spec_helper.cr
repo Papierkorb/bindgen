@@ -39,10 +39,8 @@ def update_spec_base
         build:  "#{cpp_bin} #{`llvm-config --cxxflags`.chomp} #{inc_args}" \
                " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function",
         preamble: <<-PREAMBLE
-
         #include <gc/gc_cpp.h>
         #include "bindgen_helper.hpp"
-
         PREAMBLE
       },
       crystal: {
