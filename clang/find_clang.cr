@@ -120,6 +120,7 @@ def shell_split(line : String)
       end
     when '"' # String marker
       in_string = !in_string
+    else
     end
   end
 
@@ -168,6 +169,7 @@ while index < flags.size
     l = flags[index][2..-1]
     l += "/" if l !~ /\/$/
     system_libs << l
+  else
   end
 
   index += 1
