@@ -1,4 +1,4 @@
-require "semantic_version"
+require "./generic_version"
 
 module Bindgen
   class FindPath
@@ -84,16 +84,14 @@ module Bindgen
 
       # Does the version check
       private def check_version_string(version_string) : Bool
-        version = ensure_semantic_version version_string
-        min = ensure_semantic_version @config.min
-        max = ensure_semantic_version @config.max
+        version = GenericVersion.parse version_string
 
-        if min
-          return false if version < min
+        @config.min.try do |v|
+          return false if version < GenericVersion.parse v
         end
 
-        if max
-          return false if version > max
+        @config.max.try do |v|
+          return false if version > GenericVersion.parse v
         end
 
         true
@@ -118,23 +116,6 @@ module Bindgen
         if match = regex.match(string)
           match[1]?
         end
-      end
-
-      # Ensures that *version* has 3 components needed for semantic version comparison
-      # and returns SemanticVersion object.
-      #
-      # ```
-      # pp ensure_semantic_version("10")     # => SemanticVersion.new("10.0.0")
-      # pp ensure_semantic_version("10.2")   # => SemanticVersion.new("10.2.0")
-      # pp ensure_semantic_version("10.3.0") # => SemanticVersion.new("10.3.0")
-      # ```
-      private def ensure_semantic_version(version)
-        version.try { |v|
-          if (dots = v.count('.')) < 2
-            (2 - dots).times { v += ".0" }
-          end
-          SemanticVersion.parse v
-        }
       end
     end
   end
