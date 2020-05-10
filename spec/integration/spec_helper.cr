@@ -1,7 +1,65 @@
 require "../spec_helper"
-
+require "yaml"
 # Line prefixes to look out for in `.relocate_line_reports`
 SPEC_METHODS = {"it(", "context(", "describe("}
+
+Spec.before_suite do
+  clean_integration
+  update_spec_base
+end
+
+def clean_integration
+  system "./spec/integration/tmp/clean.sh"
+end
+
+def update_spec_base
+  file_path = "spec/integration/spec_base.yml"
+
+  llvm_ver = `llvm-config --version`.chomp
+  bin_dir = `llvm-config --bindir`.chomp
+  lib_dir = `llvm-config --libdir`.chomp
+  include_dir = `llvm-config --includedir`.chomp
+
+  cpp_bin = File.join(bin_dir, "clang++")
+
+  includes = [
+    "/usr/local/include",
+    include_dir,
+    File.join(include_dir, "c++/v1"),
+    File.join(lib_dir, "clang/#{llvm_ver}/include"),
+  ]
+
+  inc_args = includes.map { |s| "-I#{s}" }.join(" ")
+
+  spec_base = {
+    module:     "Test",
+    generators: {
+      cpp: {
+        output: "tmp/{SPEC_NAME}.cpp",
+        build:  "#{cpp_bin} #{`llvm-config --cxxflags`.chomp} #{inc_args}" \
+               " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function",
+        preamble: <<-PREAMBLE
+
+        #include <gc/gc_cpp.h>
+        #include "bindgen_helper.hpp"
+
+        PREAMBLE
+      },
+      crystal: {
+        output: "tmp/{SPEC_NAME}.cr",
+      },
+    },
+    library: "%/tmp/{SPEC_NAME}.o -lstdc++",
+    parser:  {
+      files:    ["{SPEC_NAME}.cpp"],
+      includes: [
+        "%",
+      ].concat(includes),
+    },
+  }
+
+  File.open(file_path, "w") { |f| f.puts spec_base.to_yaml }
+end
 
 # Builds the project in configuration `NAME.yml`, expecting to yield the files
 # `tmp/NAME.cr`, `tmp/NAME.cpp` and `tmp/NAME.o`.  Additionally, this macro will
