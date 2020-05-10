@@ -291,4 +291,5 @@ if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
     .gsub(/\s+/, " ")
   puts "LLVM_LD_FLAGS := " + `#{llvm_config_binary} --ldflags`.chomp
     .gsub(/\s+/, " ")
+  puts "LLVM_LIBS := " + get_lib_args(llvm_libs).join(" ")
 end

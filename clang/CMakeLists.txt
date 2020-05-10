@@ -65,11 +65,11 @@ if(NOT EXISTS ${shards_bin})
 endif()
 
 # Execute find_clang.cr
-message(STATUS "Execute find_clang.cr")
+message(STATUS "Run: crystal find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet")
 
 execute_process(
         COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet
-        COMMAND_ECHO STDOUT
+        # COMMAND_ECHO STDOUT
         ERROR_VARIABLE find_clang_error
         OUTPUT_FILE ${PROJECT_SOURCE_DIR}/Makefile.variables
 )
@@ -79,16 +79,44 @@ if(NOT ${find_clang_error} STREQUAL "")
 endif()
 
 # Execute find_clang.cr for clang_libs
+message(STATUS "Run: crystal find_clang.cr -- --clang-libs --clang ${CMAKE_CXX_COMPILER} --quiet")
 execute_process(
-        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --clang-libs --quiet
-        COMMAND_ECHO STDOUT
+        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang-libs --clang ${CMAKE_CXX_COMPILER} --quiet
+        # COMMAND_ECHO STDOUT
         OUTPUT_VARIABLE clang_libs
         ERROR_VARIABLE find_clang_error
 )
-
 if(NOT ${find_clang_error} STREQUAL "")
   message(FATAL_ERROR ${find_clang_error})
 endif()
+
+
+if("${llvm_libs}" STREQUAL "")
+  message(WARNING "Unable to find llvm libs. Will run command manually" )
+
+  # NOTE: This execute_process will use `llvm-config --libs all` to gather the libs
+  # message(STATUS "Run: ${llvm_config_bin} --libs all")
+  # execute_process(
+  #         COMMAND bash -c "${llvm_config_bin} --libs all | sed -E 's/\-l/;/g' | sed -E 's/ //g'"
+  #         # COMMAND_ECHO STDOUT
+  #         # ERROR_VARIABLE find_clang_error
+  #         OUTPUT_VARIABLE llvm_libs
+  #         OUTPUT_STRIP_TRAILING_WHITESPACE
+  # )
+
+  # Execute find_clang.cr for clang_libs
+  message(STATUS "Run: crystal find_clang.cr -- --llvm-libs --clang ${CMAKE_CXX_COMPILER} --quiet")
+  execute_process(
+          COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --llvm-libs --clang ${CMAKE_CXX_COMPILER} --quiet
+          # COMMAND_ECHO STDOUT
+          OUTPUT_VARIABLE llvm_libs
+          ERROR_VARIABLE find_clang_error
+  )
+
+endif()
+
+
+
 
 ######################
 # Configure sources
