@@ -3,11 +3,11 @@
 This directory contains the `clang` based C++ parser.  Its job is to parse the
 wanted files, and returning the found information as JSON formatted data.
 
-This tool is executed by `Bindgen::Parser::Runner`.  Basically, it passes a ton
+This tool is executed by `Bindgen::Parser::Runner`.  Basically, runner passes a ton
 of arguments to this tool, and captures its standard output.
 
 **Note**: If `clang++` is not in your `PATH`, provide the path to it through the
-`CLANG` environment variable: `CLANG=/my/custom/clang++ make`
+`CLANG` environment variable: `CLANG=/my/custom/clang++ cmake .`
 
 ## Supported Clang versions
 
@@ -17,8 +17,9 @@ https://github.com/Papierkorb/bindgen/issues
 
 ## Build system
 
-This tool uses a `Makefile`.  Just run `make` to build it.  Some `make`
-implementations may call their binary differently.
+This tool uses `cmake`. Just run `cmake .` to build the usual `Makefile`. From
+there you can run `make -j` to build. If you need to rebuild the `Makefile`
+later, you might want to delete `CMakeCache.txt` first, to remove cmake's cache.
 
 ### On Clang
 
@@ -27,7 +28,7 @@ job (I never tried the GCC equivalent for this), linking a tool using it isn't
 much fun.  Second, we have to manually provide it with the system include paths.
 
 For all of this, there's `find_clang.cr`.  It's a Crystal script figuring all of
-this out.  It's used by the `Makefile`, and is supposed to be portable.
+this out.  It's used by build system, and is supposed to be portable.
 
 ## Tips for direct usage
 
