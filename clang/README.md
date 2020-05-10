@@ -21,6 +21,12 @@ This tool uses `cmake`. Just run `cmake .` to build the usual `Makefile`. From
 there you can run `make -j` to build. If you need to rebuild the `Makefile`
 later, you might want to delete `CMakeCache.txt` first, to remove cmake's cache.
 
+If on SuSE or Fedora `find_clang.cr` can't find it, run it as:
+
+```
+BINDGEN_DYNAMIC=1 crystal clang/find_clang.cr
+```
+
 ### On Clang
 
 The tool has one big flaw: It uses clang.  While clang is a good tool for this
