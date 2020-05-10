@@ -19,7 +19,7 @@ def clang_tool(cpp_code, arguments, **checks)
   tool = ENV["BINDGEN_BIN"]? || Bindgen::Parser::Runner::BINARY_PATH
 
   command = "#{tool} #{file.path} #{arguments} -- " \
-            "-x c++ -std=c++11 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS " \
+            "-x c++ #{`llvm-config --cxxflags`.chomp} " \
             "-Wno-implicitly-unsigned-literal"
 
   puts "Command: #{command}" if ENV["VERBOSE"]?
