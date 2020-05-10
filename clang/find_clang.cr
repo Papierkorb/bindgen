@@ -11,6 +11,19 @@ require "../src/bindgen/find_path"
 
 UNAME_S = `uname -s`.chomp
 
+OPTIONS = Hash(Symbol, Bool | String | Nil).new
+
+def parse_cli_args
+  OPTIONS[:llvm_libs] = ARGV.includes?("--llvm-libs")
+  OPTIONS[:clang_libs] = ARGV.includes?("--clang-libs")
+  OPTIONS[:quiet] = ARGV.includes?("--quiet")
+
+  if ARGV.includes?("--clang")
+    index = ARGV.index("--clang")
+    OPTIONS[:clang] = ARGV[index + 1] unless index.nil?
+  end
+end
+
 def find_clang_binary : String?
   clang_find_config = Bindgen::FindPath::PathConfig.from_yaml <<-YAML
   kind: Executable
@@ -70,11 +83,18 @@ def print_help_and_bail
 end
 
 def log(message : String)
-  STDERR.puts message
+  unless OPTIONS[:quiet]
+    STDERR.puts message
+  end
 end
 
+# Parse the command line options
+parse_cli_args
+
 # Find clang++ binary, through user setting, or automatically.
-if binary = ENV["CLANG"]?
+if OPTIONS[:clang]? && File.exists?(OPTIONS[:clang].as(String))
+  clang_binary = File.expand_path(OPTIONS[:clang].as(String))
+elsif binary = ENV["CLANG"]?
   unless Process.find_executable(binary)
     print_help_and_bail
   end
@@ -86,8 +106,9 @@ else
   print_help_and_bail
 end
 
-STDERR.puts "Using clang binary #{clang_binary.inspect}"
+STDERR.puts "Using clang binary #{clang_binary.inspect}" unless OPTIONS[:quiet]
 
+log "#{clang_binary} -### #{__DIR__}/src/bindgen.cpp 2>&1"
 # Ask clang the paths it uses.
 output = `#{clang_binary} -### #{__DIR__}/src/bindgen.cpp 2>&1`.lines
 
@@ -214,14 +235,14 @@ end
 
 llvm_libs = find_libraries(system_libs, "LLVM")
 
-if ARGV[0]? && ARGV[0] == "--llvm-libs"
+if OPTIONS[:llvm_libs]
   STDOUT << get_lib_args(llvm_libs).join(";")
   exit
 end
 
 clang_libs = find_libraries(system_libs, "clang")
 
-if ARGV[0]? && ARGV[0] == "--clang-libs"
+if OPTIONS[:clang_libs]
   STDOUT << get_lib_args(clang_libs).join(";")
   exit
 end
