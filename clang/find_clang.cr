@@ -53,8 +53,10 @@ OPTIONS[:llvm_cxx_flags] = output_of(OPTIONS[:llvm_config], "--cxxflags")
 OPTIONS[:llvm_ld_flags] = output_of(OPTIONS[:llvm_config], "--ldflags")
   .gsub(/\s+/, " ")
 
-# Determine which clang++ we are using
 OPTIONS[:llvm_bindir] = output_of(OPTIONS[:llvm_config], "--bindir")
+OPTIONS[:llvm_libdir] = output_of(OPTIONS[:llvm_config], "--libdir")
+
+# Determine which clang++ we are using
 unless OPTIONS[:clang] ||= find_clang_binary([llvm_bindir], min_version: "6.0.0")
   print_help_and_exit
 end
@@ -400,15 +402,29 @@ def parse_clang_output(output)
     index += 1
   end
 
+  # Check Darwin include dir
+  if UNAME_S == "Darwin" && Dir.exists?("/usr/local/include/")
+    system_include_dirs << "/usr/local/include"
+  end
+
+  # Need to add the clang includes if we can find them. This is just
+  # in case and we don't fear duplicates as they will be sorted out
+  # later.
+  clang_include_dir = File.join llvm_libdir, "clang", llvm_version, "include"
+  system_include_dirs << clang_include_dir
+
   # Clean libs
   system_lib_dirs.uniq!
   system_lib_dirs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
+  system_lib_dirs.select! { |path| File.directory? path }
   system_include_dirs.uniq!
   system_include_dirs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
+  system_include_dirs.select! { |path| File.directory? path }
 end
 
 # Convenience functions for accessing OPTIONS
 def llvm_bindir() OPTIONS[:llvm_bindir].as String end
+def llvm_libdir() OPTIONS[:llvm_libdir].as String end
 def clang() OPTIONS[:clang].as String end
 def llvm_config() OPTIONS[:llvm_config].as String end
 def llvm_version() OPTIONS[:llvm_version].as String end
