@@ -84,7 +84,7 @@ system_includes.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
 clang_libs = find_libraries(system_libs, "clang")
 llvm_libs = find_libraries(system_libs, "LLVM")
 
-# Try to provide the user with an error if we can't find it.
+# Provide user with help if we can't find it.
 print_help_and_exit if llvm_libs.empty? || clang_libs.empty?
 
 # See if only partial info was requested:
@@ -119,9 +119,9 @@ libs += get_lib_args(llvm_libs)
 includes = system_includes.map { |x| "-I#{File.expand_path(x)}" }
 
 # Find llvm config if we are using llvm
-llvm_config_binary = find_llvm_config_binary system_libs
+llvm_config_binary = find_llvm_config_binary system_libs.map { |path| path.gsub(/(lib|include)$/, "bin") }
 
-log "Found (optional) llvm-config binary in #{llvm_config_binary.inspect}."
+log "Found llvm-config binary in #{llvm_config_binary.inspect}."
 
 # Generate Makefile.variables file
 makefile_variables = File.expand_path "#{__DIR__}/Makefile.variables"
@@ -252,7 +252,7 @@ end
 # option --llvm-config-pattern) inside directories in PATH. It must
 # satisfy minimum version.
 def find_llvm_config_binary(paths) : String?
-  log %(Searching for binary "#{OPTIONS[:llvm_config_pattern]}" in PATH. Minimum version 6.0.0)
+  log %(Searching for binary "#{OPTIONS[:llvm_config_pattern]}" in clang paths and PATH. Minimum version 6.0.0)
   llvm_config_find_config = <<-YAML
   kind: Executable
   try:
@@ -285,7 +285,7 @@ def print_help_and_exit
   You can also invoke the tool with argument `--clang /path/to/clang++`. This is how make will call it.
 
   If your distro does not support static libraries like openSUSE then set env var BINDGEN_DYNAMIC=1.
-  This will use .a instead of .so libraries during linking.
+  This will use .so instead of .a libraries during linking.
 
   If you are missing the packages, please install them:
     ArchLinux: pacman -S llvm clang gc libyaml
