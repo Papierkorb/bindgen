@@ -99,7 +99,7 @@ Argument TypeHelper::processFunctionParameter(const clang::ParmVarDecl *decl) {
 
 static bool describesStringClass(const clang::CXXConstructorDecl *ctorDecl) {
 	std::string name = ctorDecl->getParent()->getQualifiedNameAsString();
-	if (name == "std::__cxx11::basic_string" || name == "QString") {
+	if (name == "std::__cxx11::basic_string" || name == "std::__1::basic_string") {
 		return true;
 	} else {
 		return false;
