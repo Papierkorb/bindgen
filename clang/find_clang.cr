@@ -226,9 +226,9 @@ def parse_cli_args
   end
 end
 
-# Finds clang binary (named 'clang++' or as specified with
-# option --clang) inside directories in PATH. It must satisfy
-# minimum version.
+# Finds clang binary (named 'clang++*' or as specified with
+# option --clang-pattern) inside directories in PATH. It must
+# satisfy minimum version.
 def find_clang_binary : String?
   log %(Searching for binary "#{OPTIONS[:clang_pattern]}" in PATH. Minimum version 6.0.0)
   clang_find_config = <<-YAML
@@ -248,9 +248,9 @@ def find_clang_binary : String?
   path_finder.find(clang_find_config)
 end
 
-# Finds llvm-config binary (named 'llvm-config' or as specified with
-# option --llvm-config) inside directories in PATH. It must satisfy
-# minimum version.
+# Finds llvm-config binary (named 'llvm-config*' or as specified with
+# option --llvm-config-pattern) inside directories in PATH. It must
+# satisfy minimum version.
 def find_llvm_config_binary(paths) : String?
   log %(Searching for binary "#{OPTIONS[:llvm_config_pattern]}" in PATH. Minimum version 6.0.0)
   llvm_config_find_config = <<-YAML
