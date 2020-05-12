@@ -18,8 +18,17 @@ def clang_tool(cpp_code, arguments, **checks)
 
   tool = ENV["BINDGEN_BIN"]? || Bindgen::Parser::Runner::BINARY_PATH
 
+  cxx_flags = "-std=c++11 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS"
+  makefile_vars = File.join(__DIR__, "../../clang/Makefile.variables")
+  if File.exists?(makefile_vars)
+    File.read_lines(makefile_vars).each do |line|
+      if line =~ /^LLVM_CXX_FLAGS/
+        cxx_flags = line.split(" := ").last.chomp
+      end
+    end
+  end
   command = "#{tool} #{file.path} #{arguments} -- " \
-            "-x c++ #{`llvm-config --cxxflags`.chomp} " \
+            "-x c++ #{cxx_flags} " \
             "-Wno-implicitly-unsigned-literal"
 
   puts "Command: #{command}" if ENV["VERBOSE"]?

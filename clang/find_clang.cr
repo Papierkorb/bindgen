@@ -74,6 +74,12 @@ while index < flags.size
   index += 1
 end
 
+# Check darwin include dir
+if UNAME_S == "Darwin" && Dir.exists?("/usr/local/include/")
+  system_includes << "/usr/local/include/"
+  # system_includes << "/usr/local/opt/llvm/lib/clang/10.0.0/include/"
+end
+
 # Clean libs
 system_libs.uniq!
 system_libs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
@@ -143,6 +149,11 @@ if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
   LLVM_VERSION := #{llvm_version.split(/\./).first}
   LLVM_VERSION_FULL := #{llvm_version}
   VARS
+
+  # Need to add the clang includes if we can find them
+  llvm_lib_dir = `#{llvm_config_binary} --libdir`.chomp
+  clang_include_dir = File.join(llvm_lib_dir, "clang", llvm_version, "include")
+  system_includes << clang_include_dir if File.exists?(clang_include_dir)
 
   llvm_cxx_flags = `#{llvm_config_binary} --cxxflags`.chomp
     .gsub(/-fno-exceptions/, "")
