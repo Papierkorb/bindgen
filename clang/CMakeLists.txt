@@ -71,7 +71,6 @@ execute_process(
         COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet
         # COMMAND_ECHO STDOUT
         ERROR_VARIABLE find_clang_error
-        OUTPUT_FILE ${PROJECT_SOURCE_DIR}/Makefile.variables
 )
 
 if(NOT ${find_clang_error} STREQUAL "")
@@ -114,9 +113,6 @@ if("${llvm_libs}" STREQUAL "")
   )
 
 endif()
-
-
-
 
 ######################
 # Configure sources

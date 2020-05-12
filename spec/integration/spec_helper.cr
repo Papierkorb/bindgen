@@ -3,6 +3,14 @@ require "../spec_helper"
 # Line prefixes to look out for in `.relocate_line_reports`
 SPEC_METHODS = {"it(", "context(", "describe("}
 
+Spec.before_suite do
+  clean_integration
+end
+
+def clean_integration
+  system "./spec/integration/tmp/clean.sh"
+end
+
 # Builds the project in configuration `NAME.yml`, expecting to yield the files
 # `tmp/NAME.cr`, `tmp/NAME.cpp` and `tmp/NAME.o`.  Additionally, this macro will
 # capture the block given to it and write it into `tmp/NAME_test.cr` within a
