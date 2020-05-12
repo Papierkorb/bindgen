@@ -36,7 +36,8 @@ message(STATUS "Using clang++ exec: ${CMAKE_CXX_COMPILER}")
 
 # Find llvm-config bin
 find_program(llvm_config_bin "llvm-config" PATHS: ${LLVM_TOOLS_BINARY_DIR})
-message(STATUS "Using llvm-config exec: ${llvm_config_bin}")
+set(LLVM_CONFIG ${llvm_config_bin})
+message(STATUS "Using llvm-config exec: ${LLVM_CONFIG}")
 
 # Include LLVM dirs
 message(STATUS "Include LLVM dirs: ${LLVM_INCLUDE_DIRS}")
@@ -65,10 +66,10 @@ if(NOT EXISTS ${shards_bin})
 endif()
 
 # Execute find_clang.cr
-message(STATUS "Run: crystal find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet")
+message(STATUS "Run: crystal find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet")
 
 execute_process(
-        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --quiet
+        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet
         # COMMAND_ECHO STDOUT
         ERROR_VARIABLE find_clang_error
 )
@@ -78,9 +79,9 @@ if(NOT ${find_clang_error} STREQUAL "")
 endif()
 
 # Execute find_clang.cr for clang_libs
-message(STATUS "Run: crystal find_clang.cr -- --clang-libs --clang ${CMAKE_CXX_COMPILER} --quiet")
+message(STATUS "Run: crystal find_clang.cr -- --print-clang-libs --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet")
 execute_process(
-        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --clang-libs --clang ${CMAKE_CXX_COMPILER} --quiet
+        COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --print-clang-libs --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet
         # COMMAND_ECHO STDOUT
         OUTPUT_VARIABLE clang_libs
         ERROR_VARIABLE find_clang_error
@@ -104,9 +105,9 @@ if("${llvm_libs}" STREQUAL "")
   # )
 
   # Execute find_clang.cr for clang_libs
-  message(STATUS "Run: crystal find_clang.cr -- --llvm-libs --clang ${CMAKE_CXX_COMPILER} --quiet")
+  message(STATUS "Run: crystal find_clang.cr -- --print-llvm-libs --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet")
   execute_process(
-          COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --llvm-libs --clang ${CMAKE_CXX_COMPILER} --quiet
+          COMMAND ${crystal_bin} ${PROJECT_SOURCE_DIR}/find_clang.cr -- --print-llvm-libs --clang ${CMAKE_CXX_COMPILER} --llvm-config ${LLVM_CONFIG} --quiet
           # COMMAND_ECHO STDOUT
           OUTPUT_VARIABLE llvm_libs
           ERROR_VARIABLE find_clang_error
