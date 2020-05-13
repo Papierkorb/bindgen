@@ -1,8 +1,9 @@
 #!/usr/bin/env crystal run
 
-# This is a helper script -- it identifies the clang++ binary and possibly
-# llvm-config binary, then calls them to retrieve their settings, and parses
-# settings for further use.
+# This is a helper script. It requires `llvm-config` to point to the
+# LLVM version which is to be used.
+# It calls llvm-config and clang binaries to retrieve their settings and
+# parse them for further use.
 
 # As part of the run, it generates some files.
 # It outputs all LLVM and Clang libraries to link to.
@@ -16,160 +17,120 @@ require "../src/bindgen/find_path"
 
 UNAME_S = `uname -s`.chomp
 
+# Parse command line options. Each of these options has an accessor
+# function of the same name.
+OPTIONS = Hash(Symbol, Bool | String | Nil | Array(String)).new
+OPTIONS[:clang] = nil
+OPTIONS[:llvm_config] = nil
+OPTIONS[:print_llvm_libs] = ARGV.includes?("--print-llvm-libs")
+OPTIONS[:print_clang_libs] = ARGV.includes?("--print-clang-libs")
+OPTIONS[:quiet] = ARGV.includes?("--quiet")
+OPTIONS[:debug] = ARGV.includes?("--debug")
+OPTIONS[:cppflags] = [] of String
+OPTIONS[:ldflags] = [] of String
+OPTIONS[:system_include_dirs] = [] of String
+OPTIONS[:system_lib_dirs] = [] of String
+OPTIONS[:generated_hpp] = File.expand_path "#{__DIR__}/include/generated.hpp"
+OPTIONS[:makefile_variables] = File.expand_path "#{__DIR__}/Makefile.variables"
+OPTIONS[:spec_base] = File.expand_path "#{__DIR__}/../spec/integration/spec_base.yml"
 parse_cli_args
 
-unless clang_binary = OPTIONS[:clang] || find_clang_binary
+# Determine which llvm-config we are using
+unless OPTIONS[:llvm_config] ||= find_llvm_config_binary min_version: "6.0.0"
   print_help_and_exit
 end
+log "Using llvm-config binary in #{OPTIONS[:llvm_config].inspect}."
 
-log "Found clang binary in #{clang_binary.inspect}. Querying it:"
+# Extract basic data from llvm-config:
+
+OPTIONS[:llvm_version] = output_of(OPTIONS[:llvm_config], "--version")
+
+OPTIONS[:llvm_cxx_flags] = output_of(OPTIONS[:llvm_config], "--cxxflags")
+  .gsub(/-fno-exceptions/, "")
+  .gsub(/-W[^alp].+\s/, "")
+  .gsub(/\s+/, " ")
+
+OPTIONS[:llvm_ld_flags] = output_of(OPTIONS[:llvm_config], "--ldflags")
+  .gsub(/\s+/, " ")
+
+OPTIONS[:llvm_bindir] = output_of(OPTIONS[:llvm_config], "--bindir")
+OPTIONS[:llvm_libdir] = output_of(OPTIONS[:llvm_config], "--libdir")
+
+# Determine which clang++ we are using
+unless OPTIONS[:clang] ||= find_clang_binary([llvm_bindir], min_version: "6.0.0")
+  print_help_and_exit
+end
+log "Using clang binary in #{OPTIONS[:clang].inspect}. Querying it."
 
 # Ask clang the paths it uses. This output will then be parsed in detail.
-output = log_and_run("#{clang_binary} -### #{__DIR__}/src/bindgen.cpp 2>&1").lines
-
+output = log_and_run("#{clang} -### #{__DIR__}/src/bindgen.cpp 2>&1").lines
 if output.size < 2 # Sanity check
-  STDERR.puts %(Unexpected output from "#{clang_binary}": Expected at least two lines.)
+  STDERR.puts %(Unexpected output from "#{clang}": Expected at least two lines.)
   exit 1
 end
-
-# Start parsing the output:
-
-# Untangle the output
-raw_cppflags = output[-2].gsub(/^\s+"|\s+"$/, "")
-raw_ldflags = output[-1].gsub(/^\s+"|\s+"$/, "")
-
-cppflags = raw_cppflags.split(/"\s+"/)
-  .concat(shell_split(ENV.fetch("CPPFLAGS", "")))
-  .uniq
-ldflags = raw_ldflags.split(/"\s+"/)
-  .concat(shell_split(ENV.fetch("LDFLAGS", "")))
-  .uniq
-
-system_includes = [] of String
-system_libs = [] of String
-
-# Interpret the argument lists
-flags = cppflags + ldflags
-index = 0
-while index < flags.size
-  case flags[index]
-  when "-internal-isystem"
-    system_includes << flags[index + 1]
-    index += 1
-  when "-resource-dir" # Find paths on Ubuntu
-    resource_dir = flags[index + 1]
-    system_includes << File.expand_path("#{resource_dir}/../../../include")
-    index += 1
-  when "-lto_library"
-    to_library = flags[index + 1]
-    system_libs << to_library.split("/lib/")[0] + "/lib/"
-    index += 1
-  when /^-L/
-    l = flags[index][2..-1]
-    l += "/" if l !~ /\/$/
-    system_libs << l
-  else
-  end
-
-  index += 1
-end
-
-# Clean libs
-system_libs.uniq!
-system_libs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
-system_includes.uniq!
-system_includes.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
+parse_clang_output output
 
 # Now extract clang and llvm-specific libs:
-clang_libs = find_libraries(system_libs, "clang")
-llvm_libs = find_libraries(system_libs, "LLVM")
-
-# Provide user with help if we can't find it.
-print_help_and_exit if llvm_libs.empty? || clang_libs.empty?
+OPTIONS[:clang_libs] = find_libraries(system_lib_dirs, "clang")
+OPTIONS[:llvm_libs] = find_libraries(system_lib_dirs, "LLVM")
 
 # See if only partial info was requested:
 
-if OPTIONS[:clang_libs]
-  log "Option --clang-libs detected. Printing libraries and exiting."
+if OPTIONS[:debug]
+  pp OPTIONS
+  exit
+end
+
+if OPTIONS[:print_clang_libs]
+  log "Option --print-clang-libs detected. Printing libraries and exiting."
   STDOUT << get_lib_args(clang_libs).join(";")
   exit
 end
 
-if OPTIONS[:llvm_libs]
-  log "Option --llvm-libs detected. Printing libraries and exiting."
+if OPTIONS[:print_llvm_libs]
+  log "Option --print-llvm-libs detected. Printing libraries and exiting."
   STDOUT << get_lib_args(llvm_libs).join(";")
   exit
 end
 
+# Provide user with help if we didn't find libraries in the output.
+print_help_and_exit if llvm_libs.empty? || clang_libs.empty?
+
 # If this is a full run (i.e. not asking for specific things), continue:
 
 # Generate the output header file.  This will be accessed from the clang tool.
-generated_hpp = File.expand_path "#{__DIR__}/include/generated.hpp"
 log "Generating #{generated_hpp}"
 write_if_changed(generated_hpp, String.build do |b|
   b.puts "// Generated by #{__FILE__}"
   b.puts "// DO NOT CHANGE"
   b.puts
-  b.puts "#define BG_SYSTEM_INCLUDES { #{system_includes.map(&.inspect).join(", ")} }"
+  b.puts "#define BG_SYSTEM_INCLUDES { #{system_include_dirs.map(&.inspect).join(", ")} }"
 end)
 
-libs = get_lib_args(clang_libs)
-libs += get_lib_args(llvm_libs)
-
-includes = system_includes.map { |x| "-I#{File.expand_path(x)}" }
-
-# Find llvm config if we are using llvm
-llvm_config_binary = find_llvm_config_binary system_libs.map { |path| path.gsub(/(lib|include)$/, "bin") }
-
-log "Found llvm-config binary in #{llvm_config_binary.inspect}."
-
 # Generate Makefile.variables file
-makefile_variables = File.expand_path "#{__DIR__}/Makefile.variables"
 log "Generating #{makefile_variables}"
-
 makefile_variables_content = <<-VARS
-  CLANG_BINARY := #{clang_binary}
-  CLANG_INCLUDES := #{includes.join(" ")}
-  CLANG_LIBS := #{libs.join(" ")}
+  CLANG_BINARY := #{clang}
+  CLANG_INCLUDES := #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')}
+  CLANG_LIBS := #{get_lib_args(clang_libs + llvm_libs).join(' ')}
 
+  LLVM_CONFIG_BINARY := #{llvm_config}
+  LLVM_VERSION_MAJOR := #{llvm_version.split(/\./).first}
+  LLVM_VERSION := #{llvm_version}
+  LLVM_CXX_FLAGS := #{llvm_cxx_flags}
+  LLVM_LD_FLAGS := #{llvm_ld_flags}
+  LLVM_LIBS := #{get_lib_args(llvm_libs).join(" ")}
   VARS
-
-# Get flags from llvm
-if !llvm_config_binary.nil? && File.exists?(llvm_config_binary)
-  llvm_version = `#{llvm_config_binary} --version`.chomp
-
-  makefile_variables_content += <<-VARS
-  LLVM_CONFIG_BINARY := #{llvm_config_binary}
-  LLVM_VERSION := #{llvm_version.split(/\./).first}
-  LLVM_VERSION_FULL := #{llvm_version}
-  VARS
-
-  llvm_cxx_flags = `#{llvm_config_binary} --cxxflags`.chomp
-    .gsub(/-fno-exceptions/, "")
-    .gsub(/-W[^alp].+\s/, "")
-    .gsub(/\s+/, " ")
-  makefile_variables_content += "\nLLVM_CXX_FLAGS := " + llvm_cxx_flags
-
-  makefile_variables_content +=
-    "\nLLVM_LD_FLAGS := " + `#{llvm_config_binary} --ldflags`.chomp
-      .gsub(/\s+/, " ")
-
-  makefile_variables_content +=
-    "\nLLVM_LIBS := " + get_lib_args(llvm_libs).join(" ")
-end
-
 write_if_changed(makefile_variables, makefile_variables_content)
 
 # Generate spec_base.yml
-spec_base = File.expand_path "#{__DIR__}/../spec/integration/spec_base.yml"
 log "Generating #{spec_base}"
-
 spec_base_content = {
   module:     "Test",
   generators: {
     cpp: {
       output: "tmp/{SPEC_NAME}.cpp",
-      build:  "#{clang_binary} #{llvm_cxx_flags} #{includes.join ' '} " \
+      build:  "#{clang} #{llvm_cxx_flags} #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')} " \
              " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function",
       preamble: <<-PREAMBLE
       #include <gc/gc_cpp.h>
@@ -185,60 +146,48 @@ spec_base_content = {
     files:    ["{SPEC_NAME}.cpp"],
     includes: [
       "%",
-    ].concat(system_includes),
+    ].concat(system_include_dirs),
   },
 }.to_yaml
-
 write_if_changed(spec_base, spec_base_content)
 
 log "All done."
 
+exit 0
+
 #################################################
 # Helper functions found below.
-
-# Used for quick/ad-hoc option parser
-OPTIONS = Hash(Symbol, Bool | String | Nil).new
 
 # Parses command line in an ad hoc way. Could be replaced
 # with OptionParser.
 def parse_cli_args
-  OPTIONS[:llvm_libs] = ARGV.includes?("--llvm-libs")
-  OPTIONS[:clang_libs] = ARGV.includes?("--clang-libs")
-  OPTIONS[:quiet] = ARGV.includes?("--quiet")
-  OPTIONS[:clang_pattern] = "clang++*"
-  OPTIONS[:llvm_config_pattern] = "llvm-config*"
-  OPTIONS[:clang] = nil
 
   if ARGV.includes?("--clang")
     index = ARGV.index("--clang")
     OPTIONS[:clang] = ARGV[index + 1] unless index.nil?
   end
-  if ARGV.includes?("--clang-pattern")
-    index = ARGV.index("--clang-pattern")
-    OPTIONS[:clang_pattern] = ARGV[index + 1] unless index.nil?
-  end
-  if ARGV.includes?("--llvm-config-pattern")
-    index = ARGV.index("--llvm-config-pattern")
-    OPTIONS[:llvm_config_pattern] = ARGV[index + 1] unless index.nil?
+  if ARGV.includes?("--llvm-config")
+    index = ARGV.index("--llvm-config")
+    OPTIONS[:llvm_config] = ARGV[index + 1] unless index.nil?
   end
   if ARGV.includes?("--help")
     print_usage_and_exit
   end
 end
 
-# Finds clang binary (named 'clang++*' or as specified with
-# option --clang-pattern) inside directories in PATH. It must
+# Finds clang binary (named 'clang++' or 'clang++-*'. Must
 # satisfy minimum version.
-def find_clang_binary : String?
-  log %(Searching for binary "#{OPTIONS[:clang_pattern]}" in PATH. Minimum version 6.0.0)
+def find_clang_binary(paths, min_version="6.0.0") : String?
+  log %(Searching for binary clang++ or clang++-* in #{paths.join ':'}. Minimum version #{min_version})
   clang_find_config = <<-YAML
   kind: Executable
   try:
-    - "#{OPTIONS[:clang_pattern]}"
+    - clang++
+    - clang++-*
   search_paths:
-    #{ENV["PATH"].split(/:+/).map { |p| "- \"" + p + "\"" }.join("\n  ")}
+    #{paths.map { |p| "- \"" + p + "\"" }.join("\n  ")}
   version:
-    min: "6.0.0"
+    min: #{min_version}
     command: "% --version"
     regex: "clang version ([0-9.]+)"
   YAML
@@ -248,20 +197,19 @@ def find_clang_binary : String?
   path_finder.find(clang_find_config)
 end
 
-# Finds llvm-config binary (named 'llvm-config*' or as specified with
-# option --llvm-config-pattern) inside directories in PATH. It must
+# Finds llvm-config binary inside directories in PATH. It must
 # satisfy minimum version.
-def find_llvm_config_binary(paths) : String?
-  log %(Searching for binary "#{OPTIONS[:llvm_config_pattern]}" in clang paths and PATH. Minimum version 6.0.0)
+def find_llvm_config_binary(paths=nil, min_version="6.0.0") : String?
+  log %(Searching for binary `llvm-config` or `llvm-config-*` in PATH. Minimum version #{min_version})
   llvm_config_find_config = <<-YAML
   kind: Executable
   try:
-    - "#{OPTIONS[:llvm_config_pattern]}"
+    - llvm-config
+    - llvm-config-*
   search_paths:
-    #{paths.map { |p| "- \"" + p + "\"" }.join("\n  ")}
-    #{ENV["PATH"].split(/:+/).map { |p| "- \"" + p + "\"" }.join("\n  ")}
+    #{paths.try(&.map { |p| "- \"" + p + "\"" }.join("\n  ")) || ENV["PATH"].split(/:+/).map { |p| "- \"" + p + "\"" }.join("\n  ")}
   version:
-    min: "6.0.0"
+    min: "#{min_version}"
     command: "% --version"
     regex: "([0-9.]+)"
   YAML
@@ -277,12 +225,8 @@ def print_help_and_exit
   You're missing the LLVM and/or Clang executables or development libraries.
 
   If you've installed the binaries in a non-standard location:
-    1) Make sure that `clang++` and `llvm-config` are in PATH. The first binary found which satisfies version will be used.
-
-  If you have them named differenly than `clang++` and `llvm-config`:
-    2) Run the tool with `--clang-pattern <name of clang++> --llvm-config-pattern <name of llvm_config>`
-
-  You can also invoke the tool with argument `--clang /path/to/clang++`. This is how make will call it.
+    1) Make sure that `llvm-config` or `llvm-config-*` is set with --llvm_config FILE or is in PATH. The first binary found which satisfies version will be used.
+    2) In rare cases if clang++ isn't found or is incorrect, you can also specify it with --clang FILE.
 
   If your distro does not support static libraries like openSUSE then set env var BINDGEN_DYNAMIC=1.
   This will use .so instead of .a libraries during linking.
@@ -303,15 +247,14 @@ def print_usage_and_exit
     find_clang.cr [options]
 
     Options:
-    --clang PATH         Path to clang binary (default: none)
+    --llvm-config PATH   Path to llvm-config binary (default: find llvm-config[-*] in PATH)
+    --clang PATH         Path to clang binary (default: find clang++[-*] in llvm bindir)
 
-    --clang-pattern PTRN        Name or pattern of clang binary (default: clang++*)
-    --llvm-config-pattern PTRN  Name or pattern of llvm-config (default: llvm-config*)
-
-    --clang-libs         Print found clang libs and exit (default: false)
-    --llvm-libs          Print found llvm libs and exit (default: false)
+    --print-clang-libs   Print detected clang libs and exit (default: false)
+    --print-llvm-libs    Print detected llvm libs and exit (default: false)
 
     --quiet              Supress diagnostic/debug STDERR output (default: false)
+    --debug              Print the complete internal and parsed config and exit (default: false)
     --help               This help
 
 
@@ -413,3 +356,97 @@ def write_if_changed(path, content)
   end
   false
 end
+
+# Runs the command and arguments as shell command line in backticks.
+# Returns it's output.chomp.
+def output_of(*args)
+  `#{args.map{|r| "\"#{r}\""}.join ' '}`.chomp
+end
+
+# Parses output from clang++ -### ....
+def parse_clang_output(output)
+  # Untangle the output
+  raw_cppflags = output[-2].gsub(/^\s+"|\s+"$/, "")
+  raw_ldflags = output[-1].gsub(/^\s+"|\s+"$/, "")
+
+  OPTIONS[:cppflags] = raw_cppflags.split(/"\s+"/)
+    .concat(shell_split(ENV.fetch("CPPFLAGS", "")))
+    .uniq
+  OPTIONS[:ldflags] = raw_ldflags.split(/"\s+"/)
+    .concat(shell_split(ENV.fetch("LDFLAGS", "")))
+    .uniq
+
+  # Interpret the argument lists
+  flags = cppflags + ldflags
+  index = 0
+  internal_isystem = false
+  while index < flags.size
+    flag = flags[index]
+    if internal_isystem
+      if flag[0] == '-'
+        internal_isystem = false
+      else
+        system_include_dirs << flag
+        index += 1
+        next
+      end
+    end
+
+    case flags[index]
+    when "-internal-isystem"
+      internal_isystem = true
+    when "-resource-dir" # Find paths on Ubuntu
+      resource_dir = flags[index + 1]
+      system_include_dirs << File.expand_path("#{resource_dir}/../../../include")
+      index += 1
+    when "-lto_library"
+      to_library = flags[index + 1]
+      system_lib_dirs << to_library.split("/lib/")[0] + "/lib/"
+      index += 1
+    when /^-L/
+      l = flags[index][2..-1]
+      l += "/" if l !~ /\/$/
+      system_lib_dirs << l
+    else
+    end
+
+    index += 1
+  end
+
+  # Check Darwin include dir
+  if UNAME_S == "Darwin" && Dir.exists?("/usr/local/include/")
+    system_include_dirs << "/usr/local/include"
+  end
+
+  # Need to add the clang includes if we can find them. This is just
+  # in case and we don't fear duplicates as they will be sorted out
+  # later.
+  clang_include_dir = File.join llvm_libdir, "clang", llvm_version, "include"
+  system_include_dirs << clang_include_dir
+
+  # Clean libs
+  system_lib_dirs.uniq!
+  system_lib_dirs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
+  system_lib_dirs.select! { |path| File.directory? path }
+  system_include_dirs.uniq!
+  system_include_dirs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
+  system_include_dirs.select! { |path| File.directory? path }
+end
+
+# Convenience functions for accessing OPTIONS
+def llvm_bindir() OPTIONS[:llvm_bindir].as String end
+def llvm_libdir() OPTIONS[:llvm_libdir].as String end
+def clang() OPTIONS[:clang].as String end
+def llvm_config() OPTIONS[:llvm_config].as String end
+def llvm_version() OPTIONS[:llvm_version].as String end
+def cppflags() OPTIONS[:cppflags].as Array(String) end
+def ldflags() OPTIONS[:ldflags].as Array(String) end
+def system_include_dirs() OPTIONS[:system_include_dirs].as Array(String) end
+def system_lib_dirs() OPTIONS[:system_lib_dirs].as Array(String) end
+def clang_libs() OPTIONS[:clang_libs].as Array(String) end
+def llvm_libs() OPTIONS[:llvm_libs].as Array(String) end
+def generated_hpp() OPTIONS[:generated_hpp].as String end
+def makefile_variables() OPTIONS[:makefile_variables].as String end
+def spec_base() OPTIONS[:spec_base].as String end
+def llvm_cxx_flags() OPTIONS[:llvm_cxx_flags].as String end
+def llvm_ld_flags() OPTIONS[:llvm_ld_flags].as String end
