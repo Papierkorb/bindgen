@@ -37,6 +37,8 @@ module Bindgen
             unless key[0]?.try(&.uppercase?) && key[1]?.try(&.lowercase?)
               key = key.downcase.camelcase
             end
+          elsif key[0]?.try(&.lowercase?)
+            key = key[0].upcase + key[1..]
           end
 
           {key, value}
