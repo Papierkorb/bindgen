@@ -379,11 +379,22 @@ def parse_clang_output(output)
   # Interpret the argument lists
   flags = cppflags + ldflags
   index = 0
+  internal_isystem = false
   while index < flags.size
+    flag = flags[index]
+    if internal_isystem
+      if flag[0] == '-'
+        internal_isystem = false
+      else
+        system_include_dirs << flag
+        index += 1
+        next
+      end
+    end
+
     case flags[index]
     when "-internal-isystem"
-      system_include_dirs << flags[index + 1]
-      index += 1
+      internal_isystem = true
     when "-resource-dir" # Find paths on Ubuntu
       resource_dir = flags[index + 1]
       system_include_dirs << File.expand_path("#{resource_dir}/../../../include")
