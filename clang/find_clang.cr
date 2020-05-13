@@ -341,7 +341,7 @@ def get_lib_args(libs_list)
   else
     libs << "-Wl,--start-group"
     libs.concat libs_list.map { |x| "-l#{x}" }
-    libs << "-Wl,--start-group"
+    libs << "-Wl,--end-group"
   end
   libs
 end
