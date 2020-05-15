@@ -35,6 +35,20 @@ OPTIONS[:makefile_variables] = File.expand_path "#{__DIR__}/Makefile.variables"
 OPTIONS[:spec_base] = File.expand_path "#{__DIR__}/../spec/integration/spec_base.yml"
 parse_cli_args
 
+# See if we can find the os-release file. Can be used as help
+# in autodetection of features/flags/etc.
+dynamic = ENV["BINDGEN_DYNAMIC"]? # Link against LLVM's .so rather than .a files?
+if dynamic.nil?
+  if file = find_os_release_file
+    os_release_data = parse_os_release file
+    if os_name = os_release_data["NAME"]?
+      dynamic = "1" if os_name =~ /Fedora|openSUSE/i
+    end
+  end
+end
+dynamic = dynamic.try &.==("1") || false
+log "Link against LLVM shared libraries: #{dynamic}. (Adjust with env BINDGEN_DYNAMIC=0/1 if needed)"
+
 # Determine which llvm-config we are using
 unless OPTIONS[:llvm_config] ||= find_llvm_config_binary min_version: "6.0.0"
   print_help_and_exit
@@ -71,8 +85,8 @@ end
 parse_clang_output output
 
 # Now extract clang and llvm-specific libs:
-OPTIONS[:clang_libs] = find_libraries(system_lib_dirs, "clang")
-OPTIONS[:llvm_libs] = find_libraries(system_lib_dirs, "LLVM")
+OPTIONS[:clang_libs] = find_libraries(system_lib_dirs, "clang", dynamic)
+OPTIONS[:llvm_libs] = find_libraries(system_lib_dirs, "LLVM", dynamic)
 
 # See if only partial info was requested:
 
@@ -219,6 +233,23 @@ def find_llvm_config_binary(paths=nil, min_version="6.0.0") : String?
   path_finder.find(llvm_config_find_config)
 end
 
+# Finds file os-release
+def find_os_release_file() : String?
+  log %(Searching for file 'os-release')
+  os_release_find_config = <<-YAML
+  kind: File
+  try:
+    - os-release
+  search_paths:
+    - /etc
+    - /usr/lib
+  YAML
+  os_release_find_config = Bindgen::FindPath::PathConfig.from_yaml os_release_find_config
+
+  path_finder = Bindgen::FindPath.new(__DIR__)
+  path_finder.find(os_release_find_config)
+end
+
 # Prints help and exits.
 def print_help_and_exit
   STDERR.puts <<-END
@@ -314,34 +345,10 @@ def shell_split(line : String)
   end
 end
 
-def parse_os_release
-  res = {} of String => String
-  path = "/etc/os-release"
-  if File.exists?(path) && File.readable?(path)
-    re = /([A-Z_]+)=(.*)/
-    File.each_line(path) do |line|
-      if (m = re.match(line))
-        key, val = m[1], m[2]
-        if val[0] == '"' && val[-1] == '"'
-          val = val[1...-1]
-        end
-        res[key] = val
-      end
-    end
-  end
-  res
-end
-
 # Finds all LLVM and clang libraries, and links to them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
-def find_libraries(paths, prefix)
-  dynamic = false
-  os_release = parse_os_release
-  if (os_name = os_release["NAME"])
-    dynamic = (os_name =~ /Fedora|openSUSE/)
-  end
-
-  if dynamic || ENV.fetch("BINDGEN_DYNAMIC", "0") == "1"
+def find_libraries(paths, prefix, dynamic=false)
+  if dynamic
     paths
       .flat_map { |path| Dir["#{path}/lib#{prefix}*.so"] }
       .map { |path| File.basename(path)[/^lib(.+)\.so$/, 1] }
@@ -455,6 +462,19 @@ def parse_clang_output(output)
   system_include_dirs.uniq!
   system_include_dirs.map! { |path| File.expand_path(path.gsub(/\/$/, "")) }
   system_include_dirs.select! { |path| File.directory? path }
+end
+
+# Parses file os-release. Returns Hash with key=value pairs.
+# Values are reported as-is (i.e. without removing quotes in quoted strings.)
+def parse_os_release(path)
+  data = {} of String => String
+  File.each_line(path) do |line|
+    if (line =~ /=/) && (line !~ /^\s*#/)
+      key, val = line.split /\s*=\s*/, 2
+      data[key] = val
+    end
+  end
+  data
 end
 
 # Convenience functions for accessing OPTIONS
