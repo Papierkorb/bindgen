@@ -314,10 +314,34 @@ def shell_split(line : String)
   end
 end
 
+def parse_os_release
+  res = {} of String => String
+  path = "/etc/os-release"
+  if File.exists?(path) && File.readable?(path)
+    re = /([A-Z_]+)=(.*)/
+    File.each_line(path) do |line|
+      if (m = re.match(line))
+        key, val = m[1], m[2]
+        if val[0] == '"' && val[-1] == '"'
+          val = val[1...-1]
+        end
+        res[key] = val
+      end
+    end
+  end
+  res
+end
+
 # Finds all LLVM and clang libraries, and links to them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
 def find_libraries(paths, prefix)
-  if ENV.fetch("BINDGEN_DYNAMIC", "0") == "1"
+  dynamic = false
+  os_release = parse_os_release
+  if (os_name = os_release["NAME"])
+    dynamic = (os_name =~ /Fedora|openSUSE/)
+  end
+
+  if dynamic || ENV.fetch("BINDGEN_DYNAMIC", "0") == "1"
     paths
       .flat_map { |path| Dir["#{path}/lib#{prefix}*.so"] }
       .map { |path| File.basename(path)[/^lib(.+)\.so$/, 1] }
