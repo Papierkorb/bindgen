@@ -144,8 +144,9 @@ spec_base_content = {
   generators: {
     cpp: {
       output: "tmp/{SPEC_NAME}.cpp",
-      build:  "#{clang} #{llvm_cxx_flags} #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')} " \
-             " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function",
+      build:  "#{clang} #{llvm_cxx_flags} #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')}" \
+             " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function" \
+             "#{dynamic ? "" : " -fPIC" }",
       preamble: <<-PREAMBLE
       #include <gc/gc_cpp.h>
       #include "bindgen_helper.hpp"
