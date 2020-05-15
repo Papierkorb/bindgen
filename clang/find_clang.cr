@@ -18,7 +18,7 @@ require "../src/bindgen/find_path"
 UNAME_S = `uname -s`.chomp
 
 # Parse command line options. Each of these options has an accessor
-# function of the same name.
+# function of the same name, defined at the end of file.
 OPTIONS = Hash(Symbol, Bool | String | Nil | Array(String)).new
 OPTIONS[:clang] = nil
 OPTIONS[:llvm_config] = nil
