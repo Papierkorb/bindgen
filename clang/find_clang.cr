@@ -15,8 +15,6 @@ require "yaml"
 require "../src/bindgen/util"
 require "../src/bindgen/find_path"
 
-UNAME_S = `uname -s`.chomp
-
 # Parse command line options. Each of these options has an accessor
 # function of the same name, defined at the end of file.
 OPTIONS = Hash(Symbol, Bool | String | Nil | Array(String)).new
@@ -368,13 +366,13 @@ end
 # the correct order
 def get_lib_args(libs_list)
   libs = Array(String).new
-  if UNAME_S == "Darwin"
+  {% if flag? :darwin %}
     libs.concat libs_list.map { |x| "-l#{x}" }
-  else
+  {% else %}
     libs << "-Wl,--start-group"
     libs.concat libs_list.map { |x| "-l#{x}" }
     libs << "-Wl,--end-group"
-  end
+  {% end %}
   libs
 end
 
@@ -446,9 +444,11 @@ def parse_clang_output(output)
   end
 
   # Check Darwin include dir
-  if UNAME_S == "Darwin" && Dir.exists?("/usr/local/include/")
-    system_include_dirs << "/usr/local/include"
-  end
+  {% if flag? :darwin %}
+    if Dir.exists? "/usr/local/include/"
+      system_include_dirs << "/usr/local/include"
+    end
+  {% end %}
 
   # Need to add the clang includes if we can find them. This is just
   # in case and we don't fear duplicates as they will be sorted out
