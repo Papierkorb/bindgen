@@ -69,7 +69,7 @@ named after the following pattern on Debian-based systems:
 
 # How To
 
-1. Add bindgen to your `shard.yml` and run `crystal deps`
+1. Add bindgen to your `shard.yml` and run `shards`
 
 ```yaml
 dependencies:
@@ -77,12 +77,12 @@ dependencies:
     github: Papierkorb/bindgen
 ```
 
-2. Copy `assets/bindgen_helper.hpp` into your `ext/`
-3. Copy and customize `TEMPLATE.yml`
+2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
+3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` and customize it
 4. Run `lib/bindgen/tool.sh your_template.yml`
 
-**Note**: If you intend to ship the generated code with your shard, you can
-replace `dependencies` with `development_dependencies`.
+**Note**: If you intend to ship the generated bindgen code with your shard,
+you can move its entry in `shard.yml` from `dependencies` to `development_dependencies`.
 
 See `TEMPLATE.yml` for configuration documentation.
 
