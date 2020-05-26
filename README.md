@@ -75,6 +75,7 @@ named after the following pattern on Debian-based systems:
 dependencies:
   bindgen:
     github: Papierkorb/bindgen
+    version: ~> 0.7.0
 ```
 
 2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
