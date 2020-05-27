@@ -396,6 +396,10 @@ separate the words.
 * `Y_isnt_Z` is true if the variable Y doesn't equal Z case-sensitively.
 * `Y_match_Z` is true if the variable Y is matched by the regular expression
 in `Z`.  The regular expression is created case-sensitively.
+* `Y_newer_Z` is true when variable Y is newer or equals (>) to Z,
+variables are treated as versions.
+* `Y_older_Z` is true when variable Y is older or equals (<) to Z,
+variables are treated as versions.
 
 A condition block is opened by the first `if`.  Later condition keys can
 use `elsif` or `else` (or `if` to open a *new* condition block).
