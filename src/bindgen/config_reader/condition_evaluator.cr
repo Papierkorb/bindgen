@@ -1,5 +1,3 @@
-require "../find_path/generic_version"
-
 alias Version = Bindgen::FindPath::GenericVersion
 
 module Bindgen
