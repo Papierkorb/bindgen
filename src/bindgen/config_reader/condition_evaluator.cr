@@ -1,7 +1,7 @@
-alias Version = Bindgen::FindPath::GenericVersion
-
 module Bindgen
   module ConfigReader
+    alias Version = Bindgen::FindPath::GenericVersion
+
     # Implements the condition evaluation logic of `Parser`.
     #
     # See `Parser`s documentation for a description of the syntax.
