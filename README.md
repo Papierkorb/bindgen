@@ -1,8 +1,57 @@
-# Bindgen ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png) [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen)
+# Bindgen
 
 Standalone C, C++, and/or Qt binding and wrapper generator.
 
-### Platform support
+![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png) [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen)
+
+# Table of Contents
+
+<!--ts-->
+   * [Platform support](#platform-support)
+   * [Features](#features)
+   * [Projects using bindgen](#projects-using-bindgen)
+   * [How To](#how-to)
+   * [Mapping behaviour](#mapping-behaviour)
+   * [Processors](#processors)
+      * [AutoContainerInstantiation](#autocontainerinstantiation)
+      * [CopyStructs](#copystructs)
+      * [CppWrapper](#cppwrapper)
+      * [CrystalBinding](#crystalbinding)
+      * [CrystalWrapper](#crystalwrapper)
+      * [DefaultConstructor](#defaultconstructor)
+      * [DumpGraph](#dumpgraph)
+      * [Enums](#enums)
+      * [ExternC](#externc)
+      * [FilterMethods](#filtermethods)
+      * [Functions](#functions)
+      * [FunctionClass](#functionclass)
+      * [Inheritance](#inheritance)
+      * [InstantiateContainers](#instantiatecontainers)
+      * [Macros](#macros)
+      * [Qt](#qt)
+      * [SanityCheck](#sanitycheck)
+      * [VirtualOverride](#virtualoverride)
+   * [Advanced configuration features](#advanced-configuration-features)
+      * [Conditions](#conditions)
+         * [Variables](#variables)
+         * [Examples](#examples)
+      * [Dependencies](#dependencies)
+         * [Errors](#errors)
+   * [Architecture of bindgen](#architecture-of-bindgen)
+      * [The Graph](#the-graph)
+      * [Parser step](#parser-step)
+      * [Graph::Builder step](#graphbuilder-step)
+      * [Processor step](#processor-step)
+      * [Generator step](#generator-step)
+   * [Contributing](#contributing)
+      * [Contributors](#contributors)
+   * [License](#license)
+
+<!-- Added by: docelic, at: Wed May 27 21:04:14 CEST 2020 -->
+
+<!--te-->
+
+# Platform support
 
 <!-- Table is sorted from A-Z ascending, versions descending. -->
 
@@ -20,7 +69,7 @@ have them already installed, bindgen will tell you. These packages are usually
 named after the following pattern on Debian-based systems:
 `clang-7 libclang-7-dev llvm-7 llvm-7-dev`.
 
-## Features
+# Features
 
 | Feature                                          | Support |
 |--------------------------------------------------|---------|
@@ -61,7 +110,7 @@ named after the following pattern on Debian-based systems:
 | Portable path finding for headers, libs, etc.    | **YES** |
 
 
-## Projects using bindgen
+# Projects using bindgen
 
 * [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
 
@@ -123,7 +172,7 @@ The order in the configured pipeline is to have *Refining* processors first,
 
 The following processors are available, in alphabetical order:
 
-### `AutoContainerInstantiation`
+## `AutoContainerInstantiation`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -142,7 +191,7 @@ containers: # At the top-level of the config
     # instantiations: # Can be added, but doesn't need to be.
 ```
 
-### `CopyStructs`
+## `CopyStructs`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -152,7 +201,7 @@ Copies structures of those types, that have `copy_structure: true` set in the
 configuration.  A wrapper class of a `copy_structure` type will host the
 structure directly (instead of a pointer) to it.
 
-### `CppWrapper`
+## `CppWrapper`
 
 * **Kind**: Generation
 * **Run after**: *Refining* processors
@@ -160,7 +209,7 @@ structure directly (instead of a pointer) to it.
 
 Generates the C++ wrapper method `Call`s.
 
-### `CrystalBinding`
+## `CrystalBinding`
 
 * **Kind**: Generation
 * **Run after**: `CppWrapper`, `VirtualOverride` and `CrystalWrapper`
@@ -168,7 +217,7 @@ Generates the C++ wrapper method `Call`s.
 
 Generates the `lib Binding` `fun`s.
 
-### `CrystalWrapper`
+## `CrystalWrapper`
 
 * **Kind**: Generation
 * **Run after**: *Refining* processors
@@ -176,7 +225,7 @@ Generates the `lib Binding` `fun`s.
 
 Generates the Crystal methods in the wrapper classes.
 
-### `DefaultConstructor`
+## `DefaultConstructor`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -185,7 +234,7 @@ Generates the Crystal methods in the wrapper classes.
 Clang doesn't expose default constructors methods for implicit default
 constructors.  This processor finds these cases and adds an explicit constructor.
 
-### `DumpGraph`
+## `DumpGraph`
 
 * **Kind**: Information
 * **Run after**: Any time
@@ -193,7 +242,7 @@ constructors.  This processor finds these cases and adds an explicit constructor
 
 Debugging processor dumping the current graph onto `STDERR`.
 
-### `Enums`
+## `Enums`
 
 * **Kind**: Refining
 * **Run after**: `FunctionClass`
@@ -202,7 +251,7 @@ Debugging processor dumping the current graph onto `STDERR`.
 Adds the copied enums to the graph.  Should be run after other processors adding
 classes, so that enums can be added into classes.
 
-### `ExternC`
+## `ExternC`
 
 * **Kind**: Refining
 * **Run after**: `Functions` and `FunctionClass`
@@ -224,7 +273,7 @@ A method can be bound directly if all of these are true:
 **Note**: If all methods can be bound to directly, you can remove the `cpp`
 generator completely from your configuration.
 
-### `FilterMethods`
+## `FilterMethods`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -237,7 +286,7 @@ configured as `ignore: true`.  Also removes methods that show up in the
 This processor can be run at any time in theory, but should be run as first part
 of the pipeline.
 
-### `Functions`
+## `Functions`
 
 * **Kind**: Refining
 * **Run after**: `FunctionClass` and `ExternC`
@@ -245,7 +294,7 @@ of the pipeline.
 
 Maps C functions, configured through the `functions:` map in the configuration.
 
-### `FunctionClass`
+## `FunctionClass`
 
 * **Kind**: Refining
 * **Run after**: `ExternC`
@@ -254,7 +303,7 @@ Maps C functions, configured through the `functions:` map in the configuration.
 Generates wrapper classes from OOP-like C APIs, using guidance from the user
 through configuration in the `functions:` map.
 
-### `Inheritance`
+## `Inheritance`
 
 * **Kind**: Refining
 * **Run after**: `FunctionClass`
@@ -264,7 +313,7 @@ Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
 Also handles abstract classes in that it adds an `Impl` class, so code can
 return instances to the (otherwise) abstract class.
 
-### `InstantiateContainers`
+## `InstantiateContainers`
 
 * **Kind**: Refining
 * **Run after**: `AutoContainerInstantiation` if used
@@ -272,7 +321,7 @@ return instances to the (otherwise) abstract class.
 
 Adds the container instantiation classes and wrappers.
 
-### `Macros`
+## `Macros`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -292,7 +341,7 @@ function-like macros are silently skipped.
 #define SOME_FUNCTION(x) (x + 1)
 ```
 
-### `Qt`
+## `Qt`
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
@@ -310,7 +359,7 @@ btn.on_clicked do |checked| # Generated by this processor
 end
 ```
 
-### `SanityCheck`
+## `SanityCheck`
 
 * **Kind**: Information
 * **Run after**: Any time, as very last pipeline element is ideal.
@@ -329,7 +378,7 @@ Checks are as follows:
 * Alias targets are reachable
 * Class base-classes are reachable
 
-### `VirtualOverride`
+## `VirtualOverride`
 
 * **Kind**: Refining, but ran after generation processors!
 * **Run after**: `CrystalWrapper`!
@@ -369,8 +418,6 @@ end
 
 # Advanced configuration features
 
-## Conditions and dependencies in YAML files
-
 YAML configuration files support conditionals elements (So, `if`s), and loading
 external dependency files.
 
@@ -380,7 +427,7 @@ Apart from this logic, the configuration file is still valid YAML.
 *mappings* (`Hash` in Crystal).  Any such syntax encountered in something
 other than a *mapping* will not trigger any special behaviour.
 
-### Condition syntax
+## Conditions
 
 YAML documents can define conditional parts in *mappings* by having a
 conditional key, with *mapping* value.  If the condition matches, the
@@ -410,7 +457,7 @@ key-values.
 **Note**: Conditions can be used in every *mapping*, even in *mappings* of
 a conditional.  Each *mapping* acts as its own scope.
 
-#### Variables
+### Variables
 
 Variables are set by the user of the class (Probably through
 `ConfigReader.from_yaml`).  All variable values are strings.
@@ -418,7 +465,7 @@ Variables are set by the user of the class (Probably through
 Variable names are **case-sensitive**.  A missing variable will be treated
 as having an empty value (`""`).
 
-#### Examples
+### Examples
 
 ```yaml
 foo: # A normal mapping
@@ -446,7 +493,7 @@ else:
   hooray: true
 ```
 
-### Dependencies
+## Dependencies
 
 To modularize the configuration, you can require ("merge") external yaml
 files from within your configuration.
@@ -477,7 +524,7 @@ if_os_is_windows:
   <<: windows-specific.yml
 ```
 
-#### Errors
+### Errors
 
 An exception will be raised if any of the following occur:
 
@@ -552,13 +599,17 @@ The final step now takes the finalized graph and writes the result into an
 output of one or more files.  Generators do *not* change the graph in any way,
 and also don't build anything on their own.  They only write to output.
 
-## Contributing
+# Contributing
 
 1. Open a new issue on the project to discuss what you're going to do and possibly receive comments
 3. Read the `STYLEGUIDE.md` for some tips.
 4. Then do the rest, PR and all.  You know the drill :)
 
-## License
+## Contributors
+
+- [Papierkorb](https://github.com/Papierkorb) Stefan Merettig - creator, maintainer
+
+# License
 
 This project (`bindgen`) and all of its sources, except those otherwise noted,
 all fall under the `GPLv3` license.  You can find a copy of its complete license
@@ -569,7 +620,3 @@ fall under the full copyright of the user of `bindgen`.  `bindgen` does not
 claim any copyright, legal or otherwise, on your work.  Established projects
 should define a license they want to use for the generated code and
 configuration.
-
-## Contributors
-
-- [Papierkorb](https://github.com/Papierkorb) Stefan Merettig - creator, maintainer
