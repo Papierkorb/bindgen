@@ -1,5 +1,7 @@
 module Bindgen
   module ConfigReader
+    alias Version = Bindgen::FindPath::GenericVersion
+
     # Implements the condition evaluation logic of `Parser`.
     #
     # See `Parser`s documentation for a description of the syntax.
@@ -25,7 +27,7 @@ module Bindgen
       # Regular expression for conditionals.
       # Matches: `[els]if VARIABLE (is|matches) VALUE`.
       # Instead of a space, an underscore may be used instead.
-      RX = /^(?:els)?if(?: +|_)(.+?)(?: +|_)(is|isnt|matches)(?: +|_)(.*)$/
+      RX = /^(?:els)?if(?: +|_)(.+?)(?: +|_)(is|isnt|matches|newer|older)(?: +|_)(.*)$/
 
       # Accessible variables
       getter variables : Hash(String, String)
@@ -95,6 +97,8 @@ module Bindgen
         when "is"      then value == test
         when "isnt"    then value != test
         when "matches" then /#{test}/.match(value) != nil
+        when "newer"   then Version.parse(value) >= Version.parse(test)
+        when "older"   then Version.parse(value) <= Version.parse(test)
         else
           raise Error.new(text, "Unknown condition verb: #{verb} in #{text.inspect}")
         end
