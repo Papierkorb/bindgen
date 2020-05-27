@@ -179,11 +179,21 @@ describe Bindgen::ConfigReader::Parser do
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
+      it "newer equals" do
+        parse(%<
+          list: [one, two]
+          string: WRONG
+          if_version_newer_1.0.0:
+            string: three
+          recurse: { list: [four], string: five }
+        >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
+      end
+
       it "not newer" do
         parse(%<
           list: [one, two]
           string: three
-          if_version_newer_1.0.0:
+          if_version_newer_1.0.1:
             string: WRONG
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
@@ -199,11 +209,21 @@ describe Bindgen::ConfigReader::Parser do
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
+      it "older equals" do
+        parse(%<
+          list: [one, two]
+          string: WRONG
+          if_version_older_1.0.0:
+            string: three
+          recurse: { list: [four], string: five }
+        >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
+      end
+
       it "not older" do
         parse(%<
           list: [one, two]
           string: three
-          if_version_older_1.0.0:
+          if_version_older_0.9.9:
             string: WRONG
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
