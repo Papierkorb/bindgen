@@ -611,7 +611,10 @@ and also don't build anything on their own.  They only write to output.
 
 ## Contributors
 
-- [Papierkorb](https://github.com/Papierkorb) Stefan Merettig - creator, maintainer
+- [Papierkorb](https://github.com/Papierkorb) Stefan Merettig - creator
+- [docelic](https://github.com/docelic) Davor Ocelic
+- [kalinon](https://github.com/kalinon) Holden Omans
+- [ZaWertun](https://github.com/ZaWertun) Yaroslav Sidlovsky
 
 # License
 
