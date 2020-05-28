@@ -43,7 +43,7 @@ bindgen: `$ VERBOSE=1 lib/bindgen/tool.sh my-config.yml`.
 
 This will output a large JSON document without any spaces.  To format the
 output, you can use the [jq tool](https://stedolan.github.io/jq/), like this:
-`$ clang/bindgen ... | jq . > output.json` The "output.json" will now be
+`$ clang/parser ... | jq . > output.json` The "output.json" will now be
 formatted.  If you want to use the less program instead of your editor, you can
 get it to show formatting with highlighting:
-`$ clang/bindgen ... | jq . -C | less -R`
+`$ clang/parser ... | jq . -C | less -R`

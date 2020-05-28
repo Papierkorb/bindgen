@@ -17,7 +17,7 @@ function print_clang_error {
 }
 
 if [ ! -f "$CLANG_DIR/bindgen" ]; then
-  echo "** clang/bindgen not found.  Building now."
+  echo "** clang/parser not found.  Building now."
   cd "$CLANG_DIR"
   ( cmake . && make -j ) || print_clang_error
   cd -

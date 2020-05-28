@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
-project(bindgen-clang)
+project(parser-clang)
 
 ######################
 # LLVM Setup
@@ -125,16 +125,16 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB source_files "${PROJECT_SOURCE_DIR}/src/*.cpp")
-add_executable(bindgen ${source_files})
+add_executable(parser ${source_files})
 
 # Link against clang libraries
-target_link_libraries(bindgen ${clang_libs})
+target_link_libraries(parser ${clang_libs})
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   message(STATUS "CLang Libs: ${clang_libs}")
 endif()
 
 # Link against LLVM libraries
-target_link_libraries(bindgen ${llvm_libs})
+target_link_libraries(parser ${llvm_libs})
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   message(STATUS "LLVM Libs: ${llvm_libs}")
@@ -150,17 +150,17 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
     # Enable threads if LLVM over 4
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
-    target_link_libraries(bindgen Threads::Threads)
+    target_link_libraries(parser Threads::Threads)
   endif ()
 elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   # Add -ltinfo and -pthread
-  target_link_libraries(bindgen tinfo)
+  target_link_libraries(parser tinfo)
 
   # Enable threads
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_package(Threads REQUIRED)
-  target_link_libraries(bindgen Threads::Threads)
+  target_link_libraries(parser Threads::Threads)
 endif ()
 
 # -ldl -lz -lcurses -lpcre
-target_link_libraries(bindgen dl z curses pcre)
+target_link_libraries(parser dl z curses pcre)

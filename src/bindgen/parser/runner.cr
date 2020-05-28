@@ -4,7 +4,7 @@ module Bindgen
     # `BINDGEN_BIN` environment variable.
     class Runner
       # Default path to the binary
-      BINARY_PATH = File.expand_path("#{File.dirname(__FILE__)}/../../../clang/bindgen")
+      BINARY_PATH = File.expand_path("#{File.dirname(__FILE__)}/../../../clang/parser")
 
       @binary_path : String
 
@@ -35,7 +35,7 @@ module Bindgen
           puts "Runner command: #{command}" if ENV["VERBOSE"]?
 
           result = `#{command}`
-          raise "clang/bindgen failed to execute." unless $?.success?
+          raise "clang/parser failed to execute." unless $?.success?
           result
         end
       end
