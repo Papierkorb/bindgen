@@ -169,61 +169,61 @@ describe Bindgen::ConfigReader::Parser do
     end
 
     context "versions" do
-      it "newer" do
+      it "newer_or" do
         parse(%<
           list: [one, two]
           string: WRONG
-          if_version_newer_0.9.9:
+          if_version_newer_or_0.9.9:
             string: three
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
-      it "newer equals" do
+      it "newer_or equals" do
         parse(%<
           list: [one, two]
           string: WRONG
-          if_version_newer_1.0.0:
+          if_version_newer_or_1.0.0:
             string: three
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
-      it "not newer" do
+      it "not newer_or" do
         parse(%<
           list: [one, two]
           string: three
-          if_version_newer_1.0.1:
+          if_version_newer_or_1.0.1:
             string: WRONG
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
-      it "older" do
+      it "older_or" do
         parse(%<
           list: [one, two]
           string: WRONG
-          if_version_older_1.0.1:
+          if_version_older_or_1.0.1:
             string: three
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
-      it "older equals" do
+      it "older_or equals" do
         parse(%<
           list: [one, two]
           string: WRONG
-          if_version_older_1.0.0:
+          if_version_older_or_1.0.0:
             string: three
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
       end
 
-      it "not older" do
+      it "not older_or" do
         parse(%<
           list: [one, two]
           string: three
-          if_version_older_0.9.9:
+          if_version_older_or_0.9.9:
             string: WRONG
           recurse: { list: [four], string: five }
         >).should eq(YamlThing.new(%w[one two], "three", YamlThing.new(%w[four], "five")))
