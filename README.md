@@ -4,14 +4,24 @@ Standalone C, C++, and/or Qt binding and wrapper generator.
 
 ![Logo](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/logo.png) [![Build Status](https://travis-ci.org/Papierkorb/bindgen.svg?branch=master)](https://travis-ci.org/Papierkorb/bindgen)
 
+## Installation
+
+Add the dependency to `shard.yml`:
+
+```yaml
+dependencies:
+  bindgen:
+    github: Papierkorb/bindgen
+    version: ~> 0.7.0
+```
+
 # Table of Contents
 
 <!--ts-->
-   * [Platform support](#platform-support)
-   * [Features](#features)
-   * [Projects using bindgen](#projects-using-bindgen)
    * [How To](#how-to)
+   * [Projects using bindgen](#projects-using-bindgen)
    * [Mapping behaviour](#mapping-behaviour)
+   * [Features](#features)
    * [Processors](#processors)
       * [AutoContainerInstantiation](#autocontainerinstantiation)
       * [CopyStructs](#copystructs)
@@ -43,31 +53,49 @@ Standalone C, C++, and/or Qt binding and wrapper generator.
       * [Graph::Builder step](#graphbuilder-step)
       * [Processor step](#processor-step)
       * [Generator step](#generator-step)
+   * [Platform support](#platform-support)
    * [Contributing](#contributing)
       * [Contributors](#contributors)
    * [License](#license)
 
-<!-- Added by: docelic, at: Wed May 27 21:04:14 CEST 2020 -->
+<!-- Added by: docelic, at: Thu 28 May 2020 09:49:50 PM CEST -->
 
 <!--te-->
 
-# Platform support
+# How To
 
-<!-- Table is sorted from A-Z ascending, versions descending. -->
+1. Add bindgen to your `shard.yml` as instructed above under Installation and run `shards`
+2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
+3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` and customize it for the library you want to bind to
+4. Run `lib/bindgen/tool.sh your_template.yml`. This will generate the bindings, by default in the `ext/` subdirectory
+5. Develop your Crystal application as usual.
 
-| Arch    | System            | CI          | Clang version  |
-| ------- | ----------------- | ----------- | -------------- |
-| x86_64  | ArchLinux         | Travis      | *Rolling*      |
-| x86_64  | Debian 9          | Travis      | 6.0, 7.0       |
-| x86_64  | Debian 7          | Travis      | 4.0, 5.0       |
-| x86_64  | Ubuntu 17.04      | *None*      | 5.0            |
-| x86_64  | Ubuntu 16.04      | Travis      | 4.0, 5.0       |
-|         | Other systems     | Help wanted | ?              |
+See `TEMPLATE.yml` for the complete configuration/customization documentation.
 
-You require the LLVM and Clang development libraries and headers.  If you don't
-have them already installed, bindgen will tell you. These packages are usually
-named after the following pattern on Debian-based systems:
-`clang-7 libclang-7-dev llvm-7 llvm-7-dev`.
+**Note**: If you intend to ship the generated bindgen code with your library or application,
+then `bindgen` is not required to compile it. In that case, you can move its entry
+in `shard.yml` from `dependencies` to `development_dependencies`.
+
+# Projects using bindgen
+
+* [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
+
+*Have you created and published a usable binding with bindgen? Want to see it here? Send a PR!*
+
+# Mapping behaviour
+
+The following rules are automatically applied to all bindings:
+
+* Method names get underscored: `addWidget() -> #add_widget`
+  * Setter methods are rewritten: `setWindowTitle() -> #window_title=`
+  * Getter methods are rewritten: `getWindowTitle() -> #window_title`
+  * Bool getters are rewritten: `getAwesome() -> #awesome?`
+  * `is` getters are rewritten: `isEmpty() -> #empty?`
+  * `has` getters are rewritten: `hasSpace() -> #has_space?`
+* On signal methods (For Qt signals):
+  * Keep their name for the `emit` version: `pressed() -> #pressed`
+  * Get an `on_` prefix for the connect version: `#on_pressed do .. end`
+* Enum fields get title-cased if not already: `color0 -> Color0`
 
 # Features
 
@@ -108,48 +136,6 @@ named after the following pattern on Debian-based systems:
 | Copying in-source docs                           |   TBD   |
 | Platform specific type binding rules             | **YES** |
 | Portable path finding for headers, libs, etc.    | **YES** |
-
-
-# Projects using bindgen
-
-* [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
-
-*Have you created and published a usable binding with bindgen? Want to see it here? Send a PR!*
-
-# How To
-
-1. Add bindgen to your `shard.yml` and run `shards`
-
-```yaml
-dependencies:
-  bindgen:
-    github: Papierkorb/bindgen
-    version: ~> 0.7.0
-```
-
-2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
-3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` and customize it
-4. Run `lib/bindgen/tool.sh your_template.yml`
-
-**Note**: If you intend to ship the generated bindgen code with your shard,
-you can move its entry in `shard.yml` from `dependencies` to `development_dependencies`.
-
-See `TEMPLATE.yml` for configuration documentation.
-
-# Mapping behaviour
-
-The following rules are automatically applied to all bindings:
-
-* Method names get underscored: `addWidget() -> #add_widget`
-  * Setter methods are rewritten: `setWindowTitle() -> #window_title=`
-  * Getter methods are rewritten: `getWindowTitle() -> #window_title`
-  * Bool getters are rewritten: `getAwesome() -> #awesome?`
-  * `is` getters are rewritten: `isEmpty() -> #empty?`
-  * `has` getters are rewritten: `hasSpace() -> #has_space?`
-* On signal methods (For Qt signals):
-  * Keep their name for the `emit` version: `pressed() -> #pressed`
-  * Get an `on_` prefix for the connect version: `#on_pressed do .. end`
-* Enum fields get title-cased if not already: `color0 -> Color0`
 
 # Processors
 
@@ -602,6 +588,25 @@ has an already set-up pipeline.
 The final step now takes the finalized graph and writes the result into an
 output of one or more files.  Generators do *not* change the graph in any way,
 and also don't build anything on their own.  They only write to output.
+
+# Platform support
+
+<!-- Table is sorted from A-Z ascending, versions descending. -->
+
+| Arch    | System            | CI          | Clang version  |
+| ------- | ----------------- | ----------- | -------------- |
+| x86_64  | ArchLinux         | Travis      | *Rolling*      |
+| x86_64  | Debian 9          | Travis      | 6.0, 7.0       |
+| x86_64  | Debian 7          | Travis      | 4.0, 5.0       |
+| x86_64  | Ubuntu 17.04      | *None*      | 5.0            |
+| x86_64  | Ubuntu 16.04      | Travis      | 4.0, 5.0       |
+|         | Other systems     | Help wanted | ?              |
+
+You require the LLVM and Clang development libraries and headers.  If you don't
+have them already installed, bindgen will tell you. These packages are usually
+named after the following pattern on Debian-based systems:
+`clang-7 libclang-7-dev llvm-7 llvm-7-dev`.
+
 
 # Contributing
 
