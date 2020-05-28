@@ -22,6 +22,12 @@ dependencies:
    * [Projects using bindgen](#projects-using-bindgen)
    * [Mapping behaviour](#mapping-behaviour)
    * [Features](#features)
+   * [Architecture of bindgen](#architecture-of-bindgen)
+      * [The Graph](#the-graph)
+      * [Parser step](#parser-step)
+      * [Graph::Builder step](#graphbuilder-step)
+      * [Processor step](#processor-step)
+      * [Generator step](#generator-step)
    * [Processors](#processors)
       * [AutoContainerInstantiation](#autocontainerinstantiation)
       * [CopyStructs](#copystructs)
@@ -47,18 +53,12 @@ dependencies:
          * [Examples](#examples)
       * [Dependencies](#dependencies)
          * [Errors](#errors)
-   * [Architecture of bindgen](#architecture-of-bindgen)
-      * [The Graph](#the-graph)
-      * [Parser step](#parser-step)
-      * [Graph::Builder step](#graphbuilder-step)
-      * [Processor step](#processor-step)
-      * [Generator step](#generator-step)
    * [Platform support](#platform-support)
    * [Contributing](#contributing)
       * [Contributors](#contributors)
    * [License](#license)
 
-<!-- Added by: docelic, at: Thu 28 May 2020 09:49:50 PM CEST -->
+<!-- Added by: docelic, at: Thu 28 May 2020 09:55:45 PM CEST -->
 
 <!--te-->
 
@@ -68,15 +68,19 @@ dependencies:
 2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
 3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` and customize it for the library you want to bind to
 4. Run `lib/bindgen/tool.sh your_template.yml`. This will generate the bindings, by default in the `ext/` subdirectory
-5. Develop your Crystal application as usual.
+5. Develop your Crystal application as usual
 
-See `TEMPLATE.yml` for the complete configuration/customization documentation.
+See `TEMPLATE.yml` for the complete configuration and customization documentation.
+(This documentation will soon be ported to a Markdown document as well.)
 
-**Note**: If you intend to ship the generated bindgen code with your library or application,
-then `bindgen` is not required to compile it. In that case, you can move its entry
-in `shard.yml` from `dependencies` to `development_dependencies`.
+**Note**: If you ship the output produced by bindgen along with your application,
+then `bindgen` will not be not required to compile it. In that case, you can move
+its entry in `shard.yml` from `dependencies` to `development_dependencies`.
 
 # Projects using bindgen
+
+You can use the following projects' .yml files as a source of ideas or syntax for
+your own bindings:
 
 * [Qt5 Bindings](https://github.com/Papierkorb/qt5.cr)
 
@@ -136,6 +140,73 @@ The following rules are automatically applied to all bindings:
 | Copying in-source docs                           |   TBD   |
 | Platform specific type binding rules             | **YES** |
 | Portable path finding for headers, libs, etc.    | **YES** |
+
+# Architecture of bindgen
+
+Bindgen employs a pipeline-inspired code architecture, which is strikingly
+similar to what most compilers use.
+
+The code flow is basically `Parser::Runner` to `Graph::Builder` to
+`Processor::Runner` to `Generator::Runner`.
+
+![Architecture flow diagram](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/architecture.png)
+
+## The Graph
+
+An important data structure used throughout the program is *the graph*.
+Code-wise, it's represented by `Graph::Node` (And its sub-classes).  The nodes
+can contain child nodes, making it a hierarchical structure.
+
+This allows to represent (almost) arbitrary structures as defined by the user
+configuration.
+
+Say, we're wrapping `GreetLib`.  As any library, it comes with a bunch of
+classes (`Greeter` and `Listener`), enums  (`Greetings`, `Type`) and other stuff
+like constants (`PORT`).  The configuration file could look like this:
+
+```yaml
+module: GreetLib
+classes: # We copy the structure of classes
+  Greeter: Greeter
+  Listener: Listener
+enums: # But map the enums differently
+  Type: Greeter::Type
+  Greeter::Greetings: Greetings
+```
+
+Which will generate a graph looking like this:
+
+![Graph example](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/graph.png)
+
+**Note**: The concept is really similar to ASTs used by compilers.
+
+## Parser step
+
+The beginning of the actual execution pipeline.  Calls out to the clang-based parser
+tool to read the C/C++ source code and write a JSON-formatted "database" onto
+standard output.  This is directly caught by `bindgen` and subsequently parsed
+as `Parser::Document`.
+
+## Graph::Builder step
+
+The second step takes the `Parser::Document` and transforms it into a
+`Graph::Namespace`.  This step is where the user configuration mapping is used.
+
+## Processor step
+
+The third step runs all configured processors in order.  These work with the
+`Graph` and mostly add methods and `Call`s so they can be bound later.  But
+they're allowed to do whatever they want really, which makes it a good place
+to add more complex rewriting rules if desired.
+
+Processors are responsible for many core features of bindgen.  The `TEMPLATE.yml`
+has an already set-up pipeline.
+
+## Generator step
+
+The final step now takes the finalized graph and writes the result into an
+output of one or more files.  Generators do *not* change the graph in any way,
+and also don't build anything on their own.  They only write to output.
 
 # Processors
 
@@ -521,73 +592,6 @@ An exception will be raised if any of the following occur:
 * The maximum dependency depth of `10` (`MAX_DEPTH`) is exceeded.
 * The dependency name contains a dot: `../foo.yml` won't work.
 * The dependency name is absolute: `/foo/bar.yml` won't work.
-
-# Architecture of bindgen
-
-Bindgen employs a pipeline-inspired code architecture, which is strikingly
-similar to what most compilers use.
-
-The code flow is basically `Parser::Runner` to `Graph::Builder` to
-`Processor::Runner` to `Generator::Runner`.
-
-![Architecture flow diagram](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/architecture.png)
-
-## The Graph
-
-An important data structure used throughout the program is *the graph*.
-Code-wise, it's represented by `Graph::Node` (And its sub-classes).  The nodes
-can contain child nodes, making it a hierarchical structure.
-
-This allows to represent (almost) arbitrary structures as defined by the user
-configuration.
-
-Say, we're wrapping `GreetLib`.  As any library, it comes with a bunch of
-classes (`Greeter` and `Listener`), enums  (`Greetings`, `Type`) and other stuff
-like constants (`PORT`).  The configuration file could look like this:
-
-```yaml
-module: GreetLib
-classes: # We copy the structure of classes
-  Greeter: Greeter
-  Listener: Listener
-enums: # But map the enums differently
-  Type: Greeter::Type
-  Greeter::Greetings: Greetings
-```
-
-Which will generate a graph looking like this:
-
-![Graph example](https://raw.githubusercontent.com/Papierkorb/bindgen/master/images/graph.png)
-
-**Note**: The concept is really similar to ASTs used by compilers.
-
-## Parser step
-
-The beginning of the actual execution pipeline.  Calls out to the clang-based parser
-tool to read the C/C++ source code and write a JSON-formatted "database" onto
-standard output.  This is directly caught by `bindgen` and subsequently parsed
-as `Parser::Document`.
-
-## Graph::Builder step
-
-The second step takes the `Parser::Document` and transforms it into a
-`Graph::Namespace`.  This step is where the user configuration mapping is used.
-
-## Processor step
-
-The third step runs all configured processors in order.  These work with the
-`Graph` and mostly add methods and `Call`s so they can be bound later.  But
-they're allowed to do whatever they want really, which makes it a good place
-to add more complex rewriting rules if desired.
-
-Processors are responsible for many core features of bindgen.  The `TEMPLATE.yml`
-has an already set-up pipeline.
-
-## Generator step
-
-The final step now takes the finalized graph and writes the result into an
-output of one or more files.  Generators do *not* change the graph in any way,
-and also don't build anything on their own.  They only write to output.
 
 # Platform support
 
