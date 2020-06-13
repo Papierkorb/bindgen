@@ -1,4 +1,4 @@
-bindgen
+parser
 include/generated.hpp
 *.o
 Makefile.variables
