@@ -11,7 +11,10 @@ dependencies:
   toka:
     github: Papierkorb/toka
     version: ">= 0.1.2"
-
+  yaml_mapping:
+    github: crystal-lang/yaml_mapping.cr
+  json_mapping:
+    github: crystal-lang/json_mapping.cr
 targets:
   bindgen:
     main: src/bindgen.cr

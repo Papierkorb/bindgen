@@ -101,16 +101,16 @@ module Bindgen
       property destination : String
 
       # Common prefix detection of enums
-      @[YAML::Field(converter: StringOrBool)]
+      @[YAML::Field(converter: Bindgen::Configuration::StringOrBool)]
       property prefix : String | Bool = false
 
       # Forces a specific `@[Flags]` setting
-      property flags : Util::Tribool = Util::Tribool.unset
+      property flags : Bindgen::Util::Tribool = Bindgen::Util::Tribool.unset
 
       # Camelcase translation
       property camelcase : Bool = true
 
-      def initialize(@destination, @prefix = false, @flags = Util::Tribool.unset, @camelcase = true)
+      def initialize(@destination, @prefix = false, @flags = Bindgen::Util::Tribool.unset, @camelcase = true)
       end
     end
 
@@ -167,13 +167,13 @@ module Bindgen
       property destination : String
 
       # Fully crystalize method names?
-      property crystalize_names : Util::Tribool = Util::Tribool.unset
+      property crystalize_names : Bindgen::Util::Tribool = Bindgen::Util::Tribool.unset
 
       # `class:` in the YAML!
       @[YAML::Field(key: "class")]
       property wrapper : FunctionClass? = nil
 
-      def initialize(@destination, @name = nil, @wrapper = nil, @crystalize_names = Util::Tribool.unset)
+      def initialize(@destination, @name = nil, @wrapper = nil, @crystalize_names = Bindgen::Util::Tribool.unset)
       end
 
       # Shall method names be fully crystalized?
@@ -191,38 +191,38 @@ module Bindgen
     property cookbook : String = "boehmgc-cpp" # See `Cpp::Cookbook.create_by_name`
 
     # Used processors
-    property processors : Array(String) = Processor::DEFAULT_CHAIN
+    property processors : Array(String) = Bindgen::Processor::DEFAULT_CHAIN
 
     # Used generators
-    property generators : Hash(String, Generator)
+    property generators : Hash(String, Bindgen::Configuration::Generator)
 
     # What to put into `@[Link(ldflags: "x")]`
     property library : String? = nil
 
     # Which enums to wrap
-    @[YAML::Field(converter: GenericConverter(Enum))]
-    property enums : Hash(String, Enum) = Hash(String, Enum).new
+    @[YAML::Field(converter: Bindgen::Configuration::GenericConverter(Bindgen::Configuration::Enum))]
+    property enums : Hash(String, Bindgen::Configuration::Enum) = Hash(String, Bindgen::Configuration::Enum).new
 
     # Which classes to wrap
     property classes : Hash(String, String) = Hash(String, String).new
 
     # Which macros to wrap
-    property macros : Hash(String, Macro) = Hash(String, Macro).new
+    property macros : Hash(String, Bindgen::Configuration::Macro) = Hash(String, Bindgen::Configuration::Macro).new
 
     # Which functions to wrap
-    @[YAML::Field(converter: GenericConverter(Function))]
-    property functions : Hash(String, Function) = Hash(String, Function).new
+    @[YAML::Field(converter: Bindgen::Configuration::GenericConverter(Bindgen::Configuration::Function))]
+    property functions : Hash(String, Bindgen::Configuration::Function) = Hash(String, Bindgen::Configuration::Function).new
 
     # Which templates to instantiate
-    property containers : Array(Container) = Array(Container).new
+    property containers : Array(Bindgen::Configuration::Container) = Array(Bindgen::Configuration::Container).new
 
     # Type database configuration
-    property types : TypeDatabase::Configuration = TypeDatabase::Configuration.new
+    property types : Bindgen::TypeDatabase::Configuration = Bindgen::TypeDatabase::Configuration.new
 
     # Parser configuration
-    property parser : Parser::Configuration
+    property parser : Bindgen::Parser::Configuration
 
     # Find path configuration
-    property find_paths : FindPath::Configuration? = nil
+    property find_paths : Bindgen::FindPath::Configuration? = nil
   end
 end
