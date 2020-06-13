@@ -1,3 +1,5 @@
+require "./kind"
+
 module Bindgen
   class FindPath
     alias Configuration = Hash(String, PathConfig)
@@ -15,19 +17,13 @@ module Bindgen
 
     # Used in `PathConfig#try` to distinguish a path try from a shell one.
     class ShellTry
-      YAML.mapping(
-        # The shell command to run
-        shell: {
-          type:      String,
-          converter: AlwaysStringConverter,
-        },
+      include YAML::Serializable
 
-        # An optional regex to grab the path
-        regex: {
-          type:    String,
-          nilable: true,
-        }
-      )
+      # The shell command to run
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
+      property shell : String
+      # An optional regex to grab the path
+      property regex : String? = nil
 
       def initialize(@shell, @regex = nil)
       end
@@ -35,45 +31,34 @@ module Bindgen
 
     # A path check testing a specific path.
     class PathCheck
-      YAML.mapping(
-        # The sub-path to check for existence.
-        path: {
-          type:      String,
-          converter: AlwaysStringConverter,
-        },
+      include YAML::Serializable
 
-        # What the path should be
-        kind: {
-          type:    Kind,
-          default: Kind::File,
-        },
+      # The sub-path to check for existence.
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
 
-        # Optional: What the file should contain
-        contains: {
-          type:    String,
-          nilable: true,
-        },
+      property path : String
 
-        # Treat the contains as regular expression?
-        regex: {
-          type:    Bool,
-          default: false,
-        },
-      )
+      # What the path should be
+      property kind : Bindgen::FindPath::Kind = Bindgen::FindPath::Kind::File
 
-      def initialize(@path, @kind = Kind::File, @contains = nil, @regex = false)
+      # Optional: What the file should contain
+      property contains : String? = nil
+
+      # Treat the contains as regular expression?
+      property regex : Bool = false
+
+      def initialize(@path, @kind = Bindgen::FindPath::Kind::File, @contains = nil, @regex = false)
       end
     end
 
     # A path check testing using a custom shell command.
     class ShellCheck
-      YAML.mapping(
-        # The shell command to run
-        shell: {
-          type:      String,
-          converter: AlwaysStringConverter,
-        },
-      )
+      include YAML::Serializable
+
+      # The shell command to run
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
+
+      property shell : String
 
       def initialize(@shell)
       end
@@ -81,10 +66,10 @@ module Bindgen
 
     # A path check testing using multiple inner checkers.
     class AnyOfCheck
-      YAML.mapping(
-        # Inner checkers
-        any_of: Array(PathCheck | ShellCheck),
-      )
+      include YAML::Serializable
+
+      # Inner checkers
+      property any_of : Array(PathCheck | ShellCheck)
 
       def initialize(@any_of)
       end
@@ -103,76 +88,51 @@ module Bindgen
         Prefer
       end
 
-      YAML.mapping(
-        # Min version string
-        min: {
-          type:      String,
-          nilable:   true,
-          converter: AlwaysStringConverter,
-        },
+      include YAML::Serializable
 
-        # Max version string
-        max: {
-          type:      String,
-          nilable:   true,
-          converter: AlwaysStringConverter,
-        },
+      # Min version string
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
 
-        # Variable to store the detected version string in
-        variable: {
-          type:    String,
-          nilable: true,
-        },
+      property min : String? = nil
 
-        # Which version to prefer
-        prefer: {
-          type:    Prefer,
-          default: Prefer::Highest,
-        },
+      # Max version string
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
 
-        # Fallback behaviour if the regex fails.
-        fallback: {
-          type:    Fallback,
-          default: Fallback::Fail,
-        },
+      property max : String? = nil
+      # Variable to store the detected version string in
+      property variable : String? = nil
+      # Which version to prefer
+      property prefer : VersionCheck::Prefer = Bindgen::FindPath::VersionCheck::Prefer::Highest
 
-        # Regular expression to grab it from the name
-        regex: {
-          type:    String,
-          default: "-([0-9.]+)$", # Debian-style
-        },
+      # Fallback behaviour if the regex fails.
+      property fallback : Bindgen::FindPath::VersionCheck::Fallback = Bindgen::FindPath::VersionCheck::Fallback::Fail
 
-        # Custom command to run to figure out the version
-        command: {
-          type:      String,
-          converter: AlwaysStringConverter,
-          nilable:   true,
-        }
-      )
+      # Regular expression to grab it from the name
+      property regex : String = "-([0-9.]+)$" # Debian-style
+
+      # Custom command to run to figure out the version
+      @[YAML::Field(converter: Bindgen::FindPath::AlwaysStringConverter)]
+
+      property command : String? = nil
 
       def initialize(
-        @min = nil, @max = nil, @prefer = Prefer::Highest,
-        @fallback = Fallback::Fail, @regex = "-([0-9.]+)$", @command = nil
+        @min = nil, @max = nil, @prefer = Bindgen::FindPath::VersionCheck::Prefer::Highest,
+        @fallback = Bindgen::FindPath::VersionCheck::Fallback::Fail, @regex = "-([0-9.]+)$", @command = nil
       )
       end
     end
 
     # Configuration for `PathConfig#list`.
     class ListConfig
-      YAML.mapping(
-        # Element separator
-        separator: {
-          type:    String,
-          default: FindPath::PATH_SEPARATOR.to_s,
-        },
+      include YAML::Serializable
 
-        # Element template
-        template: {
-          type: String,
-        },
-      )
+      # Element separator
+      property separator : String = Bindgen::FindPath::PATH_SEPARATOR.to_s
 
-      def initialize(@template, @separator = FindPath::PATH_SEPARATOR.to_s)
+      # Element template
+      property template : String
+
+      def initialize(@template, @separator = Bindgen::FindPath::PATH_SEPARATOR.to_s)
       end
 
       def self.default
@@ -198,60 +158,35 @@ module Bindgen
     # YAML-based configuration.  Used as value for the `#find_paths` option in
     # `Bindgen::Configuration`.
     class PathConfig
-      YAML.mapping(
-        # Kind of file to find
-        kind: {
-          type:    Kind,
-          default: Kind::Directory,
-        },
+      include YAML::Serializable
 
-        # Is this match optional?
-        optional: {
-          type:    Bool,
-          default: false, # Mandatory by default
-        },
+      # Bindgen::FindPath::Kind of file to find
+      property kind : Bindgen::FindPath::Kind = Bindgen::FindPath::Kind::Directory
+      # Is this match optional?
+      property optional : Bool = false # Mandatory by default
 
-        # Optional: An error message if not found
-        error_message: {
-          type:    String,
-          nilable: true,
-        },
+      # Optional: An error message if not found
+      property error_message : String? = nil
 
-        # Paths to try
-        try: {
-          type: Array(String | ShellTry),
-          # converter: TryListConverter,
-        },
+      # Paths to try
 
-        # Search paths for relative try paths
-        search_paths: {
-          type:    Array(String),
-          nilable: true,
-        },
+      property try : Array(String | ShellTry) # converter: TryListConverter,
 
-        # Checks to do
-        checks: {
-          type:    Array(PathCheck | ShellCheck | AnyOfCheck),
-          default: Array(PathCheck | ShellCheck | AnyOfCheck).new,
-        },
+      # Search paths for relative try paths
+      property search_paths : Array(String)? = nil
 
-        # Version check to do
-        version: {
-          type:    VersionCheck,
-          nilable: true,
-        },
+      # Checks to do
+      property checks : Array(Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck | Bindgen::FindPath::AnyOfCheck) = Array(Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck | Bindgen::FindPath::AnyOfCheck).new
 
-        # List functionality
-        list: {
-          type:      ListConfig,
-          nilable:   true,
-          converter: ListConfigConverter,
-        }
-      )
+      # Version check to do
+      property version : VersionCheck? = nil
+      # List functionality
+      @[YAML::Field(converter: Bindgen::FindPath::ListConfigConverter)]
+      property list : ListConfig? = nil
 
       def initialize(
-        @try, @kind = Kind::Directory, @optional = false, @error_message = nil,
-        @checks = [] of (PathCheck | ShellCheck)
+        @try, @kind = Bindgen::FindPath::Kind::Directory, @optional = false, @error_message = nil,
+        @checks = [] of (Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck)
       )
       end
     end
