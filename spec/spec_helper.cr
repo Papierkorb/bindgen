@@ -9,12 +9,12 @@ def watchdog(deadline = 10.seconds)
     sleep deadline
     STDERR.puts "WATCHDOG: Deadline reached after #{deadline.seconds}s"
     STDERR.puts "Aborting."
-    Process.kill(Signal::ABRT, Process.ppid)
+    Process.signal(Signal::ABRT, Process.ppid)
   end
 
   yield
 ensure
-  watcher.try(&.kill)
+  watcher.try(&.signal(Signal::KILL))
 end
 
 # Short-hand functions
