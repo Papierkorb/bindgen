@@ -9,6 +9,7 @@ module Bindgen
     # * Enumerations have at least one constant
     # * Enumeration constants are correctly named
     # * Flag-enumerations don't have `All` nor `None` constants
+    # * Crystal method overloads are unambiguous
     # * Method arguments and result types are reachable
     # * Variadic methods are directly bound
     # * Alias targets are reachable
@@ -104,6 +105,32 @@ module Bindgen
         end
       end
 
+      # Check for ambiguous Crystal overloads
+      def visit_class(klass)
+        methods_by_name = klass.nodes.compact_map do |node|
+          if method = node.as?(Graph::Method)
+            if call = method.calls[@platform]?
+              {method, call}
+            end
+          end
+        end.group_by {|_, call| call.name}
+
+        methods_by_name.each do |name, vs|
+          vs.each_combination(2, reuse: true) do |perm|
+            method1, call1 = perm[0]
+            method2, call2 = perm[1]
+            if method1.origin.static_method? == method2.origin.static_method?
+              if ambiguous_signatures?(call1.arguments, call2.arguments)
+                add_error(method1, "Ambiguous call")
+                add_error(method2, "Ambiguous call")
+              end
+            end
+          end
+        end
+
+        super
+      end
+
       # Check reachability of all types
       private def visit_method(method)
         call = method.calls[@platform]?
@@ -121,6 +148,24 @@ module Bindgen
 
         if method.origin.variadic? && method.tag?(Graph::Method::EXPLICIT_BIND_TAG).nil?
           add_error(method, "Variadic function must be directly bound")
+        end
+      end
+
+      # Checks if *args1* and *arg2* represent ambiguous method signatures.
+      # Does not check variadic arguments and default values yet.
+      private def ambiguous_signatures?(args1, args2)
+        if args1.size == args2.size
+          args1.zip(args2).all? do |arg1, arg2|
+            if arg1.is_a?(Call::Argument) && arg2.is_a?(Call::Argument)
+              arg1.type.equals_except_nil?(arg2.type)
+            elsif arg1.is_a?(Call::ProcArgument) && arg2.is_a?(Call::ProcArgument)
+              true # block arguments do not create overloads
+            else
+              false
+            end
+          end
+        else
+          false
         end
       end
 
