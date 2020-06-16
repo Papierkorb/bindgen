@@ -615,8 +615,8 @@ named after the following pattern on Debian-based systems:
 # Contributing
 
 1. Open a new issue on the project to discuss what you're going to do and possibly receive comments
-3. Read the `STYLEGUIDE.md` for some tips.
-4. Then do the rest, PR and all.  You know the drill :)
+2. Read the `STYLEGUIDE.md` for some tips.
+3. Then do the rest, PR and all.  You know the drill :)
 
 ## Contributors
 
