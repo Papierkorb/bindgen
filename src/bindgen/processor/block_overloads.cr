@@ -38,7 +38,7 @@ module Bindgen
               end
             end
           end
-        end.group_by {|_, call| call.name}
+        end.group_by { |_, call| call.name }
 
         typer = Crystal::Typename.new(@db)
 
