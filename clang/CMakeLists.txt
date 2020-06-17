@@ -16,7 +16,7 @@ string(REGEX MATCH "^([0-9]+)" LLVM_VER ${LLVM_PACKAGE_VERSION})
 message(STATUS "LLVM Major version: ${LLVM_VER}")
 
 # If LLVM 10+ change std version
-if(LLVM_VER GREATER_EQUAL 10)
+if(LLVM_VER GREATER 9)
   message(STATUS "Setting std version: c++14")
   set(CMAKE_CXX_STANDARD_14)
 else()
