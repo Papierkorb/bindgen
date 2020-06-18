@@ -35,7 +35,11 @@ module Bindgen
           prefix = "&"
         end
 
-        "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
+        if arg.is_a?(Call::TypeArgument)
+          meta = ".class"
+        end
+
+        "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{meta}#{default}"
       end
 
       # Formats *arguments* as `type name, ...`.  If *binding* is `true`, treat

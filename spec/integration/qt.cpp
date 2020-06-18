@@ -12,9 +12,9 @@ struct QMetaObject {
 };
 
 struct QObject {
-  template< typename T, typename F >
-  static QMetaObject::Connection connect(void *ptr, T func, F delegate) {
-    delegate(); // Call back to Crystal
+  template< typename R, typename T, typename... Args, typename F >
+  static QMetaObject::Connection connect(void *ptr, R (T::*func)(Args...), F delegate) {
+    delegate(Args { }...); // Call back to Crystal
 
     return QMetaObject::Connection();
   }
@@ -30,6 +30,18 @@ public:
 
 signals:
   void stuffHappened() {
+    // Empty.
+  }
+
+  void overloaded(int x) {
+    // Empty.
+  }
+
+  void overloaded(bool y) {
+    // Empty.
+  }
+
+  void overloaded(int x, bool y) {
     // Empty.
   }
 

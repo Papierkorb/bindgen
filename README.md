@@ -30,6 +30,7 @@ dependencies:
       * [Generator step](#generator-step)
    * [Processors](#processors)
       * [AutoContainerInstantiation](#autocontainerinstantiation)
+      * [BlockOverloads](#blockoverloads)
       * [CopyStructs](#copystructs)
       * [CppWrapper](#cppwrapper)
       * [CrystalBinding](#crystalbinding)
@@ -248,6 +249,27 @@ containers: # At the top-level of the config
     # instantiations: # Can be added, but doesn't need to be.
 ```
 
+## `BlockOverloads`
+
+* **Kind**: Refining, but ran after generation processors!
+* **Run after**: `CrystalWrapper`, `Qt`
+* **Run before**: No specific dependency
+
+Adds type parameters to ambiguous Crystal methods that take a single block
+argument, so that these methods can be overloaded by passing the parameter types
+of that argument to the method.  `Qt` needs it for several signal connection
+methods.
+
+```crystal
+cb = Qt::ComboBox.new
+cb.on_activated(Int32) do |index| # Type argument added by this processor
+  puts "Int32 overload selected: #{index}"
+end
+cb.on_activated(String) do |text| # Type argument added by this processor
+  puts "String overload selected: #{text}"
+end
+```
+
 ## `CopyStructs`
 
 * **Kind**: Refining
@@ -402,7 +424,7 @@ function-like macros are silently skipped.
 
 * **Kind**: Refining
 * **Run after**: No specific dependency
-* **Run before**: No specific dependency
+* **Run before**: `BlockOverloads`
 
 Adds Qt specific behaviour:
 
@@ -430,6 +452,7 @@ Checks are as follows:
 * Name of methods are valid
 * Enumerations have at least one constant
 * Flag-enumerations don't have `All` nor `None` constants
+* Crystal method overloads are unambiguous
 * Method arguments and result types are reachable
 * Variadic methods are directly bound
 * Alias targets are reachable
@@ -456,6 +479,7 @@ This is the recommended processor order:
 processors:
   # ...
   - crystal_wrapper
+  - block_overloads
   - virtual_override
   - cpp_wrapper
   - crystal_binding
