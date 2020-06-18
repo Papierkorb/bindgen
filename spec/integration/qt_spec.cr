@@ -20,19 +20,19 @@ describe "Qt-specific wrapper features" do
             subject = Test::SomeObject.new
 
             overload = 0
-            subject.on_overloaded(Int32) do |_i|
-              _i.should be_a(Int32)
+            subject.on_overloaded(Int32) do |i|
+              i.should be_a(Int32)
               overload = 1
             end
             overload.should eq(1)
-            subject.on_overloaded(Bool) do |_b|
-              _b.should be_a(Bool)
+            subject.on_overloaded(Bool) do |b|
+              b.should be_a(Bool)
               overload = 2
             end
             overload.should eq(2)
-            subject.on_overloaded(Int32, Bool) do |_i, _b|
-              _i.should be_a(Int32)
-              _b.should be_a(Bool)
+            subject.on_overloaded(Int32, Bool) do |i, b|
+              i.should be_a(Int32)
+              b.should be_a(Bool)
               overload = 3
             end
             overload.should eq(3)
