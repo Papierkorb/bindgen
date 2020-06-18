@@ -152,20 +152,18 @@ module Bindgen
       end
 
       # Checks if *args1* and *arg2* represent ambiguous method signatures.
-      # Does not check variadic arguments and default values yet.
+      # Does not check variadic arguments yet.
       private def ambiguous_signatures?(args1, args2)
-        if args1.size == args2.size
-          args1.zip(args2).all? do |arg1, arg2|
-            if arg1.is_a?(Call::Argument) && arg2.is_a?(Call::Argument)
-              arg1.type.equals_except_nil?(arg2.type)
-            elsif arg1.is_a?(Call::ProcArgument) && arg2.is_a?(Call::ProcArgument)
-              true # block arguments do not create overloads
-            else
-              false
-            end
+        return false unless args1.size == args2.size
+
+        args1.zip(args2).all? do |arg1, arg2|
+          if arg1.is_a?(Call::Argument) && arg2.is_a?(Call::Argument)
+            arg1.type.equals_except_nil?(arg2.type)
+          elsif arg1.is_a?(Call::ProcArgument) && arg2.is_a?(Call::ProcArgument)
+            true # block arguments do not create overloads
+          else
+            false
           end
-        else
-          false
         end
       end
 
