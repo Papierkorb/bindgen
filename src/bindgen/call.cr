@@ -105,6 +105,11 @@ module Bindgen
     class VariadicArgument < Argument
     end
 
+    # A type argument whose type is a metaclass (`T.class`).
+    # Only used for Crystal code to disambiguate block overloads.
+    class TypeArgument < Argument
+    end
+
     # A `Proc` argument.  May be a block.
     class ProcArgument < Argument
       # Is this a block argument?

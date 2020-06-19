@@ -8,5 +8,5 @@ uname -a
 pwd
 
 crystal version
-
+shards
 crystal spec

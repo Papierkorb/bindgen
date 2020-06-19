@@ -272,11 +272,26 @@ second the connection method, which are then exposed as Crystal wrappers.
 * Emission method: `changed(one : Int32) : Void`
 * Connection method: `on_changed(&block : Int32 -> Void)`
 
-### §Q.1.1
+### §Q.1.1 Signal connection object
 
 The connection method returns an connection object, which responds to
 `#disconnect`.  Calling this method breaks the connection.  Subsequent calls to
 this method have no effect.
+
+### §Q.1.2 Overloaded signals
+
+An overload is defined for each signature of a connection method that may take
+different sets of parameters.  The overloads take the expected types of the
+signal parameters, as mandatory function arguments.  This only happens to
+overloaded signals; type arguments are not required for signals with unique
+signatures.
+
+* Given these signals:
+  * `void changed(int one)`
+  * `void changed(bool two)`
+* Connection methods:
+  * `on_changed(type1 : Int32.class, &block : Int32 -> Void)`
+  * `on_changed(type1 : Bool.class, &block : Bool -> Void)`
 
 ### §Q.2 QFlags
 

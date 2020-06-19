@@ -9,12 +9,20 @@ def watchdog(deadline = 10.seconds)
     sleep deadline
     STDERR.puts "WATCHDOG: Deadline reached after #{deadline.seconds}s"
     STDERR.puts "Aborting."
-    Process.kill(Signal::ABRT, Process.ppid)
+    {% if compare_versions(::Crystal::VERSION, "0.34.0") > 0 %}
+      Process.signal(Signal::ABRT, Process.ppid)
+    {% else %}
+      Process.kill(Signal::ABRT, Process.ppid)
+    {% end %}
   end
 
   yield
 ensure
-  watcher.try(&.kill)
+  {% if compare_versions(::Crystal::VERSION, "0.34.0") > 0 %}
+    watcher.try(&.signal(Signal::KILL))
+  {% else %}
+    watcher.try(&.kill)
+  {% end %}
 end
 
 # Short-hand functions
