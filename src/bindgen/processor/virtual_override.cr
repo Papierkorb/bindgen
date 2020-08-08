@@ -56,7 +56,7 @@ module Bindgen
 
       # If *klass* shall be sub-classed, or not.
       private def subclass?(klass) : Bool
-        return false unless klass.has_virtual_methods?
+        return false unless klass.has_virtual_methods? && klass.destructible?
         @db.try_or(klass.name, true, &.sub_class)
       end
 
