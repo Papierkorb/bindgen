@@ -23,8 +23,8 @@ module Bindgen
       def visit_class(klass : Graph::Class)
         return if klass.wrapped_class # Don't change `Impl` classes.
         if subclass?(klass.origin)
-          create_subclass(klass)
-          create_superclass_wrappers(klass)
+          superclass = create_superclass_wrappers(klass)
+          create_subclass(klass, superclass)
         end
 
         super
@@ -36,8 +36,9 @@ module Bindgen
         nil # Do nothing.
       end
 
-      # Modifies *klass* to allow overriding C++ virtuals.
-      private def create_subclass(klass)
+      # Modifies *klass* to allow overriding C++ virtuals.  Also injects methods
+      # into the `Superclass` wrapper.
+      private def create_subclass(klass, superclass)
         host = Graph::PlatformSpecific.new(platform: Graph::Platform::Cpp)
         klass.nodes.unshift host # We want our structures at the top.
         host.parent = klass
@@ -49,7 +50,7 @@ module Bindgen
         register_table_type(crystal_struct, cpp_struct)
 
         cpp_subclass = add_cpp_subclass(klass, host)
-        add_virtual_forwarders(klass, cpp_subclass)
+        add_virtual_forwarders(klass, cpp_subclass, superclass)
 
         cpp_method = add_jumptable_method(klass, cpp_subclass, cpp_struct.name)
         cpp_method.calls[Graph::Platform::Cpp] = build_cpp_jumptable_call(cpp_method.origin)
@@ -59,11 +60,12 @@ module Bindgen
       end
 
       # Modifies *klass* to allow Crystal subclasses to refer to superclass
-      # methods.
+      # methods.  Returns the wrapper class's graph node.
       private def create_superclass_wrappers(klass)
         superclass = build_superclass(klass)
         add_superclass_init(superclass, klass)
         add_superclass_method(superclass, klass)
+        superclass
       end
 
       # If *klass* shall be sub-classed, or not.
@@ -144,7 +146,7 @@ module Bindgen
         structure
       end
 
-      private def add_virtual_forwarders(klass, subclass)
+      private def add_virtual_forwarders(klass, subclass, superclass)
         klass.nodes.each do |node|
           next unless node.is_a?(Graph::Method)
           next unless node.origin.virtual?
@@ -160,7 +162,21 @@ module Bindgen
             parent: subclass,
           )
 
-          method.calls[Graph::Platform::Cpp] = build_cpp_forwarder(node.origin, subclass.name, klass.origin.name)
+          method.calls[Graph::Platform::Cpp] =
+            build_cpp_forwarder(node.origin, subclass.name, klass.origin.name, false)
+
+          # Repeat for the superclass wrapper, but only for concrete base
+          # methods that are accessible from `BgInherit`.
+          next if node.origin.pure? || node.origin.private?
+
+          superclass_method = Graph::Method.new(
+            name: "#{node.name}_SUPER",
+            origin: node.origin,
+            parent: subclass,
+          )
+
+          superclass_method.calls[Graph::Platform::Cpp] =
+            build_cpp_forwarder(node.origin, subclass.name, klass.origin.name, true)
         end
       end
 
@@ -174,19 +190,23 @@ module Bindgen
         end
       end
 
-      private def build_cpp_forwarder(method : Parser::Method, class_name, parent_class) : Call
+      private def build_cpp_forwarder(
+        method : Parser::Method, class_name, parent_class, in_superclass : Bool
+      ) : Call
         original = CallBuilder::CppMethodCall.new(@db)
         wrapper = CallBuilder::CppMethod.new(@db)
         to_crystal = CallBuilder::CppToCrystalProc.new(@db)
         proc_name = "_self_->bgJump.#{method.mangled_name}"
         parent_target = "#{parent_class}::#{method.name}"
-        target = original.build(method, name: parent_target) unless method.pure? || method.private?
+        target = original.build(method, name: parent_target) if
+          in_superclass || !(method.pure? || method.private?)
 
         wrapper.build(
           method: method,
           class_name: class_name,
           target: target,
           virtual_target: to_crystal.build(method, proc_name),
+          in_superclass: in_superclass,
         )
       end
 
