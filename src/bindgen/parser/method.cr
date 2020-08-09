@@ -51,11 +51,12 @@ module Bindgen
       # syntax.
       def self.build(
         name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String,
-        type = Parser::Method::Type::MemberMethod, crystal_name = nil
+        type = Parser::Method::Type::MemberMethod, access = AccessSpecifier::Public,
+        crystal_name = nil
       ) : self
         method = Parser::Method.new(
           type: type,
-          access: Parser::AccessSpecifier::Public,
+          access: access,
           name: name,
           isConst: false,
           className: class_name,
