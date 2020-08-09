@@ -6,14 +6,20 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      def build(method : Parser::Method, target : Call?, virtual_target : Call, class_name : String? = nil)
+      def build(
+        method : Parser::Method, target : Call?, virtual_target : Call,
+        class_name : String? = nil, in_superclass = false
+      )
         pass = Cpp::Pass.new(@db)
         class_name ||= method.class_name
 
-        if target
-          body = VirtualBody.new(class_name, target, virtual_target)
+        body = case
+        when in_superclass
+          SuperclassBody.new(class_name, target.not_nil!)
+        when target
+          VirtualBody.new(class_name, target, virtual_target)
         else
-          body = PureBody.new(class_name, virtual_target)
+          PureBody.new(class_name, virtual_target)
         end
 
         Call.new(
@@ -27,6 +33,7 @@ module Bindgen
 
       abstract class Body < Call::Body
         abstract def code_body(const, call, platform, prefix)
+        abstract def overriding? : Bool
 
         def to_code(call : Call, platform : Graph::Platform) : String
           formatter = Cpp::Format.new
@@ -37,8 +44,10 @@ module Bindgen
           # Returning a `void` from a void method generates a warning.
           prefix = "return " unless call.result.type.pure_void?
           const = "const " if call.origin.const?
+          override = "override " if overriding?
+          name_suffix = "_SUPER" unless overriding?
 
-          %[#{func_result} #{call.name}(#{func_args}) #{const}override {\n] \
+          %[#{func_result} #{call.name}#{name_suffix}(#{func_args}) #{const}#{override}{\n] \
           %[#{code_body(const, call, platform, prefix)}\n] \
           %[}\n]
         end
@@ -46,6 +55,8 @@ module Bindgen
 
       # Body for virtual targets.
       class VirtualBody < Body
+        getter? overriding : Bool = true
+
         def initialize(@class : String, @target : Call, @virtual_target : Call)
         end
 
@@ -59,8 +70,22 @@ module Bindgen
         end
       end
 
+      # Body for superclass targets.
+      class SuperclassBody < Body
+        getter? overriding : Bool = false
+
+        def initialize(@class : String, @target : Call)
+        end
+
+        def code_body(const, call, platform, prefix)
+          %[  #{prefix}#{@target.body.to_code(@target, platform)};]
+        end
+      end
+
       # Body for pure targets.
       class PureBody < Body
+        getter? overriding : Bool = true
+
         def initialize(@class : String, @virtual_target : Call)
         end
 
