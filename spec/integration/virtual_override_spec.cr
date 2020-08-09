@@ -5,19 +5,32 @@ describe "C++ virtual overriding from Crystal feature" do
     build_and_run("virtual_override") do
       # Test inheriting from abstract class
       class NameThing < Test::AbstractThing
-        def name
+        def name : UInt8*
           "NameThing".to_unsafe
         end
       end
 
       # Test inheriting from non-abstract, multiple-inheritance class
       class Thing < Test::Subclass
-        def name
+        def name : UInt8*
           "Thing".to_unsafe
         end
 
         def calc(a, b)
           a - b
+        end
+      end
+
+      # Test calling superclass method from overridden method
+      class OverrideThing < Test::Base
+        def calc(a, b)
+          superclass.calc(a, b) ** 2
+        end
+      end
+
+      class SubOverrideThing < Test::Subclass
+        def calc(a, b)
+          superclass.calc(a, b) ** 2
         end
       end
 
@@ -40,6 +53,11 @@ describe "C++ virtual overriding from Crystal feature" do
 
         it "allows calling Crystal overrides from C++" do
           Thing.new.call_virtual(7, 6).should eq(1)
+        end
+
+        it "can call superclass method from overridden method" do
+          OverrideThing.new.calc(10, 4).should eq(196)
+          SubOverrideThing.new.calc(10, 4).should eq(1600)
         end
 
         # TODO: This fails!
