@@ -188,6 +188,25 @@ module Bindgen
         splits
       end
 
+      # Returns a non-virtual copy of this method suitable for use in superclass
+      # wrapper structs.  The bodies of such copies are expected to ignore
+      # method overriding.
+      def superclass_copy : Method
+        Method.new(
+          type: @type,
+          name: "#{@name}_SUPER",
+          access: @access,
+          className: @className,
+          arguments: @arguments,
+          firstDefaultArgument: @firstDefaultArgument,
+          returnType: @returnType,
+          isConst: @isConst,
+          isVirtual: false,
+          isPure: false,
+          origin: self,
+        )
+      end
+
       # Try to deduce if this is a getter.
       def getter?(name = @name)
         @arguments.empty? && !@returnType.void? && /^get[_A-Z]/.match(name)

@@ -17,7 +17,13 @@ module Bindgen
       # If the *method* is any constructor, and the type is copied, the
       # constructor will be called without `new`, effectively returning a value.
       # Otherwise, a normal `new` is used to return a pointer.
-      def generate(method : Parser::Method, self_var : String, type : Parser::Method::Type? = nil)
+      #
+      # If *exact_member* is true and *method* is a member method, the qualified
+      # method is called, bypassing dynamic lookup.
+      def generate(
+        method : Parser::Method, self_var : String,
+        type : Parser::Method::Type? = nil, exact_member = false
+      )
         type ||= method.type
         case type
         when .copy_constructor?, .constructor?
@@ -28,15 +34,24 @@ module Bindgen
             @db.cookbook.constructor_name(method.name, name)
           end
         when .member_method?, .signal?, .operator?
-          "#{self_var}->#{method.name}"
-        when .static_method?
-          if method.class_name == GLOBAL_SCOPE
-            "::#{method.name}"
+          if exact_member
+            "#{self_var}->#{qualified method}"
           else
-            "#{method.class_name}::#{method.name}"
+            "#{self_var}->#{method.name}"
           end
+        when .static_method?
+          qualified(method)
         else
           raise "BUG: Missing case for method type #{method.type.inspect}"
+        end
+      end
+
+      # Returns the qualified name of a method.
+      private def qualified(method)
+        if method.class_name == GLOBAL_SCOPE
+          "::#{method.name}"
+        else
+          "#{method.class_name}::#{method.name}"
         end
       end
 
