@@ -45,9 +45,8 @@ module Bindgen
           prefix = "return " unless call.result.type.pure_void?
           const = "const " if call.origin.const?
           override = "override " if overriding?
-          name_suffix = "_SUPER" unless overriding?
 
-          %[#{func_result} #{call.name}#{name_suffix}(#{func_args}) #{const}#{override}{\n] \
+          %[#{func_result} #{call.name}(#{func_args}) #{const}#{override}{\n] \
           %[#{code_body(const, call, platform, prefix)}\n] \
           %[}\n]
         end
