@@ -6,14 +6,7 @@ module Bindgen
       end
 
       def build(method : Parser::Method, parent_klass : Parser::Class) : Call
-        myself = Call::Argument.new(
-          type: parent_klass.as_type,
-          type_name: parent_klass.name,
-          name: "@myself",
-          call: "@myself",
-          reference: false,
-          pointer: 0,
-        )
+        myself = Crystal::Argument.new(@db).myself(parent_klass.as_type)
 
         result = Call::Result.new(
           type: method.return_type,
@@ -38,7 +31,6 @@ module Bindgen
 
         def to_code(call : Call, _platform : Graph::Platform) : String
           formatter = Crystal::Format.new(@db)
-          myself = call.arguments.first
 
           %[def #{call.name}(#{formatter.argument_list(call.arguments)})\n] \
           %[end]
