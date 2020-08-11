@@ -68,7 +68,9 @@ module Bindgen
       end
 
       # Creates the `Superclass` Crystal struct for the given *klass*.
-      private def create_superclass(klass) : Graph::Class
+      private def create_superclass(klass) : Graph::Class?
+        return nil unless @db.try_or(klass.origin.name, true, &.generate_superclass)
+
         node = Parser::Class.new(
           name: SUPERCLASS_NAME,
           isClass: false,
@@ -144,6 +146,9 @@ module Bindgen
       end
 
       private def add_virtual_forwarders(klass, subclass, superclass)
+        ignored_methods = @db.try_or(
+          klass.origin.name, Util::FAIL_RX, &.superclass_ignore_methods)
+
         klass.nodes.each do |node|
           next unless node.is_a?(Graph::Method)
           next unless node.origin.virtual?
@@ -165,7 +170,8 @@ module Bindgen
           # Generates a C++ wrapper function that always calls the base class
           # method, but only for concrete methods that are accessible.  The
           # function definition will be filled in by `Processor::CppWrapper`.
-          next if node.origin.pure? || node.origin.private?
+          next if node.origin.pure? || node.origin.private? || superclass.nil?
+          next if ignored_methods.matches?(node.origin.name)
           method_clone = node.origin.superclass_copy
 
           cpp_wrapper = Graph::Method.new(
