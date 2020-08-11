@@ -28,10 +28,11 @@ module Bindgen
       def visit_class(klass)
         return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
 
+        scope = "private" if klass.origin.private?
         prefix = "abstract" if klass.abstract?
         suffix = "< #{klass.base_class}" if klass.base_class
 
-        code_block prefix, "class", klass.name, suffix do
+        code_block scope, prefix, "class", klass.name, suffix do
           write_instance_variables(klass.instance_variables)
           super
         end

@@ -32,6 +32,17 @@ describe "C++ virtual overriding from Crystal feature" do
         def calc(a, b)
           superclass.calc(a, b) ** 2
         end
+
+        def has_random_number?
+          superclass.has_random_number?
+        end
+      end
+
+      # Must be reopened because this type is private
+      class Test::Subclass::Superclass
+        def has_random_number?
+          {{ @type.methods.map &.name.stringify }}.includes?("random_number")
+        end
       end
 
       context "non-abstract base-class" do
@@ -97,8 +108,7 @@ describe "C++ virtual overriding from Crystal feature" do
         end
 
         it "can opt out generation of methods in superclass wrappers" do
-          methods = {{ Test::Subclass::Superclass.methods.map(&.name.stringify) }}
-          methods.includes?("random_number").should be_false
+          SubOverrideThing.new.has_random_number?.should be_false
         end
       end
     end

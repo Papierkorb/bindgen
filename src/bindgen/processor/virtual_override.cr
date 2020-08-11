@@ -73,9 +73,11 @@ module Bindgen
 
         node = Parser::Class.new(
           name: SUPERCLASS_NAME,
+          access: Parser::AccessSpecifier::Private,
           isClass: false,
           methods: [] of Parser::Method,
         )
+        # TODO: return a Crystal struct instead
         Graph::Class.new(
           origin: node,
           name: node.name,
