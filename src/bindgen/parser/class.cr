@@ -6,6 +6,7 @@ module Bindgen
       alias Collection = Hash(String, Class)
 
       JSON.mapping(
+        access: {type: AccessSpecifier, default: AccessSpecifier::Public},
         isClass: Bool,
         hasDefaultConstructor: Bool,
         hasCopyConstructor: Bool,
@@ -18,8 +19,17 @@ module Bindgen
         methods: Array(Method),
       )
 
-      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field, @methods = [] of Method)
+      def initialize(
+        @name, @byteSize = 0, @hasDefaultConstructor = false,
+        @hasCopyConstructor = false, @isClass = true, @isAbstract = false,
+        @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field,
+        @methods = [] of Method, @access = AccessSpecifier::Public
+      )
       end
+
+      # Visibility of the class.  Default is public, but some generated Crystal
+      # classes may be private.
+      delegate public?, protected?, private?, to: @access
 
       # Is this a `class`?  Opposite of `#struct?`.
       def class?
