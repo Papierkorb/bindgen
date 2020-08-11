@@ -170,7 +170,8 @@ virtual method if the Crystal method and the C++ method share the same name.
 
 ```cpp
 class Foo {
-  virtual int doWork() { ... }
+public:
+  virtual int doWork() = 0;
 };
 ```
 
@@ -187,6 +188,56 @@ end
 The arguments and result values are proxied back and forth from C++ like normal
 wrappers do.  The rules of argument handling is the same.  Such overrides will
 look and behave the same to C++ as any other virtual C++ method.
+
+**Note**: Calling `super` in the body of a Crystal method that overrides a
+concrete C++ virtual method is not supported.
+
+#### §2.3.5 Base-class wrapper
+
+A `Superclass` wrapper is defined for every impure abstract class in C++.  This
+wrapper is returned by the `#superclass` method; both the type and the method
+are private within the original Crystal wrapper.  Concrete virtual methods of
+the C++ type are mirrored in the superclass wrapper, except these methods always
+invoke the original C++ methods, ignoring method overrides from Crystal.
+
+```cpp
+class Foo {
+public:
+  virtual int bar(int x);
+  virtual int baz(int x) = 0;
+};
+```
+
+Will generate:
+
+```crystal
+class Foo
+  private class Superclass
+    def bar(x)
+      # ...
+    end
+  end
+
+  private def superclass : Superclass
+    # ...
+  end
+end
+```
+
+This allows sub-classes of `Foo` to do the following:
+
+```crystal
+class MyFoo < Foo
+  def bar(x)
+    superclass.bar(x) + superclass.bar(x - 1)
+    # equivalent to: super + super(x - 1)
+  end
+end
+```
+
+**Note**: The wrapped methods always refer to the C++ methods.  If another class
+inherits from `MyFoo` and overrides `#bar`, the overriding method may refer to
+`MyFoo#bar` using `super` directly.
 
 ## §3. Crystal bindings
 
@@ -205,7 +256,7 @@ The name consists out of the following parts (in this order):
 
 All of these parts are joined by a single underscore (`_`).
 
-**Argument type mangling**
+#### Argument type mangling
 
 The argument list is a list of all types of the arguments, in the order they
 appear in the method prototype.  Each argument types C++ name is taken and
@@ -216,7 +267,7 @@ transformed, such that:
 3. All alpha-numeric characters are kept
 4. All other characters are replaced with `_`
 
-**Method types**
+#### Method types
 
 The method type marker mainly depends on the method type.  However, special
 generated methods may use custom markers to distinguish them.
@@ -226,7 +277,7 @@ generated methods may use custom markers to distinguish them.
 * Constructors use `CONSTRUCT`
 * Destructors use `DESTRUCT`
 
-**Examples**
+#### Examples
 
 1. Member method `void Foo::bar(int *&) -> bg_Foo_bar_int_XR`
 2. Static method: `void Foo::bar(std::string) -> bg_Foo_STATIC_bar_std__string`
