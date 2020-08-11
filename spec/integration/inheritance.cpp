@@ -46,3 +46,9 @@ struct Subclass : public Base, public AbstractThing {
     return 1;
   }
 };
+
+struct Skip {
+  virtual int ignoreThis() const {
+    return 7;
+  }
+};

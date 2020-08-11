@@ -89,6 +89,18 @@ describe "C++ virtual overriding from Crystal feature" do
           String.new(abstract_base.name).should eq("NameThing")
         end
       end
+
+      context "superclass opt-out" do
+        it "can opt out generation of superclass wrappers" do
+          {{ Test::Skip.has_constant?("Superclass") }}.should be_false
+          {{ Test::Skip.methods.map(&.name.stringify) }}.includes?("superclass").should be_false
+        end
+
+        it "can opt out generation of methods in superclass wrappers" do
+          methods = {{ Test::Subclass::Superclass.methods.map(&.name.stringify) }}
+          methods.includes?("random_number").should be_false
+        end
+      end
     end
   end
 end

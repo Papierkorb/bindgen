@@ -10,6 +10,14 @@ module Bindgen
       Value     # Force a C++ pass-by-value
     end
 
+    # YAML converter for building a regex from an array of strings.  The regex
+    # is the union of the individual string patterns.
+    module ArrayRegexConverter
+      def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Regex
+        Regex.union(Array(String).new(ctx, node).map(&->Regex.new(String)))
+      end
+    end
+
     # Configuration of types, used in `Configuration#types` (The `types:` map
     # in YAML).  See `TypeDatabase::Configuration`.
     class TypeConfig
@@ -101,11 +109,25 @@ module Bindgen
           default: true,
         },
 
+        # If to generate a superclass wrapper in Crystal.
+        generate_superclass: {
+          type:    Bool,
+          default: true,
+        },
+
         # Which methods to filter out.
         ignore_methods: {
           type:    Array(String),
           default: [] of String,
-        }
+        },
+
+        # Which methods to filter out in the superclass wrapper.  A method is
+        # ignored if it matches any of the regex patterns specified.
+        superclass_ignore_methods: {
+          type:    Regex,
+          default: Util::FAIL_RX,
+          converter: ArrayRegexConverter,
+        },
       )
 
       # The node this type is represented by in the graph, if any
@@ -118,7 +140,9 @@ module Bindgen
         @kind = Parser::Type::Kind::Class, @ignore = false,
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
-        @generate_binding = true, @builtin = false, @ignore_methods = [] of String,
+        @generate_binding = true, @generate_superclass = true,
+        @builtin = false, @ignore_methods = [] of String,
+        @superclass_ignore_methods = Util::FAIL_RX,
         @graph_node = nil, @alias_for = nil
       )
       end
