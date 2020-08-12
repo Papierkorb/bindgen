@@ -11,6 +11,8 @@ module Bindgen
         CopyConstructor
         Destructor
         MemberMethod
+        MemberGetter
+        MemberSetter
         StaticMethod
         Operator
 
@@ -69,7 +71,8 @@ module Bindgen
         method
       end
 
-      delegate constructor?, copy_constructor?, member_method?, static_method?, signal?, operator?, destructor?, to: @type
+      delegate constructor?, copy_constructor?, member_method?, member_getter?,
+        member_setter?, static_method?, signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
       def_equals_and_hash @type, @name, @className, @access, @arguments, @firstDefaultArgument, @returnType, @isConst, @isVirtual, @isPure, @isExternC
@@ -273,6 +276,10 @@ module Bindgen
           else
             name # Normal method
           end
+        when .member_getter?
+          name
+        when .member_setter?
+          name + "="
         when .constructor?
           "initialize"
         when .copy_constructor?
@@ -412,6 +419,8 @@ module Bindgen
         case self
         when .constructor?      then "#{name}_CONSTRUCT"
         when .copy_constructor? then "#{name}_COPY"
+        when .member_getter?    then "#{name}_GETTER"
+        when .member_setter?    then "#{name}_SETTER"
         when .operator?         then operator_name
         when .static_method?    then "#{name}_STATIC"
         when .destructor?       then "#{name}_DESTROY"

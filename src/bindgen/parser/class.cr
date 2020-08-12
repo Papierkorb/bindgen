@@ -81,6 +81,14 @@ module Bindgen
         Util.mangle_type_name(@name)
       end
 
+      # Yields each instance field defined in this class.  Does not include
+      # fields from base classes.
+      def each_field
+        @fields.each do |field|
+          yield field
+        end
+      end
+
       # Constructs a method destroying an instance of this class.
       def destructor_method : Method
         Parser::Method.new(
