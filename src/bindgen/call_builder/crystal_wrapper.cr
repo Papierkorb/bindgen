@@ -76,6 +76,7 @@ module Bindgen
             static: call.origin.static_method?,
             abstract: call.origin.pure?,
             protected: call.origin.protected?,
+            private: call.origin.private?,
           )
 
           %[#{head_line}\n] \

@@ -1,0 +1,13 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - instance_properties
+  - crystal_wrapper
+  - cpp_wrapper
+  - crystal_binding
+  - sanity_check
+
+classes:
+  Point: Point
+  Props: Props
