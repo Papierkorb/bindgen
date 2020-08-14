@@ -58,7 +58,7 @@ describe "C++ instance properties" do
         end
       end
 
-       context "setter methods" do
+      context "setter methods" do
         it "is generated for public members" do
           props = Test::Props.new(5, 8)
           props.x_pub = 7
@@ -101,6 +101,42 @@ describe "C++ instance properties" do
           got = props.position_val
           got.x.should eq(60)
           got.y.should eq(61)
+        end
+      end
+
+      context "YAML configuration" do
+        it "supports `instance_variables: false`" do
+          {{ Test::ConfigIgnoreAll.has_method?("a") }}.should be_false
+          {{ Test::ConfigIgnoreAll.has_method?("b") }}.should be_false
+        end
+
+        it "can ignore individual properties" do
+          {{ Test::ConfigIgnore.has_method?("a") }}.should be_false
+          {{ Test::ConfigIgnore.has_method?("b") }}.should be_true
+        end
+
+        it "can rename property methods" do
+          {{ Test::ConfigRename.has_method?("a_a") }}.should be_true
+          {{ Test::ConfigRename.has_method?("aa") }}.should be_false
+          {{ Test::ConfigRename.has_method?("a_b") }}.should be_true
+          {{ Test::ConfigRename.has_method?("ab") }}.should be_false
+          {{ Test::ConfigRename.has_method?("bb") }}.should be_true
+        end
+
+        context "can mark a pointer member as nilable" do
+          props = Test::ConfigNilable.new
+          bool = uninitialized Bool
+          point = Test::Point.new(3, 4)
+
+          props.bool_ptr = pointerof(bool)
+          props.bool_ptr.should eq(pointerof(bool))
+          props.bool_ptr = nil
+          props.bool_ptr.should eq(Pointer(Bool).null)
+
+          props.point_ptr = point
+          props.point_ptr.not_nil!.to_unsafe.should eq(point.to_unsafe)
+          props.point_ptr = nil
+          props.point_ptr.should eq(nil)
         end
       end
     end

@@ -195,6 +195,26 @@ kind: Kind::Function,
         )
       end
 
+      # If the type is a pointer and not a reference, returns a copy of this
+      # type that is nilable, otherwise returns `nil`.
+      def make_pointer_nilable : Type?
+        if @pointer > 0 && !@isReference && !@isMove
+          Type.new(
+            kind: @kind,
+            isConst: @isConst,
+            isReference: false,
+            isMove: false,
+            isBuiltin: @isBuiltin,
+            isVoid: @isVoid,
+            pointer: @pointer,
+            baseName: @baseName,
+            fullName: @fullName,
+            template: @template,
+            nilable: true,
+          )
+        end
+      end
+
       def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
 
       def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false, @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template = nil, @nilable = false)

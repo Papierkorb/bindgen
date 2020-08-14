@@ -18,6 +18,26 @@ module Bindgen
       end
     end
 
+    # Configuration of instance variables.
+    class InstanceVariableConfig
+      include YAML::Serializable
+
+      # Mapping from member name patterns to configurations.
+      alias Collection = Hash(Regex, InstanceVariableConfig)
+
+      # Rename the property methods. Supports regex backreferences.
+      property rename : String? = nil
+
+      # Ignore the property methods for this data member.
+      property ignore = false
+
+      # Whether the null pointer can be assigned to this data member.
+      property nilable = false
+
+      def initialize(*, @rename = nil, @ignore = false, nilable = false)
+      end
+    end
+
     # Configuration of types, used in `Configuration#types` (The `types:` map
     # in YAML).  See `TypeDatabase::Configuration`.
     class TypeConfig
@@ -84,7 +104,8 @@ module Bindgen
           default: true,
         },
 
-        # If the structure (as in, its fields) shall be tried to replicated in Crystal.
+        # If the structure (as in, its fields) shall be tried to replicated in
+        # Crystal.  Implies `instance_variables: false`.
         # This doesn't support inheritance!
         copy_structure: {
           type:    Bool,
@@ -128,6 +149,14 @@ module Bindgen
           default: Util::FAIL_RX,
           converter: ArrayRegexConverter,
         },
+        
+        # Instance variable configuration.  Each hash key is a regex used to
+        # match instance variable names.
+        instance_variables: {
+          type:      InstanceVariableConfig::Collection,
+          default:   InstanceVariableConfig::Collection.new,
+          converter: Bindgen::Configuration::InstanceVariablesConverter,
+        },
       )
 
       # The node this type is represented by in the graph, if any
@@ -143,6 +172,7 @@ module Bindgen
         @generate_binding = true, @generate_superclass = true,
         @builtin = false, @ignore_methods = [] of String,
         @superclass_ignore_methods = Util::FAIL_RX,
+        @instance_variables = InstanceVariableConfig::Collection.new,
         @graph_node = nil, @alias_for = nil
       )
       end
