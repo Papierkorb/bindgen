@@ -116,11 +116,11 @@ describe "C++ instance properties" do
         end
 
         it "can rename property methods" do
-          {{ Test::ConfigRename.has_method?("a_a") }}.should be_true
-          {{ Test::ConfigRename.has_method?("aa") }}.should be_false
-          {{ Test::ConfigRename.has_method?("a_b") }}.should be_true
-          {{ Test::ConfigRename.has_method?("ab") }}.should be_false
-          {{ Test::ConfigRename.has_method?("bb") }}.should be_true
+          {{ Test::ConfigRename.has_method?("var") }}.should be_true
+          {{ Test::ConfigRename.has_method?("m_i_var") }}.should be_false
+          {{ Test::ConfigRename.has_method?("another_var") }}.should be_true
+          {{ Test::ConfigRename.has_method?("m_i_another_var") }}.should be_false
+          {{ Test::ConfigRename.has_method?("x") }}.should be_true
         end
 
         context "can mark a pointer member as nilable" do
