@@ -36,6 +36,7 @@ processors:
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - functions # Add non-class functions
+  - instance_properties # Add property methods for public instance members
   - filter_methods # Throw out filtered methods
   - extern_c # Directly bind to pure C functions
   - instantiate_containers # Actually instantiate containers

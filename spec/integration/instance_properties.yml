@@ -11,3 +11,22 @@ processors:
 classes:
   Point: Point
   Props: Props
+  ConfigIgnoreAll: ConfigIgnoreAll
+  ConfigIgnore: ConfigIgnore
+  ConfigRename: ConfigRename
+  ConfigNilable: ConfigNilable
+
+types:
+  Point:
+    instance_variables: true
+  ConfigIgnoreAll:
+    instance_variables: false
+  ConfigIgnore:
+    instance_variables:
+      a: { ignore: true }
+  ConfigRename:
+    instance_variables:
+      "^a(.)$": { rename: "a_\\1" }
+  ConfigNilable:
+    instance_variables:
+      ".*": { nilable: true }

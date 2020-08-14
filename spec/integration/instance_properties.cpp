@@ -28,3 +28,22 @@ private:
   int x_priv;
   const int y_priv;
 };
+
+struct ConfigIgnoreAll {
+  const int a, b;
+};
+
+struct ConfigIgnore {
+  const int a, b;
+};
+
+struct ConfigRename {
+  const int aa, ab, bb;
+};
+
+struct ConfigNilable {
+  ConfigNilable() = default;
+
+  bool *bool_ptr;
+  Point *point_ptr;
+};

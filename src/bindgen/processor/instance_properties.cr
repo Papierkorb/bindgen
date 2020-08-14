@@ -2,6 +2,9 @@ module Bindgen
   module Processor
     # Processor to add getter and setter methods for instance variables.
     class InstanceProperties < Base
+      # Mapping from member name patterns to configurations.
+      private alias VarConfig = TypeDatabase::InstanceVariableConfig::Collection
+
       def initialize(*args)
         super
       end
@@ -11,28 +14,45 @@ module Bindgen
         # into `Binding`, as all fields are directly accessible anyway.
         return if klass.wrapped_class || @db[klass.name]?.try(&.copy_structure)
 
+        var_config = @db.try_or(klass.name, VarConfig.new, &.instance_variables)
+
         klass.origin.each_field do |field|
           # Ignore private fields.  Also ignore all reference fields for now.
           next if field.private? || field.reference? || field.move?
 
-          add_getter(klass, field)
-          add_setter(klass, field) unless field.const?
+          pattern, config = lookup_member_config(var_config, field.name)
+          next if config.ignore
+
+          # C++'s `protected` is closer to Crystal's `private` than to `protected`
+          access = field.protected? ?
+            Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
+          method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
+          field_type = config.nilable ? (field.make_pointer_nilable || field) : field
+
+          add_getter(klass, access, field_type, field.name, method_name)
+          add_setter(klass, access, field_type, field.name, method_name) unless field.const?
         end
 
         super
       end
 
+      # Looks up the configuration used for an instance variable.
+      private def lookup_member_config(var_config, field_name)
+        var_config.each do |key, config|
+          return {key, config} if key.matches?(field_name)
+        end
+
+        {Util::FAIL_RX, TypeDatabase::InstanceVariableConfig.new}
+      end
+
       # Builds a C++ wrapper method for an instance variable getter.  The `lib`
       # binding and the Crystal wrapper method are generated later.
-      private def add_getter(klass, field)
-        # C++'s `protected` is closer to Crystal's `private` than to `protected`
-        access = field.protected? ?
-          Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
-
+      private def add_getter(klass, access, field_type, field_name, method_name)
         method_origin = Parser::Method.new(
-          name: field.name,
+          name: field_name,
+          crystal_name: method_name,
           className: klass.origin.name,
-          returnType: field.as(Parser::Type),
+          returnType: field_type,
           arguments: [] of Parser::Argument,
           type: Parser::Method::Type::MemberGetter,
           access: access,
@@ -40,7 +60,7 @@ module Bindgen
         )
 
         method = Graph::Method.new(
-          name: method_origin.name,
+          name: field_name,
           origin: method_origin,
           parent: klass,
         )
@@ -66,15 +86,12 @@ module Bindgen
 
       # Builds a C++ wrapper method for an instance variable setter.  The `lib`
       # binding and the Crystal wrapper method are generated later.
-      private def add_setter(klass, field)
-        # C++'s `protected` is closer to Crystal's `private` than to `protected`
-        access = field.protected? ?
-          Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
-
-        arg = Parser::Argument.new(field.name, field.as(Parser::Type))
+      private def add_setter(klass, access, field_type, field_name, method_name)
+        arg = Parser::Argument.new(field_name, field_type)
 
         method_origin = Parser::Method.new(
-          name: field.name,
+          name: field_name,
+          crystal_name: method_name + "=",
           className: klass.origin.name,
           returnType: Parser::Type::VOID,
           arguments: [arg],
@@ -83,7 +100,7 @@ module Bindgen
         )
 
         method = Graph::Method.new(
-          name: method_origin.name,
+          name: field_name,
           origin: method_origin,
           parent: klass,
         )

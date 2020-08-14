@@ -10,6 +10,26 @@ module Bindgen
       Value     # Force a C++ pass-by-value
     end
 
+    # Configuration of instance variables.
+    class InstanceVariableConfig
+      include YAML::Serializable
+
+      # Mapping from member name patterns to configurations.
+      alias Collection = Hash(Regex, InstanceVariableConfig)
+
+      # Rename the property methods. Supports regex backreferences.
+      property rename : String? = nil
+
+      # Ignore the property methods for this data member.
+      property ignore = false
+
+      # Whether the null pointer can be assigned to this data member.
+      property nilable = false
+
+      def initialize(*, @rename = nil, @ignore = false, nilable = false)
+      end
+    end
+
     # Configuration of types, used in `Configuration#types` (The `types:` map
     # in YAML).  See `TypeDatabase::Configuration`.
     class TypeConfig
@@ -76,7 +96,8 @@ module Bindgen
           default: true,
         },
 
-        # If the structure (as in, its fields) shall be tried to replicated in Crystal.
+        # If the structure (as in, its fields) shall be tried to replicated in
+        # Crystal.  Implies `instance_variables: false`.
         # This doesn't support inheritance!
         copy_structure: {
           type:    Bool,
@@ -105,6 +126,14 @@ module Bindgen
         ignore_methods: {
           type:    Array(String),
           default: [] of String,
+        },
+
+        # Instance variable configuration.  Each hash key is a regex used to
+        # match instance variable names.
+        instance_variables: {
+          type:      InstanceVariableConfig::Collection,
+          default:   InstanceVariableConfig::Collection.new,
+          converter: Bindgen::Configuration::InstanceVariablesConverter,
         }
       )
 
@@ -119,6 +148,7 @@ module Bindgen
         @pass_by = PassBy::Original, @wrapper_pass_by = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
         @generate_binding = true, @builtin = false, @ignore_methods = [] of String,
+        @instance_variables = InstanceVariableConfig::Collection.new,
         @graph_node = nil, @alias_for = nil
       )
       end
