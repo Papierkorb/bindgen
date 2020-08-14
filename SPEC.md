@@ -74,7 +74,7 @@ by using the `from_crystal` template: `my_from_crystal(arg_name)`.
 2. A type with `converter` set would be wrapped by using the `converter` module:
    `MyConverter.unwrap(arg_name)`.
 
-#### §2.2.4 Unnamed arguments
+#### §2.2.2 Unnamed arguments
 
 C++ allows the declaration of unnamed arguments, like this: `void foo(int)`.
 To wrap these methods, such arguments are given a name like `unnamed_arg_X`,
@@ -83,7 +83,7 @@ where `X` is the zero-indexed index of the affected argument.
 Given `void foo(int, int two, int)`, the generated wrapper prototype would look
 like this: `foo(unnamed_arg_0 : Int32, two : Int32, unnamed_arg_2 : Int32)`.
 
-#### §2.2.5 Argument renaming
+#### §2.2.3 Argument renaming
 
 If an argument has a name which is a reserved word in Crystal, it gets an
 underscore (`_`) appended: `void foo(int next) -> foo(next_ : Int32)`.
@@ -187,6 +187,112 @@ end
 The arguments and result values are proxied back and forth from C++ like normal
 wrappers do.  The rules of argument handling is the same.  Such overrides will
 look and behave the same to C++ as any other virtual C++ method.
+
+### §2.4 Instance properties
+
+Property methods can be generated for an instance variable in a Crystal wrapper
+if:
+
+* The member's visibility is `public` or `protected` (the latter is mapped to
+  `private` in Crystal)
+* The member is not an lvalue or rvalue reference
+* The type's `copy_structure` is not set
+* The type's `instance_variable` settings do not reject the member
+
+The getter is always defined for every instance variable, but the setter is
+omitted if the instance variable was defined as a `const` member.  Property
+methods are underscored.
+
+```cpp
+struct Point {
+  int xPos, yPos;
+protected:
+  const int version;
+};
+```
+
+Will be wrapped as: (implementations omitted)
+
+```crystal
+class Point
+  def x_pos : Int32 end
+  def x_pos=(x_pos : Int32) : Void end
+  def y_pos : Int32 end
+  def y_pos=(y_pos : Int32) : Void end
+  private def version : Int32 end
+end
+```
+
+### §2.4.1 Class type properties
+
+If an instance variable is a value of another wrapped type, by default the
+getter allocates a copy of the variable in C/C++ (using the C++ type's copy
+constructor), so it is safe to modify the returned object without altering the
+original instance.
+
+```cpp
+struct Line {
+  Point start;
+};
+```
+
+```crystal
+class Line
+  def start : Point end
+  def start=(start : Point) : Void end
+end
+
+def start_from_zero(line : Line)
+  # This has no effect!
+  # `line.start` returns a copy of the property
+  line.start.x_pos = 0
+end
+```
+
+### §2.4.2 Pointer properties
+
+If an instance variable is a pointer to a wrapped type, instances of the wrapped
+type can be passed directly without forming any pointers.  These properties may
+additionally be configured as nilable, in which case they may accept and return
+`nil` as well, corresponding to C++'s `nullptr`.
+
+```cpp
+struct LinkedList {
+  LinkedList *child;
+  LinkedList *prev; // nilable
+};
+```
+
+Generates:
+
+```crystal
+class LinkedList
+  def child() : LinkedList end
+  def child=(child : LinkedList) : Void end
+  def prev() : LinkedList? end
+  def prev=(child : LinkedList?) : Void end
+end
+```
+
+Pointers of non-wrapped types, including primitive types, are exposed as Crystal
+`Pointer(T)`s, and they are always nilable, using `Pointer(T).null` instead
+of `nil`.
+
+```cpp
+struct OutParam {
+  int *index;
+  bool *found;
+};
+```
+
+```crystal
+class OutParam
+  def index : Int32* end
+  def index=(index : Int32*) : Void end
+  def found : Bool* end
+  def found=(found : Bool*) : Void end
+end
+```
 
 ## §3. Crystal bindings
 

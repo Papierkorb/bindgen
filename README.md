@@ -43,6 +43,7 @@ dependencies:
       * [Functions](#functions)
       * [FunctionClass](#functionclass)
       * [Inheritance](#inheritance)
+      * [InstanceProperties](#instanceproperties)
       * [InstantiateContainers](#instantiatecontainers)
       * [Macros](#macros)
       * [Qt](#qt)
@@ -111,6 +112,7 @@ The following rules are automatically applied to all bindings:
 | Mapping C++ classes                              |         |
 |  +- Member methods                               | **YES** |
 |  +- Static methods                               | **YES** |
+|  +- Getters and setters for instance variables   | **YES** |
 |  +- Constructors                                 | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
@@ -391,6 +393,14 @@ through configuration in the `functions:` map.
 Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
 Also handles abstract classes in that it adds an `Impl` class, so code can
 return instances to the (otherwise) abstract class.
+
+## `InstanceProperties`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Generates getter and setter methods for instance members.
 
 ## `InstantiateContainers`
 
