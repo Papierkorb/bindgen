@@ -38,7 +38,7 @@ struct ConfigIgnore {
 };
 
 struct ConfigRename {
-  const int aa, ab, bb;
+  const int m_iVar, m_iAnotherVar, x;
 };
 
 struct ConfigNilable {

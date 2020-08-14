@@ -27,6 +27,7 @@ module Bindgen
           access = field.protected? ?
             Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
+          method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
 
           add_getter(klass, access, field_type, field.name, method_name)

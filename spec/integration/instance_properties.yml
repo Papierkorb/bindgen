@@ -26,7 +26,7 @@ types:
       a: { ignore: true }
   ConfigRename:
     instance_variables:
-      "^a(.)$": { rename: "a_\\1" }
+      "^m_i(.*)$": { rename: "\\1" }
   ConfigNilable:
     instance_variables:
       ".*": { nilable: true }
