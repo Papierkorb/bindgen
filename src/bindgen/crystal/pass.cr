@@ -245,8 +245,7 @@ module Bindgen
         end
 
         if nilable
-          %[ptr = %\n] \
-          %[#{type_name}.new(unwrap: ptr) unless ptr.null?]
+          %[%.try {|ptr| #{type_name}.new(unwrap: ptr) unless ptr.null?}]
         else
           "#{type_name}.new(unwrap: %)"
         end
