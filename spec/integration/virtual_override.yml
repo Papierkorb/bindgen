@@ -14,3 +14,10 @@ classes:
   Base: Base
   AbstractThing: AbstractThing
   Subclass: Subclass
+  Skip: Skip
+
+types:
+  Subclass:
+    superclass_ignore_methods: [ "^random" ]
+  Skip:
+    generate_superclass: false

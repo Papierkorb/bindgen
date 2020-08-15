@@ -170,8 +170,13 @@ module Bindgen
               ptr -= 1
             end
 
+            # Do not return types like `Bool*?` from the wrapper.
+            if rules.builtin && ptr > 0 && !is_ref
+              nilable = false
+            end
+
             if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
-              template = wrapper_initialize_template(rules, type_name)
+              template = wrapper_initialize_template(rules, type_name, nilable)
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.crystal_pass_by, is_ref, ptr)
@@ -231,7 +236,7 @@ module Bindgen
 
       # Returns the `Call::Result#conversion` template to turn a pointer into an
       # instance of *type_name* by using its `#initialize(unwrap: x)` method.
-      private def wrapper_initialize_template(rules, type_name)
+      private def wrapper_initialize_template(rules, type_name, nilable)
         # If the target type is abstract, use its `Impl` class instead.
         if klass = rules.graph_node.as?(Graph::Class)
           if impl = klass.wrap_class
@@ -239,7 +244,11 @@ module Bindgen
           end
         end
 
-        "#{type_name}.new(unwrap: %)"
+        if nilable
+          %[%.try {|ptr| #{type_name}.new(unwrap: ptr) unless ptr.null?}]
+        else
+          "#{type_name}.new(unwrap: %)"
+        end
       end
     end
   end

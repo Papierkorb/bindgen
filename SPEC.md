@@ -74,7 +74,7 @@ by using the `from_crystal` template: `my_from_crystal(arg_name)`.
 2. A type with `converter` set would be wrapped by using the `converter` module:
    `MyConverter.unwrap(arg_name)`.
 
-#### §2.2.4 Unnamed arguments
+#### §2.2.2 Unnamed arguments
 
 C++ allows the declaration of unnamed arguments, like this: `void foo(int)`.
 To wrap these methods, such arguments are given a name like `unnamed_arg_X`,
@@ -83,7 +83,7 @@ where `X` is the zero-indexed index of the affected argument.
 Given `void foo(int, int two, int)`, the generated wrapper prototype would look
 like this: `foo(unnamed_arg_0 : Int32, two : Int32, unnamed_arg_2 : Int32)`.
 
-#### §2.2.5 Argument renaming
+#### §2.2.3 Argument renaming
 
 If an argument has a name which is a reserved word in Crystal, it gets an
 underscore (`_`) appended: `void foo(int next) -> foo(next_ : Int32)`.
@@ -170,7 +170,8 @@ virtual method if the Crystal method and the C++ method share the same name.
 
 ```cpp
 class Foo {
-  virtual int doWork() { ... }
+public:
+  virtual int doWork() = 0;
 };
 ```
 
@@ -187,6 +188,163 @@ end
 The arguments and result values are proxied back and forth from C++ like normal
 wrappers do.  The rules of argument handling is the same.  Such overrides will
 look and behave the same to C++ as any other virtual C++ method.
+
+**Note**: Calling `super` in the body of a Crystal method that overrides a
+concrete C++ virtual method is not supported.  **The process will crash due to
+a stack overflow!**
+
+#### §2.3.5 Base-class wrapper
+
+A `Superclass` wrapper is defined for every impure abstract class in C++.  This
+wrapper is returned by the `#superclass` method; both the type and the method
+are private within the original Crystal wrapper.  Concrete virtual methods of
+the C++ type are mirrored in the superclass wrapper, except these methods always
+invoke the original C++ methods, ignoring method overrides from Crystal.
+
+```cpp
+class Foo {
+public:
+  virtual int bar(int x);
+  virtual int baz(int x) = 0;
+};
+```
+
+Will generate:
+
+```crystal
+class Foo
+  private class Superclass
+    def bar(x)
+      # ...
+    end
+  end
+
+  private def superclass : Superclass
+    # ...
+  end
+end
+```
+
+This allows sub-classes of `Foo` to do the following:
+
+```crystal
+class MyFoo < Foo
+  def bar(x)
+    superclass.bar(x) + superclass.bar(x - 1)
+    # equivalent to: super + super(x - 1)
+  end
+end
+```
+
+**Note**: The wrapped methods always refer to the C++ methods.  If another class
+inherits from `MyFoo` and overrides `#bar`, the overriding method may refer to
+`MyFoo#bar` using `super` directly.
+
+### §2.4 Instance properties
+
+Property methods can be generated for an instance variable in a Crystal wrapper
+if:
+
+* The member's visibility is `public` or `protected` (the latter is mapped to
+  `private` in Crystal)
+* The member is not an lvalue or rvalue reference
+* The type's `copy_structure` is not set
+* The type's `instance_variable` settings do not reject the member
+
+The getter is always defined for every instance variable, but the setter is
+omitted if the instance variable was defined as a `const` member.  Property
+methods are underscored.
+
+```cpp
+struct Point {
+  int xPos, yPos;
+protected:
+  const int version;
+};
+```
+
+Will be wrapped as: (implementations omitted)
+
+```crystal
+class Point
+  def x_pos : Int32 end
+  def x_pos=(x_pos : Int32) : Void end
+  def y_pos : Int32 end
+  def y_pos=(y_pos : Int32) : Void end
+  private def version : Int32 end
+end
+```
+
+### §2.4.1 Class type properties
+
+If an instance variable is a value of another wrapped type, by default the
+getter allocates a copy of the variable in C/C++ (using the C++ type's copy
+constructor), so it is safe to modify the returned object without altering the
+original instance.
+
+```cpp
+struct Line {
+  Point start;
+};
+```
+
+```crystal
+class Line
+  def start : Point end
+  def start=(start : Point) : Void end
+end
+
+def start_from_zero(line : Line)
+  # This has no effect!
+  # `line.start` returns a copy of the property
+  line.start.x_pos = 0
+end
+```
+
+### §2.4.2 Pointer properties
+
+If an instance variable is a pointer to a wrapped type, instances of the wrapped
+type can be passed directly without forming any pointers.  These properties may
+additionally be configured as nilable, in which case they may accept and return
+`nil` as well, corresponding to C++'s `nullptr`.
+
+```cpp
+struct LinkedList {
+  LinkedList *child;
+  LinkedList *prev; // nilable
+};
+```
+
+Generates:
+
+```crystal
+class LinkedList
+  def child() : LinkedList end
+  def child=(child : LinkedList) : Void end
+  def prev() : LinkedList? end
+  def prev=(child : LinkedList?) : Void end
+end
+```
+
+Pointers of non-wrapped types, including primitive types, are exposed as Crystal
+`Pointer(T)`s, and they are always nilable, using `Pointer(T).null` instead
+of `nil`.
+
+```cpp
+struct OutParam {
+  int *index;
+  bool *found;
+};
+```
+
+```crystal
+class OutParam
+  def index : Int32* end
+  def index=(index : Int32*) : Void end
+  def found : Bool* end
+  def found=(found : Bool*) : Void end
+end
+```
 
 ## §3. Crystal bindings
 
@@ -205,7 +363,7 @@ The name consists out of the following parts (in this order):
 
 All of these parts are joined by a single underscore (`_`).
 
-**Argument type mangling**
+#### Argument type mangling
 
 The argument list is a list of all types of the arguments, in the order they
 appear in the method prototype.  Each argument types C++ name is taken and
@@ -216,7 +374,7 @@ transformed, such that:
 3. All alpha-numeric characters are kept
 4. All other characters are replaced with `_`
 
-**Method types**
+#### Method types
 
 The method type marker mainly depends on the method type.  However, special
 generated methods may use custom markers to distinguish them.
@@ -226,7 +384,7 @@ generated methods may use custom markers to distinguish them.
 * Constructors use `CONSTRUCT`
 * Destructors use `DESTRUCT`
 
-**Examples**
+#### Examples
 
 1. Member method `void Foo::bar(int *&) -> bg_Foo_bar_int_XR`
 2. Static method: `void Foo::bar(std::string) -> bg_Foo_STATIC_bar_std__string`

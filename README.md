@@ -43,6 +43,7 @@ dependencies:
       * [Functions](#functions)
       * [FunctionClass](#functionclass)
       * [Inheritance](#inheritance)
+      * [InstanceProperties](#instanceproperties)
       * [InstantiateContainers](#instantiatecontainers)
       * [Macros](#macros)
       * [Qt](#qt)
@@ -111,6 +112,7 @@ The following rules are automatically applied to all bindings:
 | Mapping C++ classes                              |         |
 |  +- Member methods                               | **YES** |
 |  +- Static methods                               | **YES** |
+|  +- Getters and setters for instance variables   | **YES** |
 |  +- Constructors                                 | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
@@ -392,6 +394,14 @@ Implements Crystal wrapper inheritance and adds `#as_X` conversion methods.
 Also handles abstract classes in that it adds an `Impl` class, so code can
 return instances to the (otherwise) abstract class.
 
+## `InstanceProperties`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Generates getter and setter methods for instance members.
+
 ## `InstantiateContainers`
 
 * **Kind**: Refining
@@ -430,6 +440,8 @@ Adds Qt specific behaviour:
 
 1. Removes the `qt_check_for_QGADGET_macro` fake method.
 2. Provides `#on_SIGNAL` signal connection method.
+3. Removes `#meta_object`, `#qt_metacast`, and `#qt_metacall` from superclass
+   wrappers, as these shouldn't be overridden by the user.
 
 ```crystal
 btn = Qt::PushButton.new
@@ -489,10 +501,36 @@ After this, usage is the same as with any method:
 
 ```crystal
 class MyAdder < VirtualCalculator
-  # In C++: virtual int calculate(int a, int b);
+  # In C++: virtual int calculate(int a, int b) = 0;
   # In Crystal:
-  def calculate(a, b)
+  def calculate(a, b) : Int32
     a + b
+  end
+end
+```
+
+**Do NOT call `super` in the body of a Crystal method that overrides a concrete
+C++ virtual method!**  Due to Bindgen's limitations, doing so will result in a
+stack overflow immediately.  Instead, Bindgen provides a _private_ `#superclass`
+method in every concrete abstract class; it wraps the calling instance so that
+the original C++ methods can be called, bypassing Crystal's overrides.
+
+```crystal
+class MyLogger < Calculator
+  # In C++:
+  # virtual void clear_memory();
+  # virtual void add_memory(int m);
+
+  # In Crystal:
+  def clear_memory : Nil
+    puts "M = 0"
+    superclass.clear_memory
+  end
+
+  def add_memory(m) : Nil
+    puts "M += #{m}"
+    # unlike `super`, all arguments are mandatory
+    superclass.add_memory(m)
   end
 end
 ```
@@ -648,6 +686,7 @@ named after the following pattern on Debian-based systems:
 - [docelic](https://github.com/docelic) Davor Ocelic
 - [kalinon](https://github.com/kalinon) Holden Omans
 - [ZaWertun](https://github.com/ZaWertun) Yaroslav Sidlovsky
+- [HertzDevil](https://github.com/HertzDevil) Quinton Miller
 
 # License
 

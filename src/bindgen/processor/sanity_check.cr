@@ -15,8 +15,11 @@ module Bindgen
     # * Alias targets are reachable
     # * Class base-classes are reachable
     class SanityCheck < Base
-      # Illegal constants in a flag enumeration
-      ILLEGAL_FLAG_ENUM = {"All", "None"}
+      # The all-flags constant in a flag-enum
+      ENUM_FLAG_ALL = "All"
+
+      # The no-flags constant in a flag-enum
+      ENUM_FLAG_NONE = "None"
 
       # Regular expression for a CONSTANT
       CONSTANT_RX = /^[A-Z_][A-Z0-9_]*$/
@@ -95,11 +98,20 @@ module Bindgen
           add_error(enumeration, "Enum doesn't have any constants")
         end
 
-        # 2. Check flags-enum
         if e.flags?
-          ILLEGAL_FLAG_ENUM.each do |name|
-            if e.values.has_key?(name)
-              add_error(enumeration, "@[Flags] enum can't have a #{name} constant")
+          # 2. Check All constant in flags-enum
+          if e.values.has_key?(ENUM_FLAG_ALL)
+            add_error(enumeration, "@[Flags] enum can't have an All constant")
+          end
+
+          # 3. Check None constant in flags-enum
+          if none_value = e.values[ENUM_FLAG_NONE]?
+            if e.values.size == 1
+              add_error(enumeration, "Enum doesn't have any constants")
+            end
+
+            if none_value != 0
+              add_error(enumeration, "@[Flags] enum can't have a non-0 None constant")
             end
           end
         end

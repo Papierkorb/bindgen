@@ -36,6 +36,7 @@ processors:
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - functions # Add non-class functions
+  - instance_properties # Add property methods for public instance members
   - filter_methods # Throw out filtered methods
   - extern_c # Directly bind to pure C functions
   - instantiate_containers # Actually instantiate containers
@@ -399,8 +400,8 @@ types:
     # and back.
     #
     # module TheConverter
-    #   def wrap(value : CrystalType) : BindingType
-    #   def unwrap(value : BindingType) : CrystalType
+    #   def self.wrap(value : CrystalType) : BindingType
+    #   def self.unwrap(value : BindingType) : CrystalType
     # end
     converter: TheConverter
 
@@ -431,6 +432,29 @@ types:
     # Defaults to `false`.
     copy_structure: true | false
 
+    # Whether to generate property methods for instance variables.  It may take
+    # a boolean or a hash:
+    # * `true`: Generate all methods with their default settings.
+    # * `false`: Disable all methods.
+    # * Hash: Each key is a regex pattern matching the names of the instance
+    #   variables, and the corresponding value controls the behaviour of the
+    #   matched variables.
+    # Defaults to `true`.  `copy_structure: true` will suppress the generation
+    # of property methods regardless of this setting.
+    instance_variables:
+      "^m_i(.*)$":
+        # Do not generate the getter(s) and setter(s) for the matched variables.
+        # Defaults to `false`.
+        ignore: true | false
+        # Optional: renames the property method(s).  Regex backreferences are
+        # supported.  Underscore transformation is applied after renaming.
+        # By default no renaming is applied.
+        rename: "\\1"
+        # Marks the instance variable(s) as nilable, allowing the property
+        # methods to use `nil`.  Only applied to pointer variables.
+        # Defaults to `false`.
+        nilable: true | false
+
     # Treat this type as built-in type in C++ and Crystal.
     # Defaults to `false`.
     builtin: true | false
@@ -443,6 +467,17 @@ types:
     # Defaults to `true`.
     generate_binding: true | false
 
+    # Generate the `Superclass` wrapper struct and the `#superclass` method for
+    # this type, if one is needed by the `VirtualOverride` processor.
+    # Defaults to `true`.
+    generate_superclass: true | false
+
     # List of methods to ignore in only this type when wrapping.
     ignore_methods:
       - some_method_name
+
+    # List of methods to ignore in only the `Superclass` wrapper of this type.
+    # Each element is a regex that is matched against the method name.
+    superclass_ignore_methods:
+      - ^full_method_name$
+      - ^prefix_

@@ -1,0 +1,32 @@
+<<: spec_base.yml
+
+processors:
+  - filter_methods
+  - instance_properties
+  - crystal_wrapper
+  - cpp_wrapper
+  - crystal_binding
+  - sanity_check
+
+classes:
+  Point: Point
+  Props: Props
+  ConfigIgnoreAll: ConfigIgnoreAll
+  ConfigIgnore: ConfigIgnore
+  ConfigRename: ConfigRename
+  ConfigNilable: ConfigNilable
+
+types:
+  Point:
+    instance_variables: true
+  ConfigIgnoreAll:
+    instance_variables: false
+  ConfigIgnore:
+    instance_variables:
+      a: { ignore: true }
+  ConfigRename:
+    instance_variables:
+      "^m_i(.*)$": { rename: "\\1" }
+  ConfigNilable:
+    instance_variables:
+      ".*": { nilable: true }

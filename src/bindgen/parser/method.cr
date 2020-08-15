@@ -11,6 +11,8 @@ module Bindgen
         CopyConstructor
         Destructor
         MemberMethod
+        MemberGetter
+        MemberSetter
         StaticMethod
         Operator
 
@@ -51,11 +53,12 @@ module Bindgen
       # syntax.
       def self.build(
         name, return_type : Parser::Type, arguments : Array(Parser::Argument), class_name : String,
-        type = Parser::Method::Type::MemberMethod, crystal_name = nil
+        type = Parser::Method::Type::MemberMethod, access = AccessSpecifier::Public,
+        crystal_name = nil
       ) : self
         method = Parser::Method.new(
           type: type,
-          access: Parser::AccessSpecifier::Public,
+          access: access,
           name: name,
           isConst: false,
           className: class_name,
@@ -68,7 +71,8 @@ module Bindgen
         method
       end
 
-      delegate constructor?, copy_constructor?, member_method?, static_method?, signal?, operator?, destructor?, to: @type
+      delegate constructor?, copy_constructor?, member_method?, member_getter?,
+        member_setter?, static_method?, signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
       def_equals_and_hash @type, @name, @className, @access, @arguments, @firstDefaultArgument, @returnType, @isConst, @isVirtual, @isPure, @isExternC
@@ -187,6 +191,25 @@ module Bindgen
         splits
       end
 
+      # Returns a non-virtual copy of this method suitable for use in superclass
+      # wrapper structs.  The bodies of such copies are expected to ignore
+      # method overriding.
+      def superclass_copy : Method
+        Method.new(
+          type: @type,
+          name: "#{@name}_SUPER",
+          access: @access,
+          className: @className,
+          arguments: @arguments,
+          firstDefaultArgument: @firstDefaultArgument,
+          returnType: @returnType,
+          isConst: @isConst,
+          isVirtual: false,
+          isPure: false,
+          origin: self,
+        )
+      end
+
       # Try to deduce if this is a getter.
       def getter?(name = @name)
         @arguments.empty? && !@returnType.void? && /^get[_A-Z]/.match(name)
@@ -253,6 +276,10 @@ module Bindgen
           else
             name # Normal method
           end
+        when .member_getter?
+          name
+        when .member_setter?
+          name + "="
         when .constructor?
           "initialize"
         when .copy_constructor?
@@ -392,6 +419,8 @@ module Bindgen
         case self
         when .constructor?      then "#{name}_CONSTRUCT"
         when .copy_constructor? then "#{name}_COPY"
+        when .member_getter?    then "#{name}_GETTER"
+        when .member_setter?    then "#{name}_SETTER"
         when .operator?         then operator_name
         when .static_method?    then "#{name}_STATIC"
         when .destructor?       then "#{name}_DESTROY"

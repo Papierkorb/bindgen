@@ -3,6 +3,9 @@ module Bindgen
     # Matches back-references in strings.
     BACKREFERENCE_RX = /\\(\d)/
 
+    # Matches absolutely nothing, not even the empty string.
+    FAIL_RX = /(?!)/
+
     # Mimics Rubys `Enumerable#uniq_by`.  Takes a *list*, and makes all values
     # in it unique by yielding all pairs, keeping only those items where the
     # block returned a falsy value.
