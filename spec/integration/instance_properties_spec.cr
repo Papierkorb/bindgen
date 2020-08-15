@@ -23,6 +23,13 @@ describe "C++ instance properties" do
           props = Test::Props.new(5, 8)
           props.x_pub.should eq(5)
           props.y_pub.should eq(8)
+
+          {% begin %}
+            {% method = Test::Props.methods.find &.name.== "x_pub" %}
+            {{ method.visibility }}.should eq(:public)
+            {% method = Test::Props.methods.find &.name.== "y_pub" %}
+            {{ method.visibility }}.should eq(:public)
+          {% end %}
         end
 
         it "is generated for protected members" do
@@ -63,6 +70,11 @@ describe "C++ instance properties" do
           props = Test::Props.new(5, 8)
           props.x_pub = 7
           props.x_pub.should eq(7)
+
+          {% begin %}
+            {% method = Test::Props.methods.find &.name.== "x_pub=" %}
+            {{ method.visibility }}.should eq(:public)
+          {% end %}
         end
 
         it "is generated for protected members" do
