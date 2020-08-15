@@ -190,7 +190,8 @@ wrappers do.  The rules of argument handling is the same.  Such overrides will
 look and behave the same to C++ as any other virtual C++ method.
 
 **Note**: Calling `super` in the body of a Crystal method that overrides a
-concrete C++ virtual method is not supported.
+concrete C++ virtual method is not supported.  **The process will crash due to
+a stack overflow!**
 
 #### §2.3.5 Base-class wrapper
 
