@@ -9,20 +9,27 @@ module Bindgen
 
       # Late-initialized in `#process`
       @binding : Graph::Library?
+      @all_classes : Parser::Class::Collection?
 
       # Returns `lib Binding`
       private def binding
         @binding.not_nil!
       end
 
-      def process(graph : Graph::Container, _doc : Parser::Document)
+      # Looks up a class by its name.  Used to identify base classes.
+      private def class_by_name?(name : String) : Parser::Class?
+        @all_classes.try(&.[]?(name))
+      end
+
+      def process(graph : Graph::Container, doc : Parser::Document)
         @binding = graph.by_name(Graph::LIB_BINDING).as(Graph::Library)
+        @all_classes = doc.classes
         super
       end
 
       def visit_class(klass : Graph::Class)
         return if klass.wrapped_class # Don't change `Impl` classes.
-        if subclass?(klass.origin)
+        if subclass?(klass.origin) && @db.try_or(klass.origin.name, true, &.sub_class)
           superclass = create_superclass(klass)
           add_superclass_init(superclass, klass)
           add_superclass_method(superclass, klass)
@@ -63,8 +70,20 @@ module Bindgen
 
       # If *klass* shall be sub-classed, or not.
       private def subclass?(klass) : Bool
-        return false unless klass.has_virtual_methods? && klass.destructible?
-        @db.try_or(klass.name, true, &.sub_class)
+        # Indestructible types are never sub-classed.
+        return false unless klass.destructible?
+        # Types defining at least one virtual method are sub-classed.
+        return true if klass.has_virtual_methods?
+
+        # Types inheriting from another sub-classed type must themselves also be
+        # sub-classed, to support implicitly inherited methods.
+        klass.each_base do |base|
+          if base_klass = class_by_name?(base.name)
+            return true if subclass?(base_klass)
+          end
+        end
+
+        false
       end
 
       # Creates the `Superclass` Crystal struct for the given *klass*.

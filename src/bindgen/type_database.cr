@@ -149,7 +149,7 @@ module Bindgen
           default: Util::FAIL_RX,
           converter: ArrayRegexConverter,
         },
-        
+
         # Instance variable configuration.  Each hash key is a regex used to
         # match instance variable names.
         instance_variables: {
