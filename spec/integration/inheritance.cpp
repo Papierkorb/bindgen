@@ -47,6 +47,14 @@ struct Subclass : public Base, public AbstractThing {
   }
 };
 
+struct Implicit : public Base {
+  // We don't override Base::calc here.
+
+  int callVirtual(int a, int b) {
+    return this->calc(a, b);
+  }
+};
+
 struct Skip {
   virtual int ignoreThis() const {
     return 7;

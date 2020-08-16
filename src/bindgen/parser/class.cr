@@ -89,6 +89,13 @@ module Bindgen
         end
       end
 
+      # Yields each base class.
+      def each_base
+        @bases.each do |base|
+          yield base
+        end
+      end
+
       # Constructs a method destroying an instance of this class.
       def destructor_method : Method
         Parser::Method.new(

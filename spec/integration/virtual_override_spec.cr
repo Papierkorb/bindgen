@@ -21,6 +21,13 @@ describe "C++ virtual overriding from Crystal feature" do
         end
       end
 
+      class ImplicitThing < Test::Implicit
+        # overrides Test::Base#calc (absent in Test::Implicit)
+        def calc(a, b)
+          a * b
+        end
+      end
+
       # Test calling superclass method from overridden method
       class OverrideThing < Test::Base
         def calc(a, b)
@@ -69,6 +76,10 @@ describe "C++ virtual overriding from Crystal feature" do
         it "can call superclass method from overridden method" do
           OverrideThing.new.calc(10, 4).should eq(196)
           SubOverrideThing.new.calc(10, 4).should eq(1600)
+        end
+
+        it "can override implicitly inherited method" do
+          ImplicitThing.new.call_virtual(7, 6).should eq(42)
         end
 
         # TODO: This fails!

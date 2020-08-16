@@ -14,6 +14,7 @@ classes:
   Base: Base
   AbstractThing: AbstractThing
   Subclass: Subclass
+  Implicit: Implicit
   Skip: Skip
 
 types:
