@@ -14,6 +14,10 @@ module Bindgen
         isBuiltin: Bool,
         isVoid: Bool,
         pointer: Int32,
+        extents: {
+          type:    Array(UInt64),
+          default: Array(UInt64).new,
+        },
         baseName: String,
         fullName: String,
         nilable: {
