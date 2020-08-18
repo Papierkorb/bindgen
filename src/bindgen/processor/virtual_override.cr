@@ -327,7 +327,7 @@ module Bindgen
         # Pass by reference.
         table_type = Parser::Type.new(
           baseName: table_name,
-          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
+          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true, extents: nil),
           isConst: true,
           isReference: true,
           pointer: 1,

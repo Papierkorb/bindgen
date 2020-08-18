@@ -14,7 +14,8 @@ module Bindgen
           b << base_name
 
           stars = "*" * pointer if pointer > 0
-          subscripts = extents.map {|v| "[#{v unless v.zero?}]"}.join unless extents.empty?
+          subscripts = extents.map {|v| "[#{v unless v.zero?}]"}.join unless
+            extents.nil? || extents.empty?
           ref = "&" if is_reference
 
           b << ' ' if stars || ref || subscripts

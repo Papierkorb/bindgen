@@ -39,7 +39,7 @@ module Bindgen
       private def copy_structure(klass, root)
         typename = Crystal::Typename.new(@db)
         Graph::Struct.new( # Add the struct into the graph
-name: typename.binding(klass.as_type).first.camelcase,
+          name: typename.binding(klass.as_type).first.camelcase,
           fields: fields_to_graph(klass.fields),
           parent: root,
         )

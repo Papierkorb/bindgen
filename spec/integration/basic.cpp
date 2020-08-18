@@ -55,3 +55,13 @@ public:
 struct ImplicitConstructor {
   int itWorks() { return 1; }
 };
+
+struct PlainStruct {
+  int x;
+  int *xp;
+  int y[4];
+  int *yp[6];
+  int z[8][16];
+  void *vp;
+  void **vpp;
+};
