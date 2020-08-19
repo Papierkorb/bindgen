@@ -22,6 +22,18 @@ module Bindgen
         end
       end
 
+      def arguments_from_binding(list : Enumerable(Parser::Argument))
+        argument = Argument.new(@db)
+
+        list.map_with_index do |arg, idx|
+          if idx == list.size - 1 && arg.variadic?
+            self.variadic_argument
+          else
+            from_binding(arg, qualified: true).to_argument(argument.name(arg, idx))
+          end
+        end
+      end
+
       # Turns the list of arguments into a list of `Call::Argument`s.
       def arguments_to_wrapper(list : Enumerable(Parser::Argument))
         argument = Argument.new(@db)
@@ -65,13 +77,35 @@ module Bindgen
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
+          # HACK: Since the conversion *template* for function types cannot be a
+          # simple string substitution, we simply build the entire string here,
+          # assuming the result is oblivious to `Util.template`.  Ideally,
+          # *template* should be lifted to a class hierarchy.
+          if type.kind.function?
+            func_arg_types = type.template.not_nil!.arguments.dup
+            func_ret_type = func_arg_types.shift
+            func_args = func_arg_types.map_with_index do |type, i|
+              Parser::Argument.new("arg#{i}", type)
+            end
+            builder = CallBuilder::CrystalFromCpp.new(@db)
+            call = builder.build(Parser::Method.build(
+              name: "call",
+              return_type: func_ret_type,
+              arguments: func_args,
+              class_name: "Proc",
+            ), receiver: "_proc_")
+            code = call.body.to_code(call, Graph::Platform::Crystal)
+            template = %[BindgenHelper.wrap_proc(#{code.gsub(/\{(.*)\}/, " do \\1 end ")})]
+          end
+
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
           {is_ref, ptr, type_name, template, false}
         end
       end
 
-      # Builds the type-name of a Crystal `Proc`, from the function *type*.
+      # Builds the type-name of a Crystal `Proc` for Crystal wrappers, from the
+      # function *type*.
       private def proc_to_wrapper(type)
         args = type.template.not_nil!.arguments
 
@@ -81,6 +115,17 @@ module Bindgen
         types = args[1..-1]
         types << args.first
         names = types.map { |t| to_wrapper(t).type_name.as(String) }.join(", ")
+
+        "Proc(#{names})"
+      end
+
+      # As above, but for Crystal bindings.
+      private def proc_to_binding(type)
+        args = type.template.not_nil!.arguments
+
+        types = args[1..-1]
+        types << args.first
+        names = types.map { |t| to_binding(t, qualified: true).type_name.as(String) }.join(", ")
 
         "Proc(#{names})"
       end
