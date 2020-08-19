@@ -242,7 +242,7 @@ module Bindgen
           method: method,
           class_name: class_name,
           target: target,
-          virtual_target: to_crystal.build(method, proc_name),
+          virtual_target: to_crystal.build(method, proc_name: proc_name),
           in_superclass: in_superclass,
         )
       end
