@@ -37,8 +37,8 @@ module Bindgen
     # `NAME` is unset, can be provided through a pipe symbol: `{NAME|default}`.
     #
     # It's possible to fall back to the character expansion: `{NAME|%}`
-    def self.template(haystack : String, replacement : String? = nil, env = ENV)
-      haystack.gsub(/(%)|{([^}|]+)(?:\|([^}]+))?}/) do |_, match|
+    def self.template(haystack : String, replacement : String? = nil, env = ENV) : String
+      haystack.gsub(/(%)|\{([^}|]+)(?:\|([^}]+))?\}/) do |_, match|
         expansion = match[1]?
         env_var = match[2]?
         alternative = match[3]?
