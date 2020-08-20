@@ -43,10 +43,6 @@ module Bindgen
       def ==(_other : self)
         true
       end
-
-      def hash(hasher)
-        hasher
-      end
     end
 
     # A simple template implementing a subset of `Util.template`.  Only
@@ -63,7 +59,7 @@ module Bindgen
         end
       end
 
-      def_equals_and_hash @pattern
+      def_equals @pattern
     end
 
     # The default template.  Uses `Util.template` to substitute *code* into the
@@ -76,7 +72,7 @@ module Bindgen
         Util.template(@pattern, code)
       end
 
-      def_equals_and_hash @pattern
+      def_equals @pattern
     end
 
     # Compound template which runs *code* through two child templaters.
@@ -91,7 +87,35 @@ module Bindgen
         @second.template(@first.template(code))
       end
 
-      def_equals_and_hash @first, @second
+      def_equals @first, @second
+    end
+
+    # Template to transform `Proc`s for Crystal wrapper types into `Proc`
+    # expressions for binding types.
+    class ProcFromWrapper < Base
+      def initialize(@proc_type : Parser::Type, @db : TypeDatabase)
+      end
+
+      def template(code) : String
+        args = @proc_type.template.not_nil!.arguments
+        func_args = args[1..-1].map_with_index do |type, i|
+          Parser::Argument.new("arg#{i}", type)
+        end
+        proc_call = Parser::Method.build(
+          name: "call",
+          return_type: args.first,
+          arguments: func_args,
+          class_name: "Proc",
+        )
+
+        # The templated code shouldn't contain braces, since an outer `Full`
+        # template might treat the code block as an environment variable.
+        builder = CallBuilder::CrystalFromCpp.new(@db)
+        call = builder.build(proc_call, receiver: "_proc_", do_block: true)
+        call.body.to_code(call, Graph::Platform::Crystal)
+      end
+
+      def_equals @proc_type, @db
     end
   end
 end

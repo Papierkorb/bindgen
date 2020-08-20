@@ -65,24 +65,8 @@ module Bindgen
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
 
-          # HACK: Since the conversion *template* for function types cannot be a
-          # simple string substitution, we simply build the entire string here,
-          # assuming the result is oblivious to `Util.template`.  Ideally,
-          # *template* should be lifted to a class hierarchy.
           if type.kind.function?
-            args = type.template.not_nil!.arguments
-            func_args = args[1..-1].map_with_index do |type, i|
-              Parser::Argument.new("arg#{i}", type)
-            end
-            builder = CallBuilder::CrystalFromCpp.new(@db)
-            call = builder.build(Parser::Method.build(
-              name: "call",
-              return_type: args.first,
-              arguments: func_args,
-              class_name: "Proc",
-            ), receiver: "_proc_")
-            code = call.body.to_code(call, Graph::Platform::Crystal)
-            template = Template.from_string %[BindgenHelper.wrap_proc(#{code.gsub(/\{(.*)\}/, " do \\1 end ")})], simple: true
+            template = Template::ProcFromWrapper.new(type, @db).followed_by(template)
           end
 
           ptr += 1 if is_ref # Translate reference to pointer

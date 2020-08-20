@@ -6,7 +6,7 @@ module Bindgen
       end
 
       # Calls the *method*, using the *proc_name* to call-through to Crystal.
-      def build(method : Parser::Method, receiver = "self") : Call
+      def build(method : Parser::Method, receiver = "self", do_block = false) : Call
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
@@ -26,7 +26,7 @@ module Bindgen
           name: method.crystal_name,
           result: result,
           arguments: arguments,
-          body: Body.new(@db, receiver),
+          body: Body.new(@db, receiver, do_block),
         )
       end
 
@@ -44,7 +44,7 @@ module Bindgen
       end
 
       class Body < Call::Body
-        def initialize(@db : TypeDatabase, @receiver : String)
+        def initialize(@db : TypeDatabase, @receiver : String, @do_block : Bool)
         end
 
         def to_code(call : Call, platform : Graph::Platform) : String
@@ -61,7 +61,11 @@ module Bindgen
           block_args = "|#{block_arg_names}|" unless pass_args.empty?
 
           body = call.result.apply_conversion "#{@receiver}.#{call.name}(#{pass_args})"
-          %[Proc(#{proc_args}).new{#{block_args} #{body} }]
+          if @do_block
+            %[Proc(#{proc_args}).new do #{block_args} #{body} end]
+          else
+            %[Proc(#{proc_args}).new{#{block_args} #{body} }]
+          end
         end
       end
     end
