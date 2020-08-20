@@ -28,12 +28,7 @@ module Bindgen
 
           inner = @proc.body.to_code(@proc, platform)
           code = %[QObject::connect(_self_, (#{ptr})&#{call.name}, [_proc_](#{lambda_args}){ #{inner}; })]
-
-          if templ = call.result.conversion
-            code = Util.template(templ, code)
-          end
-
-          code
+          call.result.apply_conversion(code)
         end
       end
     end

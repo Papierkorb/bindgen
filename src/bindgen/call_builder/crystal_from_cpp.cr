@@ -67,11 +67,7 @@ module Bindgen
           block_arg_names = call.arguments.map(&.name).join(", ")
           block_args = "|#{block_arg_names}|" unless pass_args.empty?
 
-          body = "#{@receiver}.#{call.name}(#{pass_args})"
-          if templ = call.result.conversion
-            body = Util.template(templ, body)
-          end
-
+          body = call.result.apply_conversion "#{@receiver}.#{call.name}(#{pass_args})"
           %[Proc(#{proc_args}).new{#{block_args} #{body} }]
         end
       end
