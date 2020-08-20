@@ -27,7 +27,7 @@ module Bindgen
 
       # Combines two templates into one.  The *other* template is run after the
       # current template.
-      def followed_by(other : self) : self
+      def followed_by(other : Base) : Base
         return other if no_op?
         return self if other.no_op?
         Seq.new(first: self, second: other)
@@ -38,6 +38,14 @@ module Bindgen
     class None < Base
       def template(code) : String
         code
+      end
+
+      def ==(_other : self)
+        true
+      end
+
+      def hash(hasher)
+        hasher
       end
     end
 
@@ -54,6 +62,8 @@ module Bindgen
           "#{literals}#{out_code}"
         end
       end
+
+      def_equals_and_hash @pattern
     end
 
     # The default template.  Uses `Util.template` to substitute *code* into the
@@ -65,6 +75,8 @@ module Bindgen
       def template(code) : String
         Util.template(@pattern, code)
       end
+
+      def_equals_and_hash @pattern
     end
 
     # Compound template which runs *code* through two child templaters.
@@ -78,6 +90,8 @@ module Bindgen
       def template(code) : String
         @second.template(@first.template(code))
       end
+
+      def_equals_and_hash @first, @second
     end
   end
 end
