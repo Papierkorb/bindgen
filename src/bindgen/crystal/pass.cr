@@ -55,9 +55,12 @@ module Bindgen
           type_name, in_lib = typer.binding(type)
           type_name = typer.qualified(type_name, in_lib) if qualified
 
+          template = Template::None.new
+
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
-            template ||= "%.to_unsafe" if to_unsafe && !rules.builtin && !type.builtin?
+            template = Template.from_string("%.to_unsafe", simple: true) if
+              template.no_op? && to_unsafe && !rules.builtin && !type.builtin?
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
@@ -79,7 +82,7 @@ module Bindgen
               class_name: "Proc",
             ), receiver: "_proc_")
             code = call.body.to_code(call, Graph::Platform::Crystal)
-            template = %[BindgenHelper.wrap_proc(#{code.gsub(/\{(.*)\}/, " do \\1 end ")})]
+            template = Template.from_string %[BindgenHelper.wrap_proc(#{code.gsub(/\{(.*)\}/, " do \\1 end ")})], simple: true
           end
 
           ptr += 1 if is_ref # Translate reference to pointer
@@ -120,7 +123,7 @@ module Bindgen
 
           ptr += 1 if is_ref # Translate reference to pointer
           is_ref = false
-          {is_ref, ptr, type_name, nil, nilable}
+          {is_ref, ptr, type_name, Template::None.new, nilable}
         end
       end
 
@@ -167,6 +170,8 @@ module Bindgen
             type_name, _ = typer.binding(type)
           end
 
+          template = Template::None.new
+
           if rules = @db[type]?
             unless is_constructor
               template = type_template(rules.converter, rules.to_crystal, "unwrap")
@@ -186,6 +191,8 @@ module Bindgen
           local_type_name, in_lib = typer.wrapper(type)
           type_name = typer.qualified(local_type_name, in_lib)
 
+          template = Template::None.new
+
           if rules = @db[type]?
             if rules.kind.class?
               ptr -= 1
@@ -196,7 +203,7 @@ module Bindgen
               nilable = false
             end
 
-            if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
+            if !rules.builtin && !is_constructor && !rules.converter && rules.to_crystal.no_op? && !in_lib && !rules.kind.enum?
               template = wrapper_initialize_template(rules, type_name, nilable)
             end
 
@@ -247,9 +254,9 @@ module Bindgen
       # *converter* is set by the user as `converter:` field in the type
       # configuration, while *translator* is influenced by `to_crystal:` or
       # `from_crystal:`.
-      private def type_template(converter, translator, conv_name)
+      private def type_template(converter, translator, conv_name) : Template::Base
         if converter
-          "#{converter}.#{conv_name}(%)"
+          Template.from_string "#{converter}.#{conv_name}(%)", simple: true
         else
           translator
         end
@@ -265,11 +272,13 @@ module Bindgen
           end
         end
 
-        if nilable
+        template_string = if nilable
           %[%.try {|ptr| #{type_name}.new(unwrap: ptr) unless ptr.null?}]
         else
           "#{type_name}.new(unwrap: %)"
         end
+
+        Template.from_string template_string, simple: true
       end
     end
   end

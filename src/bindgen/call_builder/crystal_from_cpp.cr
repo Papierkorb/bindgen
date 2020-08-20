@@ -32,21 +32,14 @@ module Bindgen
 
       # Combines the results *outer* to *inner*.
       private def combine_result(outer, inner)
-        conv_out = outer.conversion
-        conv_in = inner.conversion
-
-        if conv_out && conv_in
-          conversion = Util.template(conv_out, conv_in)
-        else
-          conversion = conv_out || conv_in
-        end
+        combined_conversion = inner.conversion.followed_by(outer.conversion)
 
         Call::Result.new(
           type: outer.type,
           type_name: outer.type_name,
           pointer: outer.pointer,
           reference: outer.reference,
-          conversion: conversion,
+          conversion: combined_conversion,
         )
       end
 
