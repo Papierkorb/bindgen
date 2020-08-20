@@ -22,18 +22,6 @@ module Bindgen
         end
       end
 
-      def arguments_from_binding(list : Enumerable(Parser::Argument))
-        argument = Argument.new(@db)
-
-        list.map_with_index do |arg, idx|
-          if idx == list.size - 1 && arg.variadic?
-            self.variadic_argument
-          else
-            from_binding(arg, qualified: true).to_argument(argument.name(arg, idx))
-          end
-        end
-      end
-
       # Turns the list of arguments into a list of `Call::Argument`s.
       def arguments_to_wrapper(list : Enumerable(Parser::Argument))
         argument = Argument.new(@db)
@@ -79,15 +67,14 @@ module Bindgen
           # assuming the result is oblivious to `Util.template`.  Ideally,
           # *template* should be lifted to a class hierarchy.
           if type.kind.function?
-            func_arg_types = type.template.not_nil!.arguments.dup
-            func_ret_type = func_arg_types.shift
-            func_args = func_arg_types.map_with_index do |type, i|
+            args = type.template.not_nil!.arguments
+            func_args = args[1..-1].map_with_index do |type, i|
               Parser::Argument.new("arg#{i}", type)
             end
             builder = CallBuilder::CrystalFromCpp.new(@db)
             call = builder.build(Parser::Method.build(
               name: "call",
-              return_type: func_ret_type,
+              return_type: args.first,
               arguments: func_args,
               class_name: "Proc",
             ), receiver: "_proc_")
@@ -112,17 +99,6 @@ module Bindgen
         types = args[1..-1]
         types << args.first
         names = types.map { |t| to_wrapper(t).type_name.as(String) }.join(", ")
-
-        "Proc(#{names})"
-      end
-
-      # As above, but for Crystal bindings.
-      private def proc_to_binding(type)
-        args = type.template.not_nil!.arguments
-
-        types = args[1..-1]
-        types << args.first
-        names = types.map { |t| to_binding(t, qualified: true).type_name.as(String) }.join(", ")
 
         "Proc(#{names})"
       end

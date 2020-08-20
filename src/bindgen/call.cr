@@ -37,18 +37,27 @@ module Bindgen
 
     # Call result type configuration.
     class Result < Expression
-      # Conversion template (`Util.template`) to get the data out of the method,
-      # ready to be returned back.
+      # Conversion template to get the data out of the method, ready to be
+      # returned back.
       getter conversion : String?
 
       def initialize(@type, @type_name, @reference, @pointer, @conversion, @nilable = false)
       end
 
+      # Applies the result's conversion template to a piece of code, if a
+      # templater is present.
+      def apply_conversion(code : String) : String
+        case templ = conversion
+        when String
+          Util.template(templ, code)
+        else
+          code
+        end
+      end
+
       # Converts the result into an argument of *name*.
       def to_argument(name : String, default = nil) : Argument
-        call = name
-        templ = @conversion # Conversion template
-        call = Util.template(templ, name) if templ
+        call = apply_conversion(name)
 
         Argument.new(
           type: @type,
@@ -67,9 +76,7 @@ module Bindgen
     class ProcResult < Result
       # Converts the result into an argument of *name*.
       def to_argument(name : String, block = false) : Argument
-        call = name
-        templ = @conversion # Conversion template
-        call = Util.template(templ, name) if templ
+        call = apply_conversion(name)
 
         ProcArgument.new(
           block: block,

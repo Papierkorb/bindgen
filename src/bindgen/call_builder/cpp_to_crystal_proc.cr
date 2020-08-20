@@ -29,12 +29,7 @@ module Bindgen
         def to_code(call : Call, platform : Graph::Platform) : String
           pass_args = call.arguments.map(&.call).join(", ")
           code = %[#{call.name}(#{pass_args})]
-
-          if templ = call.result.conversion
-            code = Util.template(templ, code)
-          end
-
-          code
+          call.result.apply_conversion(code)
         end
       end
 

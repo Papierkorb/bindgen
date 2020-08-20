@@ -28,12 +28,7 @@ module Bindgen
           ptr = formatter.function_pointer(@lambda)
 
           code = %[QObject::connect(_self_, (#{ptr})&#{call.name}, #{lambda_body})]
-
-          if templ = call.result.conversion
-            code = Util.template(templ, code)
-          end
-
-          code
+          call.result.apply_conversion(code)
         end
       end
     end
