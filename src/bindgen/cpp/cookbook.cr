@@ -8,7 +8,7 @@ module Bindgen
     # setting.  See `Configuration#platform` for the code, and `TEMPLATE.yml`
     # for user-facing documentation.
     #
-    # The functions all return a `Template::Simple` when conversion is
+    # The functions all return a `Template::Basic` when conversion is
     # necessary, and `Template::None` otherwise.
     abstract class Cookbook
       # Finds and creates a `Cookbook` by name.

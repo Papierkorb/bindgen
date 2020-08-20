@@ -8,11 +8,11 @@ describe "Template" do
 
     it "can construct a simple template from a string" do
       Bindgen::Template.from_string("%x", simple: true).should eq(
-        Bindgen::Template::Simple.new("%x"))
+        Bindgen::Template::Basic.new("%x", simple: true))
     end
 
     it "can construct a full template from a string" do
-      expected = Bindgen::Template::Full.new("%x")
+      expected = Bindgen::Template::Basic.new("%x")
       Bindgen::Template.from_string("%x").should eq(expected)
       Bindgen::Template.from_string("%x", simple: false).should eq(expected)
     end
@@ -24,8 +24,8 @@ describe "Template" do
     end
 
     it "returns false for any other templates" do
-      conversion1 = Bindgen::Template::Simple.new("%x")
-      conversion2 = Bindgen::Template::Full.new("%x")
+      conversion1 = Bindgen::Template::Basic.new("%x")
+      conversion2 = Bindgen::Template::Basic.new("%x", simple: true)
       conversion3 = Bindgen::Template::Seq.new(conversion1, conversion2)
 
       conversion1.no_op?.should be_false
@@ -36,15 +36,15 @@ describe "Template" do
 
   describe "#followed_by" do
     it "composes two templates" do
-      conversion1 = Bindgen::Template::Simple.new("%x")
-      conversion2 = Bindgen::Template::Full.new("%x")
+      conversion1 = Bindgen::Template::Basic.new("%x")
+      conversion2 = Bindgen::Template::Basic.new("%y")
       conversion3 = Bindgen::Template::Seq.new(conversion1, conversion2)
 
       conversion1.followed_by(conversion2).should eq(conversion3)
     end
 
     it "is #no_op? only when both templates are #no_op?" do
-      op = Bindgen::Template::Simple.new("%x")
+      op = Bindgen::Template::Basic.new("%x")
       no = Bindgen::Template::None.new
 
       op.followed_by(op).no_op?.should be_false
@@ -60,27 +60,25 @@ describe "Template" do
     end
   end
 
-  describe "Simple#template" do
+  describe "Basic#template" do
     it "substitutes % with the supplied code" do
-      Bindgen::Template::Simple.new("a%b%c").template("123").should eq("a123b123c")
+      Bindgen::Template::Basic.new("a%b%c").template("123").should eq("a123b123c")
     end
 
-    it "substitutes %% with %" do
-      Bindgen::Template::Simple.new("%%a%%%b%%%%c").template("123").should eq("%a%123b%%c")
-    end
-  end
-
-  describe "Full#template" do
-    it "follows Util.template rules for template substitution" do
+    it "may access environment variables if it is a full template" do
       key, value = ENV.first
-      Bindgen::Template::Full.new("%{#{key}}%").template("123").should eq("123#{value}123")
+      Bindgen::Template::Basic.new("%{#{key}}%").template("123").should eq("123#{value}123")
+    end
+
+    it "substitutes %% with % if it is a simple template" do
+      Bindgen::Template::Basic.new("%%a%%%b%%%%c", simple: true).template("123").should eq("%a%123b%%c")
     end
   end
 
   describe "Seq#template" do
     it "composes two templates" do
-      first = Bindgen::Template::Simple.new("%_a")
-      second = Bindgen::Template::Simple.new("%_b")
+      first = Bindgen::Template::Basic.new("%_a")
+      second = Bindgen::Template::Basic.new("%_b")
       conversion = Bindgen::Template::Seq.new(first: first, second: second)
       conversion.template("c").should eq("c_a_b")
     end
