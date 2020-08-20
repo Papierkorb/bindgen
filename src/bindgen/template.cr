@@ -28,7 +28,7 @@ module Bindgen
       def followed_by(other : Base) : Base
         return other if no_op?
         return self if other.no_op?
-        Seq.new(first: self, second: other)
+        Sequence.new(self, other)
       end
     end
 
@@ -68,19 +68,31 @@ module Bindgen
       def_equals @pattern, @simple
     end
 
-    # Compound template which runs *code* through two child templaters.
-    class Seq < Base
-      @first : Base
-      @second : Base
+    # Compound template which runs *code* through multiple child templater, in
+    # the order they are given in the constructor.
+    class Sequence < Base
+      getter children = Array(Base).new
 
-      def initialize(@first, @second)
+      def initialize(*conversions : Base)
+        conversions.each do |conversion|
+          # Flatten `Sequence` templates automatically.
+          if conversion.is_a?(Sequence)
+            @children.concat(conversion.children)
+          else
+            @children << conversion
+          end
+        end
       end
 
       def template(code) : String
-        @second.template(@first.template(code))
+        @children.each do |conversion|
+          code = conversion.template(code)
+        end
+
+        code
       end
 
-      def_equals @first, @second
+      def_equals @children
     end
 
     # Template to transform `Proc`s for Crystal wrapper types into `Proc`

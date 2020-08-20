@@ -26,7 +26,7 @@ describe "Template" do
     it "returns false for any other templates" do
       conversion1 = Bindgen::Template::Basic.new("%x")
       conversion2 = Bindgen::Template::Basic.new("%x", simple: true)
-      conversion3 = Bindgen::Template::Seq.new(conversion1, conversion2)
+      conversion3 = Bindgen::Template::Sequence.new(conversion1, conversion2)
 
       conversion1.no_op?.should be_false
       conversion2.no_op?.should be_false
@@ -38,7 +38,7 @@ describe "Template" do
     it "composes two templates" do
       conversion1 = Bindgen::Template::Basic.new("%x")
       conversion2 = Bindgen::Template::Basic.new("%y")
-      conversion3 = Bindgen::Template::Seq.new(conversion1, conversion2)
+      conversion3 = Bindgen::Template::Sequence.new(conversion1, conversion2)
 
       conversion1.followed_by(conversion2).should eq(conversion3)
     end
@@ -75,12 +75,16 @@ describe "Template" do
     end
   end
 
-  describe "Seq#template" do
-    it "composes two templates" do
-      first = Bindgen::Template::Basic.new("%_a")
-      second = Bindgen::Template::Basic.new("%_b")
-      conversion = Bindgen::Template::Seq.new(first: first, second: second)
+  describe "Sequence#template" do
+    it "composes multiple templates" do
+      a_conv = Bindgen::Template::Basic.new("%_a")
+      b_conv = Bindgen::Template::Basic.new("%_b")
+
+      conversion = Bindgen::Template::Sequence.new(a_conv, b_conv)
       conversion.template("c").should eq("c_a_b")
+
+      conversion = Bindgen::Template::Sequence.new(a_conv, a_conv, a_conv, b_conv, b_conv, a_conv)
+      conversion.template("c").should eq("c_a_a_a_b_b_a")
     end
   end
 end
