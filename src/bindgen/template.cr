@@ -8,10 +8,8 @@ module Bindgen
     def self.from_string(pattern : String?, *, simple = false) : Base
       if pattern.nil?
         None.new
-      elsif simple
-        Simple.new(pattern)
       else
-        Full.new(pattern)
+        Basic.new(pattern, simple: simple)
       end
     end
 
@@ -45,34 +43,29 @@ module Bindgen
       end
     end
 
-    # A simple template implementing a subset of `Util.template`.  Only
-    # supports `%`, which can be escaped by using `%%` instead.
-    class Simple < Base
-      def initialize(@pattern : String)
+    # The default template.  Uses `Util.template` to substitute *code* into the
+    # given *pattern*.
+    #
+    # If *simple* is given, the template will only use a subset of the features;
+    # `%` performs substitution, whereas the escape sequence `%%` outputs a
+    # literal percent sign.
+    class Basic < Base
+      def initialize(@pattern : String, @simple = false)
       end
 
       def template(code) : String
-        @pattern.gsub(/%+/) do |m|
-          literals = "%" * (m.size // 2)
-          out_code = code if m.size % 2 == 1
-          "#{literals}#{out_code}"
+        if @simple
+          @pattern.gsub(/%+/) do |m|
+            literals = "%" * (m.size // 2)
+            out_code = code if m.size % 2 == 1
+            "#{literals}#{out_code}"
+          end
+        else
+          Util.template(@pattern, code)
         end
       end
 
-      def_equals @pattern
-    end
-
-    # The default template.  Uses `Util.template` to substitute *code* into the
-    # given *pattern*.
-    class Full < Base
-      def initialize(@pattern : String)
-      end
-
-      def template(code) : String
-        Util.template(@pattern, code)
-      end
-
-      def_equals @pattern
+      def_equals @pattern, @simple
     end
 
     # Compound template which runs *code* through two child templaters.
@@ -108,8 +101,9 @@ module Bindgen
           class_name: "Proc",
         )
 
-        # The templated code shouldn't contain braces, since an outer `Full`
-        # template might treat the code block as an environment variable.
+        # The templated code shouldn't contain braces, since an outer template
+        # that comes from a config file might treat the code block as an
+        # environment variable.
         builder = CallBuilder::CrystalFromCpp.new(@db)
         call = builder.build(proc_call, receiver: "_proc_", do_block: true)
         call.body.to_code(call, Graph::Platform::Crystal)
