@@ -39,20 +39,14 @@ module Bindgen
     class Result < Expression
       # Conversion template to get the data out of the method, ready to be
       # returned back.
-      getter conversion : String?
+      getter conversion : Template::Base
 
-      def initialize(@type, @type_name, @reference, @pointer, @conversion, @nilable = false)
+      def initialize(@type, @type_name, @reference, @pointer, @conversion = Template::None.new, @nilable = false)
       end
 
-      # Applies the result's conversion template to a piece of code, if a
-      # templater is present.
+      # Applies the result's conversion template to a piece of code.
       def apply_conversion(code : String) : String
-        case templ = conversion
-        when String
-          Util.template(templ, code)
-        else
-          code
-        end
+        conversion.template(code)
       end
 
       # Converts the result into an argument of *name*.

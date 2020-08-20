@@ -42,7 +42,6 @@ module Bindgen
           type_name: type_name,
           pointer: type.pointer,
           reference: false,
-          conversion: nil,
         )
       end
 
