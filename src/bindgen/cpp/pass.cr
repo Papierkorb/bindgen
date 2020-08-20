@@ -77,6 +77,8 @@ module Bindgen
           ptr = 0
         end
 
+        template = Template::None.new
+
         if rules = @db[type]?
           template = rules.to_cpp
           type_name = rules.cpp_type || type_name
@@ -84,7 +86,7 @@ module Bindgen
           is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
-        if template.nil?
+        if template.no_op?
           pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
           template = conversion_template(pass_by, type, type_name)
         end
@@ -139,6 +141,8 @@ module Bindgen
           pass_by = TypeDatabase::PassBy::Pointer
         end
 
+        template = Template::None.new
+
         if rules = @db[type]?
           template = rules.from_cpp
           type_name = rules.cpp_type || type_name
@@ -146,7 +150,7 @@ module Bindgen
           is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
-        if template.nil?
+        if template.no_op?
           pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
           template = conversion_template(pass_by, type, type_name)
         end
@@ -196,7 +200,7 @@ module Bindgen
 
       # Finds the conversion template to go from *type* to the desired target
       # type configuration.
-      private def conversion_template(pass_by, type, type_name) : String?
+      private def conversion_template(pass_by, type, type_name) : Template::Base
         original_ref = type.reference?
         original_ptr = type_pointer_depth(type) > 0
 
@@ -213,7 +217,6 @@ module Bindgen
           type_name: type_name,
           reference: type.reference?,
           pointer: type_pointer_depth(type),
-          conversion: nil,
         )
       end
     end

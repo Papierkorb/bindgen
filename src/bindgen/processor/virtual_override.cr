@@ -302,7 +302,6 @@ module Bindgen
           type_name: pass.crystal_proc_name(proc_type),
           reference: false,
           pointer: 0,
-          conversion: nil,
         )
       end
 
@@ -316,7 +315,6 @@ module Bindgen
           type_name: proc_type.base_name,
           reference: false,
           pointer: 0,
-          conversion: nil,
         )
       end
 
