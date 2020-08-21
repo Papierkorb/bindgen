@@ -23,6 +23,11 @@ describe "Template" do
       Bindgen::Template::None.new.no_op?.should be_true
     end
 
+    it "returns true for string templates with only `%`" do
+      Bindgen::Template::Basic.new("%").no_op?.should be_true
+      Bindgen::Template::Basic.new("%", simple: true).no_op?.should be_true
+    end
+
     it "returns false for any other templates" do
       conversion1 = Bindgen::Template::Basic.new("%x")
       conversion2 = Bindgen::Template::Basic.new("%x", simple: true)

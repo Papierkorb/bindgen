@@ -6,6 +6,11 @@ module Bindgen
       end
 
       # Calls the *method*, using the *proc_name* to call-through to Crystal.
+      #
+      # If `do_block` is true, the generated `Proc` expression will use
+      # `do ... end` instead of `{ ... }`.  This allows embedding the code body
+      # inside a string conversion template, without the code block being
+      # interpreted as an environment variable (see also `Template::Basic`).
       def build(method : Parser::Method, receiver = "self", do_block = false) : Call
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
