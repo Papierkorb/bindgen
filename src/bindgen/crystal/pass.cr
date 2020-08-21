@@ -136,8 +136,8 @@ module Bindgen
       #
       # If *qualified* is `true`, the type is assumed to be used outside the
       # `lib Binding`, and will be qualified if required.
-      def from_binding(type : Parser::Type, qualified = false, is_constructor = false) : Call::Result
-        from(type) do |is_ref, ptr, type_name, nilable|
+      def from_binding(type : Parser::Type, qualified = false, is_constructor = false, no_slice = false) : Call::Result
+        from(type, is_constructor, no_slice) do |is_ref, ptr, type_name, nilable|
           typer = Typename.new(@db)
 
           if qualified
@@ -146,9 +146,17 @@ module Bindgen
             type_name, _ = typer.binding(type)
           end
 
+          if type.c_array? && !no_slice
+            is_ref = false
+            ptr = 0
+            inner_result = from_binding(type.decayed.not_nil!, no_slice: true)
+            template = "BindgenHelper::SliceConverter(#{typer.full(inner_result)}).unwrap(%)"
+            type_name = "Binding::CrystalSlice"
+          end
+
           if rules = @db[type]?
             unless is_constructor
-              template = type_template(rules.converter, rules.to_crystal, "unwrap")
+              template ||= type_template(rules.converter, rules.to_crystal, "unwrap")
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
@@ -159,8 +167,8 @@ module Bindgen
       end
 
       # Computes a result for passing *type* from the wrapper to the user.
-      def from_wrapper(type : Parser::Type, is_constructor = false) : Call::Result
-        from(type) do |is_ref, ptr, type_name, nilable|
+      def from_wrapper(type : Parser::Type, is_constructor = false, no_slice = false) : Call::Result
+        from(type, is_constructor, no_slice) do |is_ref, ptr, type_name, nilable|
           typer = Typename.new(@db)
           local_type_name, in_lib = typer.wrapper(type)
           type_name = typer.qualified(local_type_name, in_lib)
@@ -173,6 +181,13 @@ module Bindgen
             # Do not return types like `Bool*?` from the wrapper.
             if rules.builtin && ptr > 0 && !is_ref
               nilable = false
+            end
+
+            if type.c_array? && !no_slice
+              is_ref = false
+              ptr = 0
+              inner_result = from_wrapper(type.decayed.not_nil!, no_slice: true)
+              type_name = "Slice(#{typer.full(inner_result)})"
             end
 
             if !rules.builtin && !is_constructor && !rules.converter && !rules.to_crystal && !in_lib && !rules.kind.enum?
@@ -189,7 +204,7 @@ module Bindgen
         end
       end
 
-      def from(type : Parser::Type, is_constructor = false) : Call::Result
+      def from(type : Parser::Type, is_constructor = false, no_slice = false) : Call::Result
         is_copied = is_type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
@@ -209,6 +224,8 @@ module Bindgen
         # Hand-off
         is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
         ptr += 1 if is_ref # Translate reference to pointer
+        ptr -= type.extents.size
+        type = type.remove_all_extents unless no_slice
 
         Call::Result.new(
           type: type,

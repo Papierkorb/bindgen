@@ -62,6 +62,7 @@ static __attribute__((noreturn)) void bindgen_fatal_panic(const char *message) {
 #ifdef __cplusplus
 #include <gc/gc_cpp.h>
 #include <string>
+#include <type_traits>
 
 // Break C++'s encapsulation to allow easy wrapping of protected methods.
 #define protected public
@@ -72,6 +73,18 @@ static CrystalString bindgen_stdstring_to_crystal(const std::string &str) {
 
 static std::string bindgen_crystal_to_stdstring(CrystalString str) {
   return std::string(str.ptr, str.size);
+}
+
+/* Wrapper for a Crystal `Slice`.  Layout-compatible to `Slice`. */
+struct CrystalSlice {
+  int32_t size;
+  bool read_only;
+  const void *pointer;
+};
+
+template<typename T, std::size_t N>
+/*constexpr*/ CrystalSlice bindgen_array_to_slice(T (&arr)[N]) noexcept {
+  return CrystalSlice{ static_cast<uint32_t>(N), std::is_const<T>::value, arr };
 }
 
 /* Wrapper for a Crystal `Proc`. */

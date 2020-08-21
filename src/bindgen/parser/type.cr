@@ -187,7 +187,7 @@ module Bindgen
         ptr = @pointer
         extents = @extents
 
-        if extents.size > 0 # 1,
+        if extents.size > 0 # 1.
           extents = extents[1..]
           ptr -= 1
         elsif is_const # 2.
@@ -307,6 +307,31 @@ module Bindgen
       # Is this type a C array with known size?
       def c_complete_array?
         c_array? && @extents.none?(&.zero?)
+      end
+
+      # Returns a copy of this type with C array extents removed.
+      def remove_all_extents : Type
+        ptr = @pointer - @extents.size
+        extents = Array(UInt64).new
+
+        typer = Cpp::Typename.new
+        type_ptr = ptr
+        type_ptr -= 1 if @isReference
+
+        Type.new(
+          kind: @kind,
+          isConst: @isConst,
+          isReference: @isReference,
+          isMove: false,
+          isBuiltin: @isBuiltin,
+          isVoid: @isVoid,
+          pointer: ptr,
+          extents: extents,
+          baseName: @baseName,
+          fullName: typer.full(@baseName, @isConst, type_ptr, @isReference, extents),
+          template: @template,
+          nilable: @nilable,
+        )
       end
 
       # Unqualified base name for easier mapping to Crystal.

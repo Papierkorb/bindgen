@@ -6,13 +6,18 @@ module Bindgen
       def initialize(@db : TypeDatabase)
       end
 
-      # Returns the full Crystal type-name of *result*.
+      # Returns the full Crystal type-name of *result*.  The type-name cannot be
+      # used in normal code if the type contains pointers or arrays.
       def full(result : Call::Expression)
         ptr = result.pointer
         ptr += 1 if result.reference
         stars = "*" * ptr
         nilable = "?" if result.nilable?
-        "#{result.type_name}#{stars}#{nilable}"
+
+        extents = result.type.extents.reverse
+        subscripts = extents.map {|v| "[#{v unless v.zero?}]"}.join
+
+        "#{result.type_name}#{stars}#{subscripts}#{nilable}"
       end
 
       # The type-name of *type* for use in a wrapper.

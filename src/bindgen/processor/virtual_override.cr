@@ -299,7 +299,7 @@ module Bindgen
 
         Call::Result.new(
           type: proc_type,
-          type_name: pass.crystal_proc_name(proc_type),
+          type_name: pass.type_name_base(proc_type),
           reference: false,
           pointer: 0,
           conversion: nil,

@@ -31,7 +31,7 @@ module Bindgen
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
 
           add_getter(klass, access, field_type, field.name, method_name)
-          add_setter(klass, access, field_type, field.name, method_name) unless field.const?
+          add_setter(klass, access, field_type, field.name, method_name) unless field.const? || field.c_array?
         end
 
         super
