@@ -196,50 +196,50 @@ module Bindgen
       # going up to the parent(s).
       #
       # If the *path* starts with `::` (An empty element), the look-up will
-      # always start at the global scope.  If `::` is given, the root node
-      # is returned.  Otherwise, the first part of the path must be the name
-      # of the root node: `::RootNameHere::And::So::On` instead of
-      # `::And::So::On`.
+      # always start at the global scope.  If *path* is exactly `::`, the root
+      # node (not the global root) is returned.  Otherwise, the first part of
+      # the path must be the name of the root node: `::RootName::And::So::On`
+      # instead of `::And::So::On`.
       #
       # If not found, returns `nil`.  This method does *not* raise.
       def lookup(base : Node) : Node?
+        if empty? # Handle self-paths and global root
+          return global? ? base.find_root : base
+        end
+
+        first_part = @parts.first
+
         if global?
           root = base.find_root
-
-          if empty?
-            root
-          elsif @parts.first == root.name # Make sure we go into our namespace
-            try_lookup(root, @parts[1..-1]) # Skip first element
-          end
+          try_lookup_at(root) if first_part == root.name
         else
-          return base if empty? # Handle self lookup.
-
-          root = base.find_root
-
-          # Try lookup of the path, going up to the parent once if not found.
           while base
-            found = try_lookup(base, @parts)
-            return found if found
-            base = base.parent
-          end
+            # Child nodes have higher priority over siblings.  If a child
+            # matches *first_part*, lookup will stop after this iteration;
+            # otherwise, siblings in *node*'s enclosing namespace are searched
+            # (on the first iteration this includes the original *base* itself).
+            node = find_in_container(base, first_part) || base
+            return try_lookup_at(node) if first_part == node.name
 
-          # One last try: Support a local-"global"-path like `Qt::Object`.
-          if @parts.first == root.name
-            return try_lookup(root, @parts[1..-1])
+            # Try parent namespaces
+            base = base.unspecific_parent
           end
         end
       end
 
-      # Tries to find *path* starting in *node*.
-      private def try_lookup(node, path) : Node?
-        path.each do |local_name|
+      # Helper for `#lookup`.  Tries to locate this path in a namespace
+      # enclosing *node*.  Assumes the path is local and does not retry lookup
+      # in parent namespaces.
+      private def try_lookup_at(node) : Node?
+        @parts.each(within: 1..) do |local_name|
+          # Lookup is only supported on container nodes
           return nil unless node.is_a?(Container)
 
           # Manually traverse to also search in `PlatformSpecific` nodes
           node = find_in_container(node, local_name)
         end
 
-        # Maybe found!  May be `nil` if the last part of the path was not found.
+        # Maybe found!  May be `nil` if the last part was not found.
         node
       end
 
