@@ -403,20 +403,20 @@ describe Bindgen::Graph::Path do
     end
 
     it "builds a fake-global path if not found" do
-      s = Bindgen::Graph::Namespace.new("S")
+      s = Bindgen::Graph::Namespace.new("J")
       t = Bindgen::Graph::Namespace.new("T", s)
 
       # a and t don't share any ancestor.
-      Bindgen::Graph::Path.local(a, t).should eq(path("S::T"))
+      Bindgen::Graph::Path.local(a, t).should eq(path("J::T"))
     end
   end
 
   describe ".global" do
     it "returns the global path to the node" do
-      s = Bindgen::Graph::Namespace.new("S")
+      s = Bindgen::Graph::Namespace.new("J")
       t = Bindgen::Graph::Namespace.new("T", s)
 
-      Bindgen::Graph::Path.global(t).should eq(path("::S::T"))
+      Bindgen::Graph::Path.global(t).should eq(path("::J::T"))
     end
   end
 
@@ -428,12 +428,20 @@ describe Bindgen::Graph::Path do
     end
 
     context "given a local path" do
+      it "finds the node itself" do
+        path("Left").lookup(left).should be(left)
+      end
+
       it "finds the parent" do
         path("Left").lookup(a).should be(left)
       end
 
       it "finds a direct child" do
         path("A").lookup(left).should be(a)
+      end
+
+      it "finds the node's own child" do
+        path("Left::A").lookup(left).should be(a)
       end
 
       it "finds an earlier parent" do
@@ -463,18 +471,36 @@ describe Bindgen::Graph::Path do
       it "returns nil if not found" do
         path("DoesntExist").lookup(root).should be_nil
       end
+    end
 
+    context "shadowed namespaces" do
       # Builds this graph:
       #
-      #   p1  -->  P
+      #              E
+      #             /
+      #   f1  -->  F
       #           / \
-      # p2  -->  P   Q
-      pending "doesn't find parents beyond the first matched parent" do
-        p1 = Bindgen::Graph::Namespace.new("P")
-        p2 = Bindgen::Graph::Namespace.new("P", p1)
-        q = Bindgen::Graph::Namespace.new("Q", p1)
+      # f2  -->  F   G
+      #         /     \
+      #        H       J
+      e = Bindgen::Graph::Namespace.new("E")
+      f1 = Bindgen::Graph::Namespace.new("F", e)
+      f2 = Bindgen::Graph::Namespace.new("F", f1)
+      g = Bindgen::Graph::Namespace.new("G", f1)
+      h = Bindgen::Graph::Namespace.new("H", f2)
+      j = Bindgen::Graph::Namespace.new("J", h)
 
-        path("P::Q").lookup(p2).should be_nil
+      it "f2 shadows f1 in descendents of f1" do
+        path("F::G").lookup(f1).should be_nil
+        path("F::G").lookup(f2).should be_nil
+        path("F::G").lookup(g).should be_nil
+        path("F::G").lookup(h).should be_nil
+        path("F::G").lookup(j).should be_nil
+      end
+
+      it "f2 doesn't shadow f1 in e" do
+        path("F::G").lookup(e).should be(g)
+        path("F::F").lookup(e).should be(f2)
       end
     end
 
