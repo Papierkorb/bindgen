@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-private def path(parts)
-  Bindgen::Graph::Path.from(parts)
+private def path(*parts)
+  Bindgen::Graph::Path.from(*parts)
 end
 
 describe Bindgen::Graph::Path do
@@ -134,6 +134,33 @@ describe Bindgen::Graph::Path do
 
     it "returns the last path part" do
       path("a::b::c::d").last_part.should eq("d")
+    end
+  end
+
+  describe "#join" do
+    it "concatenates two paths" do
+      path("a::b").join(path("c::d")).should eq(path("a::b::c::d"))
+      path("::a::b").join(path("c::d")).should eq(path("::a::b::c::d"))
+
+      path("a::b").join(path("")).should eq(path("a::b"))
+      path("").join(path("a::b")).should eq(path("a::b"))
+      path("").join(path("")).should eq(path(""))
+    end
+
+    context "joining to a global path" do
+      it "returns a global path" do
+        path("::a::b").join(path("c::d")).should eq(path("::a::b::c::d"))
+        path("::a::b").join(path("")).should eq(path("::a::b"))
+        path("::").join(path("c::d")).should eq(path("::c::d"))
+      end
+    end
+
+    context "joining a global path to another path" do
+      it "returns the global path" do
+        path("a::b").join(path("::c::d")).should eq(path("::c::d"))
+        path("").join(path("::c::d")).should eq(path("::c::d"))
+        path("a::b").join(path("::")).should eq(path("::"))
+      end
     end
   end
 
@@ -293,14 +320,34 @@ describe Bindgen::Graph::Path do
       path("").self_path?.should be_true
     end
 
+    it "ignores trailing namespace operators" do
+      path("a::b::").should eq(path("a::b"))
+    end
+
     it "ignores type arguments of generic types" do
       path("Foo(Stuff)::Bar").should eq(path("Foo::Bar"))
     end
   end
 
+  describe ".from(Path)" do
+    it "returns a copy of the path" do
+      subject = path("a::b")
+      copy = path(subject)
+      copy.should eq(subject)
+      copy.parts.should_not be(subject.parts)
+    end
+  end
+
+  describe ".from(*)" do
+    it "returns the concatenation of the given paths" do
+      path("a", "b::c", path("d")).should eq(path("a::b::c::d"))
+      path("::", "c", path(""), path("::"), "d").should eq(path("::d"))
+    end
+  end
+
   describe ".from(Enumerable)" do
-    it "uses the list" do
-      path({"Foo", "Bar"}).should eq(path("Foo::Bar"))
+    it "returns the concatenation of the given paths" do
+      path({"Foo", "Bar::Baz"}).should eq(path("Foo::Bar::Baz"))
     end
   end
 

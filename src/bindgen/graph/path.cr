@@ -13,7 +13,7 @@ module Bindgen
 
       def_equals_and_hash @parts, @global
 
-      protected def initialize(*, @parts, @global = false)
+      protected def initialize(@parts, @global)
       end
 
       # Returns the `Path` with the parts in *range*.  The new `Path` is global
@@ -21,7 +21,7 @@ module Bindgen
       # also global.
       def [](range : Range) : Path
         range = normalize_range(range)
-        Path.new(parts: @parts[range], global: global? && range.includes?(0))
+        Path.new(@parts[range], global? && range.includes?(0))
       end
 
       # Returns the `Path` excluding the last part in `#nodes`, thus pointing
@@ -29,20 +29,42 @@ module Bindgen
       # global.  Raises if this is an empty path.
       def parent : Path
         raise IndexError.new("parent called on empty path") if empty?
-        Path.new(parts: @parts[0..-2], global: global?)
+        Path.new(@parts[0..-2], global?)
       end
 
       # Returns the local `Path` with only the last part in `#nodes`, thus
       # pointing at the child in `#parent`.  Raises if this is an empty path.
       def last : Path
         raise IndexError.new("last called on empty path") if empty?
-        Path.new(parts: @parts[-1..-1], global: false)
+        Path.new(@parts[-1..-1], false)
       end
 
       # Returns the last part of this path.  Raises if this is an empty path.
       def last_part : String
         raise IndexError.new("last_part called on empty path") if empty?
         @parts.last
+      end
+
+      # Combines the *other* path into this path.  If the other path is global,
+      # simply returns *other*.  Otherwise, the new path contains the parts from
+      # this path, followed by the parts from *other*.
+      def join(other : Path) : Path
+        if other.global?
+          other
+        else
+          Path.new(@parts + other.parts, self.global?)
+        end
+      end
+
+      # :nodoc:
+      protected def join!(other : Path)
+        if other.global?
+          @parts = other.parts.dup
+          @global = true
+        else
+          @parts.concat(other.parts)
+        end
+        self
       end
 
       # Is this an empty path?
@@ -72,9 +94,9 @@ module Bindgen
         end
 
         if target.parent
-          Path.new(parts: target.full_path.map(&.name), global: true)
+          Path.new(target.full_path.map(&.name), true)
         else # Self-path lookup on the root.
-          Path.new(parts: [] of String, global: true)
+          Path.global_root
         end
       end
 
@@ -106,27 +128,36 @@ module Bindgen
           if global = parts.first?.try(&.empty?)
             parts.shift
           end
-          new(parts: parts, global: global || false)
+          parts.pop if parts.last?.try(&.empty?)
+          new(parts, global || false)
         end
       end
 
       # :ditto:
-      def self.from(path : Enumerable(String)) : Path
-        parts = path.to_a
-        if global = parts.first?.try(&.empty?)
-          parts.shift
+      def self.from(path : Path) : Path
+        new(path.parts.dup, path.global?)
+      end
+
+      # Returns a new `Path` formed by concatenating the given paths.
+      def self.from(first_path : String | Path, *remaining : String | Path) : Path
+        remaining.reduce(from(first_path)) do |path, other|
+          path.join!(other.is_a?(Path) ? other : from(other))
         end
-        new(parts: parts, global: global || false)
+      end
+
+      # :ditto:
+      def self.from(path : Enumerable(String | Path)) : Path
+        from(*path)
       end
 
       # Returns a self-referencing path.
       def self.self_path : Path
-        new(parts: [] of String, global: false)
+        new([] of String, false)
       end
 
       # Returns a path that refers to the global root.
       def self.global_root : Path
-        new(parts: [] of String, global: true)
+        new([] of String, true)
       end
 
       # Finds the local path to go from *node* to *wants*, in terms of constant
@@ -138,26 +169,26 @@ module Bindgen
         if node == wants # It wants itself.  Nothing to do.
           Path.self_path
         elsif node.parent == wants.parent # !!
-          new(parts: [wants.name], global: false) # Locally qualified name suffices
+          new([wants.name], false) # Locally qualified name suffices
         else
           wants_path = wants.full_path
           common, index = last_common(node.full_path, wants_path)
 
           if common            # We have a common ancestor node
             if common == wants # *node* is inside *wants*
-              new(parts: [wants.name], global: false)
+              new([wants.name], false)
             else # !!
-              new(parts: wants_path[(index + 1)..-1].map(&.name), global: false)
+              new(wants_path[(index + 1)..-1].map(&.name), false)
             end
           else # No common parts in the path.  Fall back to using the full path.
-            new(parts: wants_path.map(&.name), global: false)
+            new(wants_path.map(&.name), false)
           end
         end
       end
 
       # Returns the global path to *node*.
       def self.global(node : Node) : Path
-        new(parts: node.full_path.map(&.name), global: true)
+        new(node.full_path.map(&.name), true)
       end
 
       # Does a local look-up starting at *base* for *path*.  The look-up will
