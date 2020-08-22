@@ -5,60 +5,55 @@ module Bindgen
     #
     # The structure doesn't store any origin by itself.
     struct Path
-      # Node path.  If `nil`, the path points to itself.
-      getter nodes : Array(String)?
-
-      def initialize(@nodes = [] of String)
-      end
-
-      # Returns the path parts in *range*.  If `#nodes` is nil, the returneed
-      # path will also have a nil-`#nodes`.
-      def [](range : Range) : Path
-        if nodes = @nodes
-          self.class.new(nodes[range])
-        else
-          self
-        end
-      end
-
-      # Returns the `Path` excluding the last element in `#nodes`, thus pointing
-      # to the parent of this path.
-      def parent
-        self[0..-2]
-      end
-
-      # Returns the `Path` with only the last element in `#nodes`, thus pointing
-      # at the child in `#parent`.
-      def last
-        self[-1..-1]
-      end
-
-      # Returns the last element of `#nodes` itself.  If `#nodes` is `nil`, raises.
-      def last_part : String
-        if nodes = @nodes
-          nodes.last
-        else
-          raise IndexError.new("last_part called on self-path")
-        end
-      end
-
-      # Does this path point to itself?
-      def self?
-        @nodes.nil?
-      end
+      # The names of the path at each namespace.
+      getter parts : Array(String)
 
       # Is this a global path?
-      def global?
-        nodes = @nodes
+      getter? global : Bool
 
-        if nodes && nodes.first?.try(&.empty?)
-          true
-        else
-          false
-        end
+      def_equals_and_hash @parts, @global
+
+      protected def initialize(*, @parts, @global = false)
       end
 
-      # Is this a local path?  Also `true` if this is a `#self?` path.
+      # Returns the `Path` with the parts in *range*.  The new `Path` is global
+      # only if it includes the first part of this `Path` and this `Path` is
+      # also global.
+      def [](range : Range) : Path
+        range = normalize_range(range)
+        Path.new(parts: @parts[range], global: global? && range.includes?(0))
+      end
+
+      # Returns the `Path` excluding the last part in `#nodes`, thus pointing
+      # to the parent of this path.  Returns a global path if this path is also
+      # global.  Raises if this is an empty path.
+      def parent : Path
+        raise IndexError.new("parent called on empty path") if empty?
+        Path.new(parts: @parts[0..-2], global: global?)
+      end
+
+      # Returns the local `Path` with only the last part in `#nodes`, thus
+      # pointing at the child in `#parent`.  Raises if this is an empty path.
+      def last : Path
+        raise IndexError.new("last called on empty path") if empty?
+        Path.new(parts: @parts[-1..-1], global: false)
+      end
+
+      # Returns the last part of this path.  Raises if this is an empty path.
+      def last_part : String
+        raise IndexError.new("last_part called on empty path") if empty?
+        @parts.last
+      end
+
+      # Is this an empty path?
+      delegate empty?, to: @parts
+
+      # Does this path point to itself?
+      def self_path?
+        empty? && !global?
+      end
+
+      # Is this a local path?  Also `true` if this is a `#self_path?` path.
       def local?
         !global?
       end
@@ -77,28 +72,21 @@ module Bindgen
         end
 
         if target.parent
-          Path.new([""] + target.full_path.map(&.name))
+          Path.new(parts: target.full_path.map(&.name), global: true)
         else # Self-path lookup on the root.
-          Path.new([] of String)
+          Path.new(parts: [] of String, global: true)
         end
       end
 
       # Gives the path as Crystal constants look-up path.
       def to_s(io)
-        nodes = @nodes
-
-        if nodes.nil? # Path to itself
-          io << ""
-        elsif nodes.empty? # Force lookup starting at the global scope
-          io << "::"
-        else # Normal constant lookup path
-          io << nodes.join("::")
-        end
+        io << "::" if global?
+        io << parts.join("::")
       end
 
       # Much like `#to_s`, but tells the user when this path points to itself.
       def inspect(io)
-        if @nodes.nil?
+        if self_path?
           io << "self"
         else
           to_s(io)
@@ -109,21 +97,36 @@ module Bindgen
       #
       # BUG: Doesn't support nested generics, like `Foo(Bar(Baz))::Quux`.
       def self.from(path : String) : Path
-        if path == "::"
-          new([""])
+        if path == ""
+          self_path
+        elsif path == "::"
+          global_root
         else
-          new(path.gsub(/\([^)]+\)/, "").split("::"))
+          parts = path.gsub(/\([^)]+\)/, "").split("::")
+          if global = parts.first?.try(&.empty?)
+            parts.shift
+          end
+          new(parts: parts, global: global || false)
         end
       end
 
-      # ditto
+      # :ditto:
       def self.from(path : Enumerable(String)) : Path
-        new path.to_a
+        parts = path.to_a
+        if global = parts.first?.try(&.empty?)
+          parts.shift
+        end
+        new(parts: parts, global: global || false)
       end
 
       # Returns a self-referencing path.
-      def self.from(path : Nil) : Path
-        new nil
+      def self.self_path : Path
+        new(parts: [] of String, global: false)
+      end
+
+      # Returns a path that refers to the global root.
+      def self.global_root : Path
+        new(parts: [] of String, global: true)
       end
 
       # Finds the local path to go from *node* to *wants*, in terms of constant
@@ -131,30 +134,30 @@ module Bindgen
       #
       # BUG: Fails if `Foo::Node`, `Foo::Wants` and `Foo::Node::Wants` exist.
       # The affected branches are marked with `!!`.
-      def self.local(node : Graph::Node, wants : Graph::Node) : Path
+      def self.local(node : Node, wants : Node) : Path
         if node == wants # It wants itself.  Nothing to do.
-          Path.new(nil)
+          Path.self_path
         elsif node.parent == wants.parent # !!
-          Path.new([wants.name])          # Locally qualified name suffices
+          new(parts: [wants.name], global: false) # Locally qualified name suffices
         else
           wants_path = wants.full_path
           common, index = last_common(node.full_path, wants_path)
 
           if common            # We have a common ancestor node
             if common == wants # *node* is inside *wants*
-              Path.new([wants.name])
+              new(parts: [wants.name], global: false)
             else # !!
-              Path.new(wants_path[(index + 1)..-1].map(&.name))
+              new(parts: wants_path[(index + 1)..-1].map(&.name), global: false)
             end
           else # No common parts in the path.  Fall back to using the full path.
-            Path.new(wants_path.map(&.name))
+            new(parts: wants_path.map(&.name), global: false)
           end
         end
       end
 
       # Returns the global path to *node*.
-      def self.global(node : Graph::Node) : Path
-        new([""] + node.full_path.map(&.name))
+      def self.global(node : Node) : Path
+        new(parts: node.full_path.map(&.name), global: true)
       end
 
       # Does a local look-up starting at *base* for *path*.  The look-up will
@@ -169,35 +172,31 @@ module Bindgen
       #
       # If not found, returns `nil`.  This method does *not* raise.
       def lookup(base : Node) : Node?
-        nodes = @nodes
-        if nodes.nil? # Handle self lookup.
-          base
-        elsif nodes.empty? # We don't have a global scope by itself.
-          nil
+        if global?
+          root = base.find_root
+
+          if empty?
+            root
+          elsif @parts.first == root.name # Make sure we go into our namespace
+            try_lookup(root, @parts[1..-1]) # Skip first element
+          end
         else
-          do_lookup(base, nodes)
+          return base if empty? # Handle self lookup.
+
+          root = base.find_root
+
+          # Try lookup of the path, going up to the parent once if not found.
+          while base
+            found = try_lookup(base, @parts)
+            return found if found
+            base = base.parent
+          end
+
+          # One last try: Support a local-"global"-path like `Qt::Object`.
+          if @parts.first == root.name
+            return try_lookup(root, @parts[1..-1])
+          end
         end
-      end
-
-      # Implements the actual look-up logic without the corner cases.
-      private def do_lookup(base, path) : Node?
-        root = base.find_root
-        base, path = lookup_global_check(root, base, path)
-        return base if path.nil?
-
-        # Try lookup of the path, going up to the parent once if not found.
-        while base
-          found = try_lookup(base, path)
-          return found if found
-          base = base.parent
-        end
-
-        # One last try: Support a local-"global"-path like `Qt::Object`.
-        if path.first == root.name
-          return try_lookup(root, path[1..-1])
-        end
-
-        nil # Not found
       end
 
       # Tries to find *path* starting in *node*.
@@ -221,29 +220,12 @@ module Bindgen
             if found = find_in_container(node, name) # Recurse
               return found
             end
+          else
+            return node if node.name == name
           end
-
-          return node if node.name == name
         end
 
         nil # Not found.
-      end
-
-      # Helper for `#do_lookup`: Checks if *path* starts at the global level.
-      private def lookup_global_check(root, base, path)
-        if path.first.empty? # Force start at the root?
-          base = root
-
-          if path.size < 2
-            return {root, nil}
-          elsif path[1] != base.name # Make sure we go into our namespace
-            return {nil, path}
-          end
-
-          path = path[2..-1] # Skip first two elements
-        end
-
-        {base, path}
       end
 
       # Finds the last common element in the lists *a* and *b*, and returns it.
@@ -263,6 +245,32 @@ module Bindgen
         end
 
         {found, index}
+      end
+
+      # Normalizes a range expression, required for `#[](Range)`.  Based on
+      # `Indexable.range_to_index_and_count` (an undocumented method).
+      private def normalize_range(range)
+        collection_size = @parts.size
+
+        start_index = range.begin
+        if start_index.nil?
+          start_index = 0
+        else
+          start_index += collection_size if start_index < 0
+          raise IndexError.new if start_index < 0
+        end
+
+        end_index = range.end
+        if end_index.nil?
+          count = collection_size - start_index
+        else
+          end_index += collection_size if end_index < 0
+          end_index -= 1 if range.excludes_end?
+          count = end_index - start_index + 1
+        end
+        count = 0 if count < 0
+
+        (start_index..(start_index + count - 1))
       end
     end
   end
