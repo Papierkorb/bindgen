@@ -326,6 +326,7 @@ describe Bindgen::Graph::Path do
 
     it "ignores type arguments of generic types" do
       path("Foo(Stuff)::Bar").should eq(path("Foo::Bar"))
+      path("Proc(Tuple(Foo::Bar,Baz),Quux,Array(T))::T").should eq(path("Proc::T"))
     end
   end
 
@@ -403,20 +404,20 @@ describe Bindgen::Graph::Path do
     end
 
     it "builds a fake-global path if not found" do
-      s = Bindgen::Graph::Namespace.new("J")
+      s = Bindgen::Graph::Namespace.new("S")
       t = Bindgen::Graph::Namespace.new("T", s)
 
       # a and t don't share any ancestor.
-      Bindgen::Graph::Path.local(a, t).should eq(path("J::T"))
+      Bindgen::Graph::Path.local(a, t).should eq(path("S::T"))
     end
   end
 
   describe ".global" do
     it "returns the global path to the node" do
-      s = Bindgen::Graph::Namespace.new("J")
+      s = Bindgen::Graph::Namespace.new("S")
       t = Bindgen::Graph::Namespace.new("T", s)
 
-      Bindgen::Graph::Path.global(t).should eq(path("::J::T"))
+      Bindgen::Graph::Path.global(t).should eq(path("::S::T"))
     end
   end
 

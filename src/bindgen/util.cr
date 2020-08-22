@@ -6,6 +6,10 @@ module Bindgen
     # Matches absolutely nothing, not even the empty string.
     FAIL_RX = /(?!)/
 
+    # Matches strings with balanced parentheses.
+    # (http://www.pcre.org/original/doc/html/pcrepattern.html#SEC23)
+    BALANCED_PARENS_RX = /\( ( [^()]++ | (?R) )* \)/x
+
     # Mimics Rubys `Enumerable#uniq_by`.  Takes a *list*, and makes all values
     # in it unique by yielding all pairs, keeping only those items where the
     # block returned a falsy value.

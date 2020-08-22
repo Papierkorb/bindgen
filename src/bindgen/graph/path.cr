@@ -116,15 +116,13 @@ module Bindgen
       end
 
       # Returns a new `Path` on *path*.  Supports generic parts.
-      #
-      # BUG: Doesn't support nested generics, like `Foo(Bar(Baz))::Quux`.
       def self.from(path : String) : Path
         if path == ""
           self_path
         elsif path == "::"
           global_root
         else
-          parts = path.gsub(/\([^)]+\)/, "").split("::")
+          parts = path.gsub(Util::BALANCED_PARENS_RX, "").split("::")
           if global = parts.first?.try(&.empty?)
             parts.shift
           end
@@ -138,16 +136,19 @@ module Bindgen
         new(path.parts.dup, path.global?)
       end
 
-      # Returns a new `Path` formed by concatenating the given paths.
-      def self.from(first_path : String | Path, *remaining : String | Path) : Path
-        remaining.reduce(from(first_path)) do |path, other|
+      # Returns a new `Path` formed by concatenating the given paths.  An empty
+      # collection produces a self-path.
+      def self.from(paths : Enumerable(String | Path)) : Path
+        paths.reduce(self_path) do |path, other|
           path.join!(other.is_a?(Path) ? other : from(other))
         end
       end
 
       # :ditto:
-      def self.from(path : Enumerable(String | Path)) : Path
-        from(*path)
+      def self.from(first_path : String | Path, *remaining : String | Path) : Path
+        remaining.reduce(from(first_path)) do |path, other|
+          path.join!(other.is_a?(Path) ? other : from(other))
+        end
       end
 
       # Returns a self-referencing path.
