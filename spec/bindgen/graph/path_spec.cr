@@ -6,89 +6,153 @@ end
 
 describe Bindgen::Graph::Path do
   describe "#[](Range)" do
-    context "self path" do
-      it "returns path with nil-nodes" do
-        path(nil)[0..2].nodes.should be_nil
+    it "returns a sub-path" do
+      path("a::b::c::d")[1..2].should eq(path("b::c"))
+      path("a::b::c::d")[0..0].should eq(path("a"))
+    end
+
+    it "supports negative indices" do
+      subject = path("a::b::c::d")
+      subject[-3..2].should eq(path("b::c"))
+      subject[1..-2].should eq(path("b::c"))
+      subject[-3..-2].should eq(path("b::c"))
+    end
+
+    context "global path" do
+      it "returns a global path only if the first part is included" do
+        subject = path("::a::b::c::d")
+        subject[0..2].should eq(path("::a::b::c"))
+        subject[1..2].should eq(path("b::c"))
+        subject[-3..-2].should eq(path("b::c"))
+        subject[0..-4].should eq(path("::a"))
       end
     end
 
-    it "returns a sub-path" do
-      path(%w[a b c d])[1..2].nodes.should eq(%w[b c])
+    context "self path" do
+      it "returns a self path" do
+        path("")[0..2].should eq(path(""))
+      end
+    end
+
+    context "global root" do
+      it "returns the global root" do
+        path("::")[0..2].should eq(path("::"))
+      end
     end
   end
 
   describe "#parent" do
     context "self path" do
-      it "returns a self path" do
-        path(nil).parent.nodes.should be_nil
+      it "raises" do
+        expect_raises(IndexError, /empty path/i) do
+          path("").parent
+        end
       end
     end
 
-    context "single element path" do
-      it "returns the global path" do
-        path(%w[a]).parent.nodes.try(&.empty?).should be_true
+    context "global root" do
+      it "raises" do
+        expect_raises(IndexError, /empty path/i) do
+          path("::").parent
+        end
+      end
+    end
+
+    context "single element local path" do
+      it "returns a self path" do
+        path("a").parent.should eq(path(""))
+      end
+    end
+
+    context "single element global path" do
+      it "returns the global root" do
+        path("::a").parent.should eq(path("::"))
       end
     end
 
     it "returns the path of the parent" do
-      path(%w[a b c d]).parent.nodes.should eq(%w[a b c])
+      path("a::b::c::d").parent.should eq(path("a::b::c"))
     end
   end
 
   describe "#last" do
     context "self path" do
-      it "returns a self path" do
-        path(nil).last.nodes.should be_nil
+      it "raises" do
+        expect_raises(IndexError, /empty path/i) do
+          path("").last
+        end
+      end
+    end
+
+    context "global root" do
+      it "raises" do
+        expect_raises(IndexError, /empty path/i) do
+          path("::").last
+        end
       end
     end
 
     context "single element path" do
       it "returns the same path" do
-        path(%w[a]).last.nodes.should eq(%w[a])
+        path("a").last.should eq(path("a"))
       end
     end
 
     it "returns the last path part" do
-      path(%w[a b c d]).last.nodes.should eq(%w[d])
+      path("a::b::c::d").last.should eq(path("d"))
+    end
+
+    context "global path" do
+      it "returns a local path" do
+        path("::a::b").last.should eq(path("b"))
+      end
     end
   end
 
   describe "#last_part" do
     context "self path" do
       it "raises" do
-        expect_raises(IndexError, /self-path/i) do
-          path(nil).last_part
+        expect_raises(IndexError, /empty path/i) do
+          path("").last_part
+        end
+      end
+    end
+
+    context "global root" do
+      it "raises" do
+        expect_raises(IndexError, /empty path/i) do
+          path("::").last_part
         end
       end
     end
 
     context "single element path" do
       it "returns that element" do
-        path(%w[a]).last_part.should eq("a")
+        path("a").last_part.should eq("a")
       end
     end
 
     it "returns the last path part" do
-      path(%w[a b c d]).last_part.should eq("d")
+      path("a::b::c::d").last_part.should eq("d")
     end
   end
 
-  describe "#self?" do
+  describe "#self_path?" do
     context "on a self path" do
       it "returns true" do
-        path(nil).self?.should be_true
+        path("").self_path?.should be_true
       end
     end
 
     context "on a local path" do
       it "returns false" do
-        path(%w[a b]).self?.should be_false
+        path("a::b").self_path?.should be_false
       end
     end
 
     context "on a global path" do
       it "returns false" do
-        path(["", "a", "b"]).self?.should be_false
+        path("::a::b").self_path?.should be_false
       end
     end
   end
@@ -96,19 +160,19 @@ describe Bindgen::Graph::Path do
   describe "#global?" do
     context "on a self path" do
       it "returns false" do
-        path(nil).global?.should be_false
+        path("").global?.should be_false
       end
     end
 
     context "on a local path" do
       it "returns false" do
-        path(%w[a b]).global?.should be_false
+        path("a::b").global?.should be_false
       end
     end
 
     context "on a global path" do
       it "returns true" do
-        path(["", "a", "b"]).global?.should be_true
+        path("::a::b").global?.should be_true
       end
     end
   end
@@ -116,19 +180,19 @@ describe Bindgen::Graph::Path do
   describe "#local?" do
     context "on a self path" do
       it "returns true" do
-        path(nil).local?.should be_true
+        path("").local?.should be_true
       end
     end
 
     context "on a local path" do
       it "returns true" do
-        path(%w[a b]).local?.should be_true
+        path("a::b").local?.should be_true
       end
     end
 
     context "on a global path" do
       it "returns false" do
-        path(["", "a", "b"]).local?.should be_false
+        path("::a::b").local?.should be_false
       end
     end
   end
@@ -142,25 +206,25 @@ describe Bindgen::Graph::Path do
 
     context "given a global path" do
       it "returns self without checks" do
-        subject = path(["", "Doesnt", "Actually", "Exist"])
+        subject = path("::Doesnt::Actually::Exist")
         subject.to_global(root).should eq(subject)
       end
     end
 
     context "given a self path" do
       it "returns a path pointing to '::'" do
-        path(nil).to_global(root).should eq(path(%w[]))
+        path("").to_global(root).should eq(path("::"))
       end
     end
 
     context "given a local path" do
       it "returns a global path" do
-        path(%w[C D]).to_global(mod_b).should eq(path(["", "A", "B", "C", "D"]))
+        path("C::D").to_global(mod_b).should eq(path("::A::B::C::D"))
       end
 
       it "raises if the local path doesn't exist" do
         expect_raises(Exception, /does not exist/i) do
-          path(%w[Unknown]).to_global(mod_b)
+          path("Unknown").to_global(mod_b)
         end
       end
     end
@@ -169,19 +233,19 @@ describe Bindgen::Graph::Path do
   describe "#to_s" do
     context "given a self path" do
       it "returns empty string" do
-        path(nil).to_s.should eq("")
+        path("").to_s.should eq("")
       end
     end
 
     context "given a local path" do
       it "returns The::Path" do
-        path(%w[The Path]).to_s.should eq("The::Path")
+        path("The::Path").to_s.should eq("The::Path")
       end
     end
 
     context "given a global path" do
       it "returns ::The::Path" do
-        path(["", "The", "Path"]).to_s.should eq("::The::Path")
+        path("::The::Path").to_s.should eq("::The::Path")
       end
     end
   end
@@ -189,50 +253,54 @@ describe Bindgen::Graph::Path do
   describe "#inspect" do
     context "given a self path" do
       it "returns 'self'" do
-        path(nil).inspect.should eq("self")
+        path("").inspect.should eq("self")
       end
     end
 
     context "given a local path" do
       it "returns The::Path" do
-        path(%w[The Path]).inspect.should eq("The::Path")
+        path("The::Path").inspect.should eq("The::Path")
       end
     end
 
     context "given a global path" do
       it "returns ::The::Path" do
-        path(["", "The", "Path"]).inspect.should eq("::The::Path")
+        path("::The::Path").inspect.should eq("::The::Path")
       end
     end
   end
 
   describe ".from(String)" do
-    it "works with normal paths" do
-      path("Foo::Bar").nodes.should eq(%w[Foo Bar])
-    end
-
-    it "works with generics paths" do
-      path("Foo(Stuff)::Bar").nodes.should eq(%w[Foo Bar])
+    it "builds a local path" do
+      subject = path("Foo::Bar")
+      subject.parts.should eq(["Foo", "Bar"])
+      subject.global?.should be_false
     end
 
     it "builds a global path" do
-      path("::Foo::Bar").nodes.should eq(["", "Foo", "Bar"])
+      subject = path("::Foo::Bar")
+      subject.parts.should eq(["Foo", "Bar"])
+      subject.global?.should be_true
     end
 
     it "builds the global path" do
-      path("::").nodes.should eq([""])
+      subject = path("::")
+      subject.parts.empty?.should be_true
+      subject.global?.should be_true
+    end
+
+    it "builds the self-path" do
+      path("").self_path?.should be_true
+    end
+
+    it "ignores type arguments of generic types" do
+      path("Foo(Stuff)::Bar").should eq(path("Foo::Bar"))
     end
   end
 
   describe ".from(Enumerable)" do
     it "uses the list" do
-      path({"Foo", "Bar"}).nodes.should eq(%w[Foo Bar])
-    end
-  end
-
-  describe ".from(Nil)" do
-    it "returns a self path" do
-      path(nil).nodes.should be_nil
+      path({"Foo", "Bar"}).should eq(path("Foo::Bar"))
     end
   end
 
@@ -256,7 +324,7 @@ describe Bindgen::Graph::Path do
 
   describe ".local" do
     it "returns a self-path for going to the same node" do
-      Bindgen::Graph::Path.local(a, a).self?.should be_true
+      Bindgen::Graph::Path.local(a, a).self_path?.should be_true
     end
 
     it "finds the parent" do
@@ -301,14 +369,14 @@ describe Bindgen::Graph::Path do
       s = Bindgen::Graph::Namespace.new("S")
       t = Bindgen::Graph::Namespace.new("T", s)
 
-      Bindgen::Graph::Path.global(t).nodes.should eq(["", "S", "T"])
+      Bindgen::Graph::Path.global(t).should eq(path("::S::T"))
     end
   end
 
   describe "#lookup" do
     context "given a self path" do
       it "returns the base" do
-        path(nil).lookup(a).should be(a)
+        path("").lookup(a).should be(a)
       end
     end
 
@@ -337,12 +405,29 @@ describe Bindgen::Graph::Path do
         path("Right::D").lookup(left).should be(d)
       end
 
+      it "finds a siblings child from a parent" do
+        path("Right::D").lookup(a).should be(d)
+      end
+
       it "finds with a pseudo global" do
         path("Root::Right::D").lookup(left).should be(d)
       end
 
       it "returns nil if not found" do
         path("DoesntExist").lookup(root).should be_nil
+      end
+
+      # Builds this graph:
+      #
+      #   p1  -->  P
+      #           / \
+      # p2  -->  P   Q
+      pending "doesn't find parents beyond the first matched parent" do
+        p1 = Bindgen::Graph::Namespace.new("P")
+        p2 = Bindgen::Graph::Namespace.new("P", p1)
+        q = Bindgen::Graph::Namespace.new("Q", p1)
+
+        path("P::Q").lookup(p2).should be_nil
       end
     end
 
@@ -364,6 +449,7 @@ describe Bindgen::Graph::Path do
 
       it "starts lookup from the root" do
         path("::Root::Right::D").lookup(a).should be(d)
+        path("::Root::Root::Right::D").lookup(a).should_not be(d)
       end
     end
   end
