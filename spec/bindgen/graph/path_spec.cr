@@ -371,44 +371,81 @@ describe Bindgen::Graph::Path do
   d = Bindgen::Graph::Namespace.new("D", specific_right)
 
   describe ".local" do
-    it "returns a self-path for going to the same node" do
-      Bindgen::Graph::Path.local(a, a).self_path?.should be_true
+    it "returns the node itself on self look-ups" do
+      Bindgen::Graph::Path.local(from: a, to: a).should eq(path("A"))
     end
 
     it "finds the parent" do
-      Bindgen::Graph::Path.local(a, left).should eq(path("Left"))
+      Bindgen::Graph::Path.local(from: a, to: left).should eq(path("Left"))
     end
 
     it "finds a direct child" do
-      Bindgen::Graph::Path.local(left, a).should eq(path("A"))
+      Bindgen::Graph::Path.local(from: left, to: a).should eq(path("A"))
     end
 
     it "finds an earlier parent" do
-      Bindgen::Graph::Path.local(a, root).should eq(path("Root"))
+      Bindgen::Graph::Path.local(from: a, to: root).should eq(path("Root"))
     end
 
     it "finds a indirect child" do
-      Bindgen::Graph::Path.local(root, a).should eq(path("Left::A"))
+      Bindgen::Graph::Path.local(from: root, to: a).should eq(path("Left::A"))
     end
 
     it "finds a direct sibling" do
-      Bindgen::Graph::Path.local(left, right).should eq(path("Right"))
+      Bindgen::Graph::Path.local(from: left, to: right).should eq(path("Right"))
     end
 
     it "finds a siblings child" do
-      Bindgen::Graph::Path.local(left, d).should eq(path("Right::D"))
+      Bindgen::Graph::Path.local(from: left, to: d).should eq(path("Right::D"))
     end
 
     it "finds a node in a different sub-graph" do
-      Bindgen::Graph::Path.local(a, d).should eq(path("Right::D"))
+      Bindgen::Graph::Path.local(from: a, to: right).should eq(path("Right"))
+      Bindgen::Graph::Path.local(from: a, to: d).should eq(path("Right::D"))
     end
 
-    it "builds a fake-global path if not found" do
+    it "builds a global path if not found" do
       s = Bindgen::Graph::Namespace.new("S")
       t = Bindgen::Graph::Namespace.new("T", s)
 
       # a and t don't share any ancestor.
-      Bindgen::Graph::Path.local(a, t).should eq(path("S::T"))
+      Bindgen::Graph::Path.local(from: a, to: t).should eq(path("::S::T"))
+    end
+
+    context "ambiguous paths" do
+      it "handles ambiguities" do
+        # Builds this graph:
+        #
+        #            E
+        #           / \
+        #          F   G  <--  g1
+        #          |   |
+        # g2  -->  G   G  <--  g3
+        e = Bindgen::Graph::Namespace.new("E")
+        f = Bindgen::Graph::Namespace.new("F", e)
+        g1 = Bindgen::Graph::Namespace.new("G", e)
+        g2 = Bindgen::Graph::Namespace.new("G", f)
+        g3 = Bindgen::Graph::Namespace.new("G", g1)
+
+        Bindgen::Graph::Path.local(from: f, to: g1).should eq(path("E::G"))
+        Bindgen::Graph::Path.local(from: g1, to: g1).should eq(path("E::G"))
+        Bindgen::Graph::Path.local(from: g2, to: g1).should eq(path("E::G"))
+        Bindgen::Graph::Path.local(from: g3, to: g1).should eq(path("E::G"))
+      end
+
+      it "builds a global path if all local paths are ambiguous" do
+        # Builds this graph:
+        #
+        #      X  <-- x1
+        #     / \
+        #    Y   X  <--  x2
+        x1 = Bindgen::Graph::Namespace.new("X")
+        y = Bindgen::Graph::Namespace.new("Y", x1)
+        x2 = Bindgen::Graph::Namespace.new("X", x1)
+
+        Bindgen::Graph::Path.local(from: y, to: x1).should eq(path("::X"))
+        Bindgen::Graph::Path.local(from: x2, to: x1).should eq(path("::X"))
+      end
     end
   end
 
