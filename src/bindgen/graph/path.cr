@@ -164,27 +164,33 @@ module Bindgen
       # Finds the local path to go from *node* to *wants*, in terms of constant
       # resolution for Crystal.
       #
-      # BUG: Fails if `Foo::Node`, `Foo::Wants` and `Foo::Node::Wants` exist.
-      # The affected branches are marked with `!!`.
-      def self.local(node : Node, wants : Node) : Path
-        if node == wants # It wants itself.  Nothing to do.
-          Path.self_path
-        elsif node.parent == wants.parent # !!
-          new([wants.name], false) # Locally qualified name suffices
-        else
-          wants_path = wants.full_path
-          common, index = last_common(node.full_path, wants_path)
+      # Each call may perform multiple look-ups to ensure the resulting local
+      # path refers to *wants* unambiguously.  If this cannot be done, a global
+      # path will be returned.
+      def self.local(from node : Node, to wants : Node) : Path
+        wants_nodes = wants.full_path
+        common, index = last_common(node.full_path, wants_nodes)
 
-          if common            # We have a common ancestor node
-            if common == wants # *node* is inside *wants*
-              new([wants.name], false)
-            else # !!
-              new(wants_path[(index + 1)..-1].map(&.name), false)
-            end
-          else # No common parts in the path.  Fall back to using the full path.
-            new(wants_path.map(&.name), false)
-          end
+        if common == wants # *node* is a descendent of *wants*
+          index = wants_nodes.size - 1
+        else
+          index += 1
         end
+
+        parts = wants_nodes[index..-1].map(&.name)
+        path = new(parts, false)
+
+        loop do
+          return path if path.lookup(node).same?(wants)
+
+          # local look-up failed, prepend the parent namespace to *path*
+          index -= 1
+          break if index < 0
+          parts.unshift(wants_nodes[index].name)
+        end
+
+        # all local look-ups are ambiguous, use global path
+        global(wants)
       end
 
       # Returns the global path to *node*.
@@ -268,7 +274,7 @@ module Bindgen
         a.each_with_index do |l, idx|
           r = b[idx]?
 
-          if l == r
+          if l.same?(r)
             found = l
             index = idx
           else
