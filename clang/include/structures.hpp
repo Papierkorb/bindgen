@@ -139,7 +139,10 @@ struct Field : public Type {
 JsonStream &operator<<(JsonStream &s, const Field &value);
 
 struct Class {
+	// The following are mutually exclusive
 	bool isClass; // Class or struct?
+	bool isUnion; // Union or struct?
+
 	bool hasDefaultConstructor;
 	bool hasCopyConstructor;
 	bool isDestructible = true; // Does this class have a public or protected destructor?

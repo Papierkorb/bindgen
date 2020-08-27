@@ -85,6 +85,7 @@ bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *r
 	klass.hasCopyConstructor = record->hasCopyConstructorWithConstParam();
 	klass.isAbstract = record->isAbstract();
 	klass.isClass = record->isClass();
+	klass.isUnion = record->isUnion();
 
 	clang::TypeInfo typeInfo = record->getASTContext().getTypeInfo(record->getTypeForDecl());
 	uint64_t bitSize = typeInfo.Width;
