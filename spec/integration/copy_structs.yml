@@ -11,6 +11,7 @@ classes:
   Nested::Inner2: Nested::Inner2
   Anonymous: Anonymous
   Wrapped: Wrapped
+  PlainUnion: PlainUnion
 
 types:
   Point: { copy_structure: true, generate_binding: false, generate_wrapper: false }
@@ -20,3 +21,4 @@ types:
   Nested::Inner: { copy_structure: true, generate_binding: false, generate_wrapper: false }
   Nested::Inner2: { copy_structure: true, generate_binding: false, generate_wrapper: false }
   Anonymous: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  PlainUnion: { copy_structure: true, generate_binding: false, generate_wrapper: false }
