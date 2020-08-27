@@ -55,6 +55,13 @@ struct Wrapped {
 
 
 
+union PlainUnion {
+  int x;
+  float y;
+};
+
+
+
 class Props {
 public:
   Props(int x, int y) :

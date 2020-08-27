@@ -28,6 +28,13 @@ describe "copied structure functionality" do
           subject.before.should eq(Pointer(Test::Binding::PolyLine).null)
           subject.after.should eq(Pointer(Test::Binding::PolyLine).null)
         end
+
+        it "supports unions" do
+          subject = Test::Binding::PlainUnion.new
+          instance_var_names(subject).should eq(%w{x y})
+          subject.x = 1_f32.unsafe_as(Int32)
+          subject.y.should eq(1_f32)
+        end
       end
 
       context "nested types" do

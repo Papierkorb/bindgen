@@ -19,6 +19,7 @@ module Bindgen
         klass.origin.each_field do |field|
           # Ignore private fields.  Also ignore all reference fields for now.
           next if field.private? || field.reference? || field.move?
+          next if is_field_anonymous?(field) # Skip anonymous members for now
 
           pattern, config = lookup_member_config(var_config, field.name)
           next if config.ignore
@@ -29,7 +30,6 @@ module Bindgen
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
           method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
-          next if is_field_anonymous?(field_type) # Skip anonymous members for now
 
           add_getter(klass, access, field_type, field.name, method_name)
           add_setter(klass, access, field_type, field.name, method_name) unless field.const?

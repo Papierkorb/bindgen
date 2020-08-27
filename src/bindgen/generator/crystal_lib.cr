@@ -31,7 +31,7 @@ module Bindgen
       end
 
       def visit_struct(structure)
-        puts "struct #{structure.name}"
+        puts "#{structure.c_union? ? "union" : "struct"} #{structure.name}"
         indented do
           structure.fields.each do |name, result|
             # can't use Void as a struct field type directly

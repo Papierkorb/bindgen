@@ -47,6 +47,7 @@ module Bindgen
           name: name,
           fields: fields_to_graph(klass.fields),
           parent: root,
+          union: klass.c_union?,
         )
       end
 
