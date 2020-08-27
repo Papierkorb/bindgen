@@ -1,6 +1,6 @@
 module Bindgen
   module Parser
-    # Describes a C++ `class` or `struct`.
+    # Describes a C++ `class`, `struct`, or `union`.
     class Class
       # Collection of classes.
       alias Collection = Hash(String, Class)
@@ -8,6 +8,7 @@ module Bindgen
       JSON.mapping(
         access: {type: AccessSpecifier, default: AccessSpecifier::Public},
         isClass: Bool,
+        isUnion: Bool,
         hasDefaultConstructor: Bool,
         hasCopyConstructor: Bool,
         isAbstract: Bool,
@@ -22,10 +23,10 @@ module Bindgen
 
       def initialize(
         @name, @byteSize = 0, @hasDefaultConstructor = false,
-        @hasCopyConstructor = false, @isClass = true, @isAbstract = false,
-        @isAnonymous = false, @isDestructible = true, @bases = [] of BaseClass,
-        @fields = [] of Field, @methods = [] of Method,
-        @access = AccessSpecifier::Public
+        @hasCopyConstructor = false, @isClass = true, @isUnion = false,
+        @isAbstract = false, @isAnonymous = false, @isDestructible = true,
+        @bases = [] of BaseClass, @fields = [] of Field,
+        @methods = [] of Method, @access = AccessSpecifier::Public
       )
       end
 
@@ -33,14 +34,20 @@ module Bindgen
       # classes may be private.
       delegate public?, protected?, private?, to: @access
 
-      # Is this a `class`?  Opposite of `#struct?`.
+      # Is this a `class`?  Implies not a C `union` or `struct`.
       def class?
-        @isClass
+        @isClass && !@isUnion
       end
 
-      # Is this a `struct`?  Opposite of `#class?`.
+      # Is this a C `union`?  Implies not a `class` or `struct`.
+      # This is distinct from Crystal `Union`s!
+      def c_union?
+        @isUnion && !@isClass
+      end
+
+      # Is this a `struct`?  Implies not a `class` or C `union`.
       def struct?
-        !@isClass
+        !@isClass && !@isUnion
       end
 
       # Does the type have a default, argument-less constructor?
