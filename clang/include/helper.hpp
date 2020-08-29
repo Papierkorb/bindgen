@@ -1,6 +1,8 @@
 #ifndef HELPER_HPP
 #define HELPER_HPP
 
+#include <memory>
+
 /* Pointer guard, which copies the instance on each copy.
  * Useful to mark optional data.
  */
@@ -65,5 +67,12 @@ struct CopyPtr {
 	T &operator*() { return *this->ptr; }
 	const T &operator*() const { return *this->ptr; }
 };
+
+// compatibility for C++11
+template< typename T, typename... Args >
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 #endif // HELPER_HPP

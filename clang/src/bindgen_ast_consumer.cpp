@@ -19,33 +19,30 @@ BindgenASTConsumer::BindgenASTConsumer(Document &doc, clang::CompilerInstance &c
 	for (const std::string &className : ClassList) {
 		DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
-		RecordMatchHandler *handler = new RecordMatchHandler(m_document, className);
-		this->m_matchFinder.addMatcher(classMatcher, handler);
-		this->m_classHandlers.push_back(handler);
+		auto handler = make_unique<RecordMatchHandler>(m_document, className);
+		this->m_matchFinder.addMatcher(classMatcher, handler.get());
+		this->m_classHandlers.push_back(std::move(handler));
 	}
 
 	if (FunctionMatchHandler::isActive()) {
 		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
-		FunctionMatchHandler *handler = new FunctionMatchHandler(m_document);
-		this->m_matchFinder.addMatcher(funcMatcher, handler);
-		this->m_functionHandler = handler;
+		auto handler = make_unique<FunctionMatchHandler>(m_document);
+		this->m_matchFinder.addMatcher(funcMatcher, handler.get());
+		this->m_functionHandler = std::move(handler);
 	}
 
 	for (const std::string &enumName : EnumList) {
 		DeclarationMatcher enumMatcher = enumDecl(hasName(enumName)).bind("enumDecl");
 		DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 
-		EnumMatchHandler *handler = new EnumMatchHandler(m_document, enumName);
-		this->m_matchFinder.addMatcher(enumMatcher, handler);
-		this->m_matchFinder.addMatcher(typedefMatcher, handler);
-		this->m_enumHandlers.push_back(handler);
+		auto handler = make_unique<EnumMatchHandler>(m_document, enumName);
+		this->m_matchFinder.addMatcher(enumMatcher, handler.get());
+		this->m_matchFinder.addMatcher(typedefMatcher, handler.get());
+		this->m_enumHandlers.push_back(std::move(handler));
 	}
 }
 
 BindgenASTConsumer::~BindgenASTConsumer() {
-	for (RecordMatchHandler *handler : this->m_classHandlers) {
-		delete handler;
-	}
 }
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
