@@ -26,17 +26,17 @@ bool BindgenFrontendAction::BeginSourceFileAction(clang::CompilerInstance &ci)
 {
 	clang::Preprocessor &preprocessor = ci.getPreprocessor();
 #if __clang_major__ >= 10
-	preprocessor.addPPCallbacks(std::make_unique<PreprocessorHandler>(this->m_macros, preprocessor));
+	preprocessor.addPPCallbacks(std::make_unique<PreprocessorHandler>(this->m_document, preprocessor));
 #else
-	preprocessor.addPPCallbacks(llvm::make_unique<PreprocessorHandler>(this->m_macros, preprocessor));
+	preprocessor.addPPCallbacks(llvm::make_unique<PreprocessorHandler>(this->m_document, preprocessor));
 #endif
 	return true;
 }
 
 std::unique_ptr<clang::ASTConsumer> BindgenFrontendAction::CreateASTConsumer(clang::CompilerInstance &ci, llvm::StringRef file) {
 #if __clang_major__ >= 10
-	return std::make_unique<BindgenASTConsumer>(this->m_macros, ci);
+	return std::make_unique<BindgenASTConsumer>(this->m_document, ci);
 #else
-	return llvm::make_unique<BindgenASTConsumer>(this->m_macros, ci);
+	return llvm::make_unique<BindgenASTConsumer>(this->m_document, ci);
 #endif
 }
