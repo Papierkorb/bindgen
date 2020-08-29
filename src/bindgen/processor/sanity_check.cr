@@ -156,8 +156,10 @@ module Bindgen
           end
         end
 
-        unless type_reachable?(call.result, namespace)
-          add_error(method, "Result type #{call.result.type_name} is unreachable")
+        unless method.origin.any_constructor?
+          unless type_reachable?(call.result, namespace)
+            add_error(method, "Result type #{call.result.type_name} is unreachable")
+          end
         end
 
         if method.origin.variadic? && method.tag?(Graph::Method::EXPLICIT_BIND_TAG).nil?
