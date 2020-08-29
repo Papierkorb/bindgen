@@ -75,4 +75,9 @@ struct Derived2 : Module::Super2 { };
 namespace Module {
   struct Super3 { };
   struct Derived3 : Super3 { };
+
+  struct SuperV {
+    virtual ~SuperV() { }
+    virtual void f() { }
+  };
 }

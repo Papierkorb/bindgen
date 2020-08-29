@@ -364,7 +364,7 @@ module Bindgen
 
         rules = @db.get_or_add(cpp_struct.name)
         rules.graph_node = crystal_struct
-        rules.crystal_type = typer.qualified(crystal_struct.name, in_lib: true)
+        rules.crystal_type = crystal_struct.name
         rules.cpp_type = cpp_struct.name
         rules.pass_by = TypeDatabase::PassBy::Reference
         rules.copy_structure = true
@@ -397,12 +397,12 @@ module Bindgen
 
       # Name of the jumptable structure for both C++ and Crystal.
       private def jumptable_name(klass)
-        "BgJumptable_#{klass.mangled_name}"
+        "BgJumptable_#{klass.origin.binding_name}"
       end
 
       # The name of the shadow sub-class in C++.
       private def subclass_name(klass)
-        "BgInherit_#{klass.mangled_name}"
+        "BgInherit_#{klass.origin.binding_name}"
       end
 
       # Body for `CallBuilder::CppCall`, setting the `bgJump` member in C++.

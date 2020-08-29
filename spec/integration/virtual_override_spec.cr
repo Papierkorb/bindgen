@@ -122,6 +122,12 @@ describe "C++ virtual overriding from Crystal feature" do
           SubOverrideThing.new.has_random_number?.should be_false
         end
       end
+
+      context "namespaced classes" do
+        it "compiles" do
+          Test::Module::SuperV.new.f
+        end
+      end
     end
   end
 end
