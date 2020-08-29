@@ -184,6 +184,7 @@ JsonStream &operator<<(JsonStream &s, const Class &value) {
 		<< std::make_pair("byteSize", value.byteSize) << c
 		<< std::make_pair("isClass", value.isClass) << c
 		<< std::make_pair("isAbstract", value.isAbstract) << c
+		<< std::make_pair("isAnonymous", value.isAnonymous) << c
 		<< std::make_pair("isDestructible", value.isDestructible) << c
 		<< std::make_pair("hasDefaultConstructor", value.hasDefaultConstructor) << c
 		<< std::make_pair("hasCopyConstructor", value.hasCopyConstructor) << c

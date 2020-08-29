@@ -144,8 +144,9 @@ struct Class {
 	bool hasCopyConstructor;
 	bool isDestructible = true; // Does this class have a public or protected destructor?
 	bool isAbstract; // Does the class have pure virtual methods?
+	bool isAnonymous; // Is this class anonymous?
 	int byteSize; // Size of an instance in memory.
-	std::string name; // Fully::qualified::class::name
+	std::string name; // Fully::qualified::class::name (anonymous classes also receive one for identification)
 	std::vector<BaseClass> bases; // Names of base classes
 	std::vector<Method> methods; // Methods
 	std::vector<Field> fields; // Accessible fields

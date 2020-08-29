@@ -7,11 +7,12 @@ public:
 
 	virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
-	void runOnMethod(const clang::CXXMethodDecl *method, bool isSignal);
+private:
+	bool runOnMethod(Method &m, Class &klass, const clang::CXXMethodDecl *method, bool isSignal);
 
-	void runOnRecord(const clang::CXXRecordDecl *record);
+	bool runOnRecord(Class &klass, const clang::CXXRecordDecl *record);
 
-	void runOnField(const clang::FieldDecl *field);
+	bool runOnField(Field &f, Class &klass, const clang::FieldDecl *field);
 
 	bool checkAccessSpecForSignal(clang::AccessSpecDecl *spec);
 
@@ -21,7 +22,10 @@ public:
 
 private:
 	Document &m_document;
-	Class m_class;
+	std::string m_className;
+
+	// first = record definition, second = qualified type name
+	std::vector<std::pair<const clang::CXXRecordDecl *, std::string>> m_classesToRun;
 };
 
 #endif // RECORD_MATCH_HANDLER_HPP

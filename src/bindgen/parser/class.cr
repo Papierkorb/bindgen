@@ -11,6 +11,7 @@ module Bindgen
         hasDefaultConstructor: Bool,
         hasCopyConstructor: Bool,
         isAbstract: Bool,
+        isAnonymous: Bool,
         isDestructible: Bool,
         name: String,
         byteSize: Int32,
@@ -22,8 +23,9 @@ module Bindgen
       def initialize(
         @name, @byteSize = 0, @hasDefaultConstructor = false,
         @hasCopyConstructor = false, @isClass = true, @isAbstract = false,
-        @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field,
-        @methods = [] of Method, @access = AccessSpecifier::Public
+        @isAnonymous = false, @isDestructible = true, @bases = [] of BaseClass,
+        @fields = [] of Field, @methods = [] of Method,
+        @access = AccessSpecifier::Public
       )
       end
 
@@ -64,6 +66,11 @@ module Bindgen
       # Is this class abstract?
       def abstract?
         @isAbstract
+      end
+
+      # Is this class anonymous?
+      def anonymous?
+        @isAnonymous
       end
 
       # Does this class have any virtual methods?
