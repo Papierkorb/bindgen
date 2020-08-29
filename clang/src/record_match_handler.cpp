@@ -128,7 +128,7 @@ BaseClass RecordMatchHandler::handleBaseClass(const clang::CXXBaseSpecifier &bas
 	b.isVirtual = base.isVirtual();
 	b.inheritedConstructor = base.getInheritConstructors();
 	b.access = base.getAccessSpecifier();
-	b.name = base.getType()->getAsCXXRecordDecl()->getNameAsString();
+	b.name = base.getType()->getAsCXXRecordDecl()->getQualifiedNameAsString();
 
 	return b;
 }

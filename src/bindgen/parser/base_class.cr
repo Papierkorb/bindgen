@@ -5,7 +5,7 @@ module Bindgen
       JSON.mapping(
         isVirtual: Bool,
         inheritedConstructor: Bool,
-        name: String,
+        name: String, # fully qualified!
         access: AccessSpecifier,
       )
 
