@@ -65,8 +65,9 @@ module Bindgen
         puts "#{prototype} {"
         indented do
           if structure.tag?(Graph::Struct::INHERIT_CONSTRUCTORS_TAG)
-            base = structure.base_class
-            puts "using #{base}::#{base};" # C++11
+            base = structure.base_class.not_nil!
+            ctor = Graph::Path.from(base).last_part
+            puts "using #{base}::#{ctor};" # C++11
           end
 
           structure.fields.each do |name, type|

@@ -16,6 +16,7 @@ classes:
   Subclass: Subclass
   Implicit: Implicit
   Skip: Skip
+  Module::SuperV: Module::SuperV
 
 types:
   Subclass:

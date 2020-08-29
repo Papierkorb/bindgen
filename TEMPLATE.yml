@@ -385,8 +385,8 @@ types:
     # Name of this type in the C++ binding.  Useful when used with converters.
     cpp_type: CppTypeName
 
-    # Name of this type in `lib Binding`.  Namespaces are automatically removed
-    # from this name.
+    # Name of this type in `lib Binding`.  Namespaces are automatically turned
+    # into underscores (e.g. `Namespace::Type` -> `Namespace_Type`).
     binding_type: CrystalTypeName
 
     # Inserted into C++ to turn the type into something the `binding_type` will
