@@ -9,6 +9,14 @@ describe "single and multiple inheritance feature" do
         {{ Test::Base.superclass == Reference }}.should be_true
       end
 
+      context "namespaced classes" do
+        it "sets the base-class correctly" do
+          {{ Test::Module::Derived1.superclass == Test::Super1 }}.should be_true
+          {{ Test::Derived2.superclass == Test::Module::Super2 }}.should be_true
+          {{ Test::Module::Derived3.superclass == Test::Module::Super3 }}.should be_true
+        end
+      end
+
       it "sets the abstract class attribute" do
         {{ Test::AbstractThing.abstract? }}.should be_true
         {{ Test::Subclass.abstract? }}.should be_false

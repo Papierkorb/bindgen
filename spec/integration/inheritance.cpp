@@ -60,3 +60,19 @@ struct Skip {
     return 7;
   }
 };
+
+
+
+struct Super1 { };
+
+namespace Module {
+  struct Derived1 : Super1 { };
+  struct Super2 { };
+}
+
+struct Derived2 : Module::Super2 { };
+
+namespace Module {
+  struct Super3 { };
+  struct Derived3 : Super3 { };
+}

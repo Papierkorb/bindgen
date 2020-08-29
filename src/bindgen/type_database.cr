@@ -205,13 +205,16 @@ module Bindgen
         @ignore
       end
 
-      # Type name to use in the Crystal `lib` block.
+      # Type name to use in the Crystal `lib` block.  Namespace operators (`::`)
+      # are automatically converted into underscores.
       def lib_type : String?
-        if @copy_structure || @builtin || @kind.enum?
+        typename = if @copy_structure || @builtin || @kind.enum?
           @binding_type || @crystal_type || @cpp_type
         else
           @binding_type || @cpp_type
         end
+
+        typename.try(&.gsub("::", "_"))
       end
 
       # Type name to use in the Crystal wrapper.
