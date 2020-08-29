@@ -19,9 +19,9 @@ private:
 	void serializeAndOutput();
 
 	clang::CompilerInstance &m_compiler;
-	std::vector<RecordMatchHandler *> m_classHandlers;
-	std::vector<EnumMatchHandler *> m_enumHandlers;
-	FunctionMatchHandler *m_functionHandler;
+	std::vector<std::unique_ptr<RecordMatchHandler>> m_classHandlers;
+	std::vector<std::unique_ptr<EnumMatchHandler>> m_enumHandlers;
+	std::unique_ptr<FunctionMatchHandler> m_functionHandler;
 	Document &m_document;
 	clang::ast_matchers::MatchFinder::MatchFinderOptions m_matchFinderOpts;
 	clang::ast_matchers::MatchFinder m_matchFinder;
