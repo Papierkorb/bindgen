@@ -3,18 +3,35 @@
 #include "type_helper.hpp"
 
 RecordMatchHandler::RecordMatchHandler(Document &doc, const std::string &name)
-	: m_document(doc)
+	: m_document(doc), m_className(name)
 {
-	this->m_class.name = name;
 }
 
 void RecordMatchHandler::run(const clang::ast_matchers::MatchFinder::MatchResult &result) {
-	const clang::CXXRecordDecl *record = result.Nodes.getNodeAs<clang::CXXRecordDecl>("recordDecl");
-	if (record) runOnRecord(record);
+	const clang::CXXRecordDecl *record0 = result.Nodes.getNodeAs<clang::CXXRecordDecl>("recordDecl");
+	if (record0) {
+		m_classesToRun.push_back(std::make_pair(record0, this->m_className));
+	}
+
+	bool anonymous = false;
+	while (!m_classesToRun.empty()) {
+		const clang::CXXRecordDecl *record = m_classesToRun.back().first;
+		std::string name = m_classesToRun.back().second;
+		m_classesToRun.pop_back();
+
+		Class klass;
+		klass.name = name;
+		klass.isAnonymous = anonymous;
+		if (runOnRecord(klass, record)) {
+			this->m_document.classes[name] = klass;
+		}
+
+		// every added record is anonymous except the first one
+		anonymous = true;
+	}
 }
 
-void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool isSignal) {
-	Method m;
+bool RecordMatchHandler::runOnMethod(Method &m, Class &klass, const clang::CXXMethodDecl *method, bool isSignal) {
 	m.className = method->getParent()->getQualifiedNameAsString();
 	m.isConst = method->isConst();
 	m.isVirtual = method->isVirtual();
@@ -28,15 +45,15 @@ void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool is
 	// Figure out what we have found
 	if (ctor) {
 		if (ctor->isMoveConstructor()) {
-			return; // Move constructors aren't really wrappable
+			return false; // Move constructors aren't really wrappable
 		}
 
 		m.type = ctor->isCopyConstructor() ? Method::CopyConstructor : Method::Constructor;
 	} else if (llvm::isa<clang::CXXDestructorDecl>(method)) {
-		this->m_class.isDestructible = m.access != clang::AS_private;
+		klass.isDestructible = m.access != clang::AS_private;
 
 		// For a destructor, only store if this type can be destructed publicly or not.
-		return;
+		return false;
 
 	} else { // Normal method
 		m.type = method->isStatic() ? Method::StaticMethod : Method::MemberMethod;
@@ -54,48 +71,60 @@ void RecordMatchHandler::runOnMethod(const clang::CXXMethodDecl *method, bool is
 	}
 
 	TypeHelper::addFunctionParameters(method, m);
-	this->m_class.methods.push_back(m);
+	return true;
 }
 
-void RecordMatchHandler::runOnRecord(const clang::CXXRecordDecl *record) {
-	this->m_class.hasDefaultConstructor = record->hasDefaultConstructor();
-	this->m_class.hasCopyConstructor = record->hasCopyConstructorWithConstParam();
-	this->m_class.isAbstract = record->isAbstract();
-	this->m_class.isClass = record->isClass();
+bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *record) {
+	klass.hasDefaultConstructor = record->hasDefaultConstructor();
+	klass.hasCopyConstructor = record->hasCopyConstructorWithConstParam();
+	klass.isAbstract = record->isAbstract();
+	klass.isClass = record->isClass();
 
 	clang::TypeInfo typeInfo = record->getASTContext().getTypeInfo(record->getTypeForDecl());
 	uint64_t bitSize = typeInfo.Width;
 	if (typeInfo.AlignIsRequired) bitSize += typeInfo.Align;
-	this->m_class.byteSize = bitSize / 8;
+	klass.byteSize = bitSize / 8;
 
 	for (clang::CXXBaseSpecifier base : record->bases()) {
-		this->m_class.bases.push_back(handleBaseClass(base));
+		klass.bases.push_back(handleBaseClass(base));
 	}
 
 	bool isPublic = record->isStruct(); // Default public for structs!
 	bool isSignal = false; // Qt signal support
+	int unnamedCount = 0;
 
 	for (clang::Decl *decl : record->decls()) {
 		if (clang::CXXMethodDecl *method = llvm::dyn_cast<clang::CXXMethodDecl>(decl)) {
-			runOnMethod(method, isSignal);
+			Method m;
+			if (runOnMethod(m, klass, method, isSignal)) {
+				klass.methods.push_back(m);
+			}
 		} else if (clang::AccessSpecDecl *spec = llvm::dyn_cast<clang::AccessSpecDecl>(decl)) {
 			isSignal = checkAccessSpecForSignal(spec);
 		} else if (clang::FieldDecl *field = llvm::dyn_cast<clang::FieldDecl>(decl)) {
-			runOnField(field);
+			Field f;
+			if (runOnField(f, klass, field)) {
+				klass.fields.push_back(f);
+			}
+		} else if (clang::CXXRecordDecl *tag = llvm::dyn_cast<clang::CXXRecordDecl>(decl)) {
+			if (!tag->getIdentifier()) {
+				std::string ident = "Unnamed" + std::to_string(unnamedCount++);
+				tag->setDeclName(&tag->getASTContext().Idents.get(ident));
+				m_classesToRun.push_back(std::make_pair(tag, klass.name + "::" + ident));
+			}
 		}
 	}
 
-	this->m_document.classes[this->m_class.name] = this->m_class;
+	return true;
 }
 
-void RecordMatchHandler::runOnField(const clang::FieldDecl *field) {
-	Field f;
+bool RecordMatchHandler::runOnField(Field &f, Class &klass, const clang::FieldDecl *field) {
 	f.name = field->getNameAsString();
 	f.access = field->getAccess();
 	// f.bitField = TODO
 
 	TypeHelper::qualTypeToType(f, field->getType(), field->getASTContext());
-	this->m_class.fields.push_back(f);
+	return true;
 }
 
 bool RecordMatchHandler::checkAccessSpecForSignal(clang::AccessSpecDecl *spec) {
