@@ -6,16 +6,18 @@
  */
 template< typename T >
 struct CopyPtr {
-	T *ptr;
+	T *ptr = nullptr;
 
-	CopyPtr() : ptr(nullptr) { }
+	CopyPtr() = default;
 	CopyPtr(T *ptr) : ptr(ptr) { }
 	CopyPtr(const T &t) : ptr(new T(t)) { }
 	CopyPtr(const CopyPtr<T> &other) {
-		this->ptr = nullptr;
 		if (other.ptr) {
 			this->ptr = new T(*other.ptr);
 		}
+	}
+	CopyPtr(CopyPtr<T> &&other) : ptr(other.ptr) {
+		other.ptr = nullptr;
 	}
 
 	const T *operator=(const T *other) {
@@ -38,6 +40,12 @@ struct CopyPtr {
 
 	operator bool() const {
 		return this->ptr != nullptr;
+	}
+
+	CopyPtr<T> &operator=(const CopyPtr<T> &other) {
+		delete this->ptr;
+		this->ptr = new T(*other.ptr);
+		return *this;
 	}
 
 	CopyPtr<T> &operator=(CopyPtr<T> &&other) {
