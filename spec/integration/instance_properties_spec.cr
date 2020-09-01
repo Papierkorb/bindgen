@@ -88,6 +88,11 @@ describe "C++ instance properties" do
           props.v_ptr.should be_a(Slice(Int32*))
           props.v2_ptr.should be_a(Slice(Int32*[11]))
         end
+
+        it "is ignored for arrays of user types" do
+          {{ Test::Props.has_method?("points") }}.should be_false
+          {{ Test::Props.has_method?("points_ptr") }}.should be_false
+        end
       end
 
       context "setter methods" do
@@ -141,7 +146,7 @@ describe "C++ instance properties" do
         end
 
         it "is ignored for array members" do
-          {% for member in %w[v= v2= v_c= v_ptr= v2_ptr=] %}
+          {% for member in %w[v= v2= v_c= v_ptr= v2_ptr= points= points_ptr=] %}
             {{ Test::Props.has_method?(member) }}.should be_false
           {% end %}
         end

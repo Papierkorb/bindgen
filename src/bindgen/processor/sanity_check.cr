@@ -150,8 +150,14 @@ module Bindgen
             add_error(structure, "Struct field #{name} is a reference")
           end
 
-          if result.type.c_array? && !result.type.c_complete_array?
-            add_error(structure, "Struct field #{name} is a C array with unknown bounds")
+          if result.type.c_array?
+            if !result.type.builtin?
+              add_error(structure, "Struct field #{name} is a C array of user type")
+            end
+
+            if !result.type.c_complete_array?
+              add_error(structure, "Struct field #{name} is a C array with unknown bounds")
+            end
           end
         end
       end

@@ -1,4 +1,5 @@
 struct Point {
+  Point() { }
   Point(int x, int y) : x(x), y(y) { }
 
   int x, y;
@@ -28,6 +29,9 @@ public:
   const int v_c[8] = {2003};
   int *v_ptr[9] = { };
   int *v2_ptr[10][11] = { };
+
+  Point points[2];
+  Point *points_ptr[2];
 
 protected:
   int x_prot;
