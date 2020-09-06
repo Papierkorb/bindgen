@@ -38,8 +38,10 @@ module Bindgen
       # Copies the structure of *klass* into the `lib` *root*.
       private def copy_structure(klass, root)
         typename = Crystal::Typename.new(@db)
+        name = typename.binding(klass.as_type).first
+
         Graph::Struct.new( # Add the struct into the graph
-name: typename.binding(klass.as_type).first.camelcase,
+          name: name.split("_").map(&.camelcase).join("_"),
           fields: fields_to_graph(klass.fields),
           parent: root,
         )
