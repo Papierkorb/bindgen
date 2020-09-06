@@ -11,7 +11,17 @@ module Bindgen
       # Copies *document* into the *ns*.
       def build_document(document : Parser::Document, ns : Namespace) : Namespace
         document.classes.each do |_, klass|
-          target_name = @db[klass.name].crystal_type || klass.name.camelcase
+          target_name = @db[klass.name]?.try(&.crystal_type) || klass.name.camelcase
+
+          if @db[klass.name]?.nil? && klass.anonymous?
+            @db.add(klass.name,
+              binding_type: klass.name,
+              copy_structure: true,
+              generate_binding: false,
+              generate_wrapper: false,
+            )
+          end
+
           build_class(klass, target_name, ns)
         end
 
