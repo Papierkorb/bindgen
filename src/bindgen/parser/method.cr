@@ -384,6 +384,11 @@ module Bindgen
           return true if list.includes?(@name)
         end
 
+        # TODO: Support methods that take or return C arrays (which become
+        # `Slice` in Crystal).
+        return true if @returnType.c_array?
+        return true if @arguments.any?(&.c_array?)
+
         # Check that all arguments, which pass in explicit by-value, either take
         # the value directly, or a const-reference to it.
         pass_by_value_violation = @arguments.any? do |arg|

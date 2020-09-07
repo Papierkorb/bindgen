@@ -14,8 +14,10 @@ module Bindgen
         Function
       end
 
-      # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`s mapping!!
-      # Also make sure to update other methods in here and in `Argument` as required!
+      # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`
+      # and `Parser::Field`'s mapping!!
+      # Also make sure to update other methods in here and in those two classes
+      # as required!
       JSON.mapping(
         kind: {
           type:    Kind,
@@ -27,6 +29,10 @@ module Bindgen
         isBuiltin: Bool,
         isVoid: Bool,
         pointer: Int32,
+        extents: {
+          type:    Array(UInt64),
+          default: Array(UInt64).new,
+        },
         baseName: String,
         fullName: String,
         nilable: {
@@ -48,6 +54,7 @@ module Bindgen
         isBuiltin: true,
         isVoid: true,
         pointer: 0,
+        extents: Array(UInt64).new,
         baseName: "void",
         fullName: "void",
         template: nil,
@@ -63,6 +70,7 @@ module Bindgen
         isBuiltin: true,
         isVoid: false,
         pointer: 0,
+        extents: Array(UInt64).new,
         baseName: "",
         fullName: "",
         template: nil,
@@ -78,6 +86,7 @@ module Bindgen
           isBuiltin: true,
           isVoid: (cpp_name == "void"),
           pointer: pointer,
+          extents: Array(UInt64).new,
           baseName: cpp_name,
           fullName: cpp_name,
           template: nil,
@@ -104,6 +113,14 @@ module Bindgen
           name = name[0..-2] # Remove ampersand
         end
 
+        # Is it a C array?
+        extents = [] of UInt64
+        while subscript = name.match(/\s*\[\s*(\d*)\s*\]\s*$/)
+          extents.unshift subscript[1].to_u64 { 0_u64 }
+          pointer_depth += 1
+          name = subscript.pre_match
+        end
+
         # Is it a pointer?
         while name.ends_with?('*')
           pointer_depth += 1
@@ -111,12 +128,13 @@ module Bindgen
         end
 
         new( # Build the `Type`
-isConst: const,
+          isConst: const,
           isMove: false,
           isReference: reference,
           isBuiltin: false, # Oh well
           isVoid: (name == "void"),
           pointer: pointer_depth,
+          extents: extents,
           baseName: name.strip,
           fullName: type_name,
           template: nil,
@@ -139,13 +157,14 @@ isConst: const,
         )
 
         new( # Build the `Type`
-kind: Kind::Function,
+          kind: Kind::Function,
           isConst: false,
           isMove: false,
           isReference: false,
           isBuiltin: false,
           isVoid: false,
           pointer: 0,
+          extents: Array(UInt64).new,
           baseName: base,
           fullName: base,
           template: template,
@@ -157,27 +176,32 @@ kind: Kind::Function,
       # removed from this type.  Each rule is tried in the following order.
       # The first winning rule returns a new type.
       #
-      # 1. If `#const?`, remove const (`const int &` -> `int &`)
-      # 2. If `#reference?`, pointer-ize (`int &` -> `int *`)
-      # 3. If `#pointer > 0`, remove one (`int *` -> `int`)
-      # 4. Else, it's the base-type already.  Return `nil`.
+      # 1. If `#c_array?`, remove outermost extent (`int [4][3]` -> `int [3]`)
+      # 2. If `#const?`, remove const (`const int &` -> `int &`)
+      # 3. If `#reference?`, pointer-ize (`int &` -> `int *`)
+      # 4. If `#pointer > 0`, remove one (`int *` -> `int`)
+      # 5. Else, it's the base-type already.  Return `nil`.
       def decayed : Type?
         is_const = @isConst
         is_ref = @isReference
         ptr = @pointer
+        extents = @extents
 
-        if is_const # 1.
-          is_const = false
-        elsif is_ref # 2.
-          is_ref = false
-        elsif ptr > 0 # 3.
+        if extents.size > 0 # 1.
+          extents = extents[1..]
           ptr -= 1
-        else # 4.
+        elsif is_const # 2.
+          is_const = false
+        elsif is_ref # 3.
+          is_ref = false
+        elsif ptr > 0 # 4.
+          ptr -= 1
+        else # 5.
           return nil
         end
 
         typer = Cpp::Typename.new
-        type_ptr = ptr
+        type_ptr = ptr - extents.size
         type_ptr -= 1 if is_ref
 
         Type.new(
@@ -188,8 +212,9 @@ kind: Kind::Function,
           isBuiltin: @isBuiltin,
           isVoid: @isVoid,
           pointer: ptr,
+          extents: extents,
           baseName: @baseName,
-          fullName: typer.full(@baseName, is_const, type_ptr, is_ref),
+          fullName: typer.full(@baseName, is_const, type_ptr, is_ref, extents),
           template: @template,
           nilable: @nilable,
         )
@@ -207,6 +232,7 @@ kind: Kind::Function,
             isBuiltin: @isBuiltin,
             isVoid: @isVoid,
             pointer: @pointer,
+            extents: extents,
             baseName: @baseName,
             fullName: @fullName,
             template: @template,
@@ -215,9 +241,14 @@ kind: Kind::Function,
         end
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
+      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove,
+        @isBuiltin, @isVoid, @pointer, @kind, @nilable, @extents
 
-      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false, @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template = nil, @nilable = false)
+      def initialize(
+        @baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false,
+        @isBuiltin = false, @isVoid = false, @kind = Kind::Class,
+        @template = nil, @nilable = false, @extents = Array(UInt64).new
+      )
       end
 
       # Is this type nilable?  For compatibility with `Argument`.
@@ -225,8 +256,8 @@ kind: Kind::Function,
 
       # Checks if this type equals the *other* type, except for nil-ability.
       def equals_except_nil?(other : Type)
-        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind] %}
-        return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind extents] %}
+          return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 
         true
@@ -261,6 +292,46 @@ kind: Kind::Function,
       # Returns `true` if this type is `void`, and nothing else.
       def pure_void?
         @isVoid && @pointer == 0
+      end
+
+      # The array extents of this type.
+      def extents
+        @extents.dup
+      end
+
+      # Is this type a C array?
+      def c_array?
+        @extents.size > 0
+      end
+
+      # Is this type a C array with known size?
+      def c_complete_array?
+        c_array? && @extents.none?(&.zero?)
+      end
+
+      # Returns a copy of this type with C array extents removed.
+      def remove_all_extents : Type
+        ptr = @pointer - @extents.size
+        extents = Array(UInt64).new
+
+        typer = Cpp::Typename.new
+        type_ptr = ptr
+        type_ptr -= 1 if @isReference
+
+        Type.new(
+          kind: @kind,
+          isConst: @isConst,
+          isReference: @isReference,
+          isMove: false,
+          isBuiltin: @isBuiltin,
+          isVoid: @isVoid,
+          pointer: ptr,
+          extents: extents,
+          baseName: @baseName,
+          fullName: typer.full(@baseName, @isConst, type_ptr, @isReference, extents),
+          template: @template,
+          nilable: @nilable,
+        )
       end
 
       # Unqualified base name for easier mapping to Crystal.

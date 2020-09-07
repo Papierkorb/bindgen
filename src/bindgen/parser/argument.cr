@@ -16,6 +16,10 @@ module Bindgen
         isBuiltin: Bool,
         isVoid: Bool,
         pointer: Int32,
+        extents: {
+          type:    Array(UInt64),
+          default: Array(UInt64).new,
+        },
         baseName: String,
         fullName: String,
         nilable: {
@@ -42,7 +46,8 @@ module Bindgen
       def initialize(
         @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,
         @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false,
-        @value = nil, @nilable = false, @isVariadic = false
+        @value = nil, @nilable = false, @isVariadic = false,
+        @extents = Array(UInt64).new
       )
       end
 
@@ -56,12 +61,15 @@ module Bindgen
         @isVoid = type.isVoid
         @isVariadic = false
         @pointer = type.pointer
+        @extents = type.extents
         @kind = type.kind
         @template = type.template
         @nilable = type.nilable
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @hasDefault, @name, @value, @nilable
+      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove,
+        @isBuiltin, @isVoid, @pointer, @hasDefault, @name, @value, @nilable,
+        @extents
 
       # Does this argument have a default value?
       def has_default?
@@ -100,6 +108,7 @@ module Bindgen
           isBuiltin: @isBuiltin,
           isVoid: @isVoid,
           pointer: @pointer,
+          extents: extents,
           kind: @kind,
           hasDefault: false,
           value: nil,
@@ -121,6 +130,7 @@ module Bindgen
           isBuiltin: @isBuiltin,
           isVoid: @isVoid,
           pointer: @pointer,
+          extents: extents,
           kind: @kind,
           hasDefault: @hasDefault || other.has_default?,
           value: @value || other.value,
@@ -130,7 +140,7 @@ module Bindgen
 
       # Checks if the type-part of this equals the type-part of *other*.
       def type_equals?(other : Type)
-        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer template] %}
+        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer extents template] %}
           return false if @{{ i.id }} != other.{{ i.id }}
         {% end %}
 

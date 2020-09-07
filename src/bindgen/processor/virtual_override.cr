@@ -299,7 +299,7 @@ module Bindgen
 
         Call::Result.new(
           type: proc_type,
-          type_name: pass.crystal_proc_name(proc_type),
+          type_name: pass.type_name_base(proc_type),
           reference: false,
           pointer: 0,
         )
@@ -325,7 +325,7 @@ module Bindgen
         # Pass by reference.
         table_type = Parser::Type.new(
           baseName: table_name,
-          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
+          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true, extents: nil),
           isConst: true,
           isReference: true,
           pointer: 1,

@@ -250,10 +250,12 @@ if:
 * The member is not an lvalue or rvalue reference
 * The type's `copy_structure` is not set
 * The type's `instance_variable` settings do not reject the member
+* If the member is a C array, only complete arrays of C/C++ built-in types are
+  allowed
 
 The getter is always defined for every instance variable, but the setter is
-omitted if the instance variable was defined as a `const` member.  Property
-methods are underscored.
+omitted if the instance variable was defined as a C array or `const` member.
+Property methods are underscored.
 
 ```cpp
 struct Point {
@@ -343,6 +345,31 @@ class OutParam
   def index=(index : Int32*) : Void end
   def found : Bool* end
   def found=(found : Bool*) : Void end
+end
+```
+
+### §2.4.3 Array properties
+
+Getters are generated for complete C arrays of built-in types, which return
+`Slice`s instead of Crystal `Array`s.  The `Slice`s are marked as read-only if
+the array member is `const`.  Multi-dimensional arrays are also supported.
+
+```cpp
+struct Foo {
+  int bar[15][20][25];
+  void *baz[8];
+  const float quux[2];
+  Foo *children[3];
+};
+```
+
+```crystal
+class Foo
+  def bar : Slice(Int32[25][20]) end
+  def baz : Slice(Void*) end
+  def quux : Slice(Float32) end # read_only: true
+
+  # `#children` is not defined
 end
 ```
 

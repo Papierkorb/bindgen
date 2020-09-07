@@ -20,6 +20,10 @@ module Bindgen
           # Ignore private fields.  Also ignore all reference fields for now.
           next if field.private? || field.reference? || field.move?
 
+          # For C arrays only built-in types are supported; user types will need
+          # a custom `Slice`-like wrapper so that raw pointers are not returned.
+          next if field.c_array? && (!field.builtin? || !field.c_complete_array?)
+
           pattern, config = lookup_member_config(var_config, field.name)
           next if config.ignore
 
@@ -31,7 +35,7 @@ module Bindgen
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
 
           add_getter(klass, access, field_type, field.name, method_name)
-          add_setter(klass, access, field_type, field.name, method_name) unless field.const?
+          add_setter(klass, access, field_type, field.name, method_name) unless field.const? || field.c_array?
         end
 
         super

@@ -33,13 +33,23 @@ module Bindgen
       def visit_struct(structure)
         puts "struct #{structure.name}"
         indented do
-          structure.fields.each do |name, type|
-            # can't use Void as a struct field type
-            if type.type_name == "Void"
-              puts "#{name} : #{type.type_name}*"
-            else
-              puts "#{name} : #{type.type_name}"
+          structure.fields.each do |name, result|
+            # can't use Void as a struct field type directly
+            ptr = result.pointer
+            ptr = {ptr, 1}.max if result.type_name == "Void"
+
+            if result.type.c_array?
+              # Crystal's `Int32[2][3][4]` is really equivalent to C's
+              # `int [4][3][2]`, so the extents have to be reversed when they
+              # are written to a `lib`.
+              extents = result.type.extents.reverse
+              subscripts = extents.map {|v| "[#{v}]"}.join
+              ptr -= extents.size
             end
+
+            stars = "*" * ptr if ptr > 0
+
+            puts "#{name} : #{result.type_name}#{stars}#{subscripts}"
           end
         end
         puts "end"
