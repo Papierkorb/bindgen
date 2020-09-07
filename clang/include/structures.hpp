@@ -175,8 +175,8 @@ struct Macro {
 JsonStream &operator<<(JsonStream &s, const Macro &value);
 
 struct Document {
-	std::map<std::string, Enum> enums;
-	std::map<std::string, Class> classes;
+	JsonMap<std::string, Enum> enums;
+	JsonMap<std::string, Class> classes;
 	std::vector<Method> functions;
 	std::vector<Macro> macros;
 };
