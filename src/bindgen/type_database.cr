@@ -215,10 +215,10 @@ module Bindgen
           @binding_type || @cpp_type
         end
 
-        if @builtin || @kind.enum?
-          typename
-        else
-          typename.try(&.gsub("::", "_"))
+        if typename
+          parts = typename.split("::").map(&.camelcase)
+          in_lib = !@builtin && !@kind.enum?
+          parts.join(in_lib ? "_" : "::")
         end
       end
 

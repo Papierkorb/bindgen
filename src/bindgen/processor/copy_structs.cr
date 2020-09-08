@@ -41,7 +41,7 @@ module Bindgen
         name = typename.binding(klass.as_type).first
 
         Graph::Struct.new( # Add the struct into the graph
-          name: name.split("_").map(&.camelcase).join("_"),
+          name: name,
           fields: fields_to_graph(klass.fields),
           parent: root,
         )
