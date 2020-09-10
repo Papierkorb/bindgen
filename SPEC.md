@@ -395,7 +395,7 @@ generated methods may use custom markers to distinguish them.
 ### §3.2 Structures
 
 Structs marked with `copy_structure` are available under `lib Binding`.
-Built-in types can be used directly, as are pointers to wrapped types.
+Built-in types can be used directly, as are pointers to other types.
 
 ```cpp
 class Wrapper { }; // structure not copied
@@ -404,6 +404,7 @@ struct Point {
   int x, y;
   bool z;
   Wrapper *w;
+  Point *p;
 };
 ```
 
@@ -414,6 +415,7 @@ lib Binding
     y : Int32
     z : Bool
     w : Wrapper* # refers to the return value of `Wrapper#to_unsafe`
+    p : Point*
   end
 end
 ```

@@ -398,12 +398,12 @@ module Bindgen
 
       # Name of the jumptable structure for both C++ and Crystal.
       private def jumptable_name(klass)
-        "BgJumptable_#{klass.origin.name.gsub("::", "_")}"
+        "BgJumptable_#{klass.origin.binding_name}"
       end
 
       # The name of the shadow sub-class in C++.
       private def subclass_name(klass)
-        "BgInherit_#{klass.origin.name.gsub("::", "_")}"
+        "BgInherit_#{klass.origin.binding_name}"
       end
 
       # Body for `CallBuilder::CppCall`, setting the `bgJump` member in C++.
