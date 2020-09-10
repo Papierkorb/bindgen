@@ -1,0 +1,22 @@
+<<: spec_base.yml
+
+# Uses the default processor pipeline.
+
+classes:
+  Point: Point
+  Line: Line
+#  PolyLine: PolyLine
+  Nested: Nested
+  Nested::Inner: Nested::Inner
+  Nested::Inner2: Nested::Inner2
+  Anonymous: Anonymous
+  Wrapped: Wrapped
+
+types:
+  Point: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  Line: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+#  PolyLine: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  Nested: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  Nested::Inner: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  Nested::Inner2: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  Anonymous: { copy_structure: true, generate_binding: false, generate_wrapper: false }
