@@ -8,12 +8,15 @@ module Bindgen
       def process(graph : Graph::Node, doc : Parser::Document)
         root = graph.by_name(Graph::LIB_BINDING)
 
+        unused_structures = find_unused_structures(doc)
+
         @db.each do |cpp_name, rules|
           next unless rules.copy_structure # Only care about copy-able structures
 
           klass = find_structure(doc, cpp_name)
           graph = rules.graph_node.as(Graph::Class)
           next if graph.structure # Already has a structure?
+          next if unused_structures.includes?(graph) # Will be inlined?
 
           graph.structure = copy_structure(klass, root)
         end
@@ -50,17 +53,61 @@ module Bindgen
       # Turns *fields* into a hash of `Call::Result`s we can store in the graph.
       private def fields_to_graph(fields : Enumerable(Parser::Field))
         calls = {} of String => Call::Result
+        add_fields_to_graph(fields, calls)
+        calls
+      end
+
+      # Helper for `#fields_to_graph`.  Recursively descends into inlinable
+      # member types.
+      private def add_fields_to_graph(fields, calls)
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
         fields.each_with_index do |field, idx|
-          result = pass.to_binding(field)
-          var_name = argument.name(field.crystal_name, idx)
+          field_klass, inlinable = get_field_type(field)
 
-          calls[var_name] = result
+          if field_klass && inlinable
+            add_fields_to_graph(field_klass.origin.fields, calls)
+          else
+            result = pass.to_binding(field)
+            var_name = argument.name(field.crystal_name, idx)
+
+            calls[var_name] = result
+          end
+        end
+      end
+
+      # Locates classes whose structures aren't needed due to being inlined in a
+      # parent structure.  Applies to unnamed structure members of anonymous
+      # types.
+      private def find_unused_structures(doc : Parser::Document)
+        nodes = Set(Graph::Class).new
+        nodes.compare_by_identity
+
+        @db.each do |cpp_name, rules|
+          next unless rules.copy_structure
+
+          if klass = doc.classes[cpp_name]?
+            klass.fields.each do |field|
+              field_klass, inlinable = get_field_type(field)
+              nodes << field_klass if field_klass && inlinable
+            end
+          end
         end
 
-        calls
+        nodes
+      end
+
+      # Looks up the given *field*'s class.  Returns the graph node, and whether
+      # the field's own data members can be inlined.
+      private def get_field_type(field) : {Graph::Class?, Bool}
+        rules = @db[field.base_name]?
+        klass = rules.try(&.graph_node).as?(Graph::Class)
+
+        inlinable = field.name.empty? && rules.try(&.copy_structure) &&
+          klass.try(&.origin.anonymous?)
+
+        {klass, inlinable || false}
       end
     end
   end

@@ -14,9 +14,11 @@ module Bindgen
           target_name = @db[klass.name]?.try(&.crystal_type) || klass.name.camelcase
 
           if @db[klass.name]?.nil? && klass.anonymous?
+            enclosing_type = klass.name.gsub(/::[^:]+$/, "")
+
             @db.add(klass.name,
               binding_type: klass.name,
-              copy_structure: true,
+              copy_structure: @db.try_or(enclosing_type, false, &.copy_structure),
               generate_binding: false,
               generate_wrapper: false,
             )
