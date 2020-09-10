@@ -1,8 +1,4 @@
-struct Point {
-  Point(int x, int y) : x(x), y(y) { }
-
-  int x, y;
-};
+#include "copy_structs.cpp" // Point, Anonymous
 
 class Props {
 public:

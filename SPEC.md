@@ -250,6 +250,8 @@ if:
 * The member is not an lvalue or rvalue reference
 * The type's `copy_structure` is not set
 * The type's `instance_variable` settings do not reject the member
+* The member is not of an unnamed type, either directly or recursively (they are
+  supported by §3.2.2 and §3.2.3)
 
 The getter is always defined for every instance variable, but the setter is
 omitted if the instance variable was defined as a `const` member.  Property

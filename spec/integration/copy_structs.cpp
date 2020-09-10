@@ -1,4 +1,6 @@
 struct Point {
+  Point(int x, int y) : x(x), y(y) { } // for instance_properties.cpp
+
   int x, y;
 };
 

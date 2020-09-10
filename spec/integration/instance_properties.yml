@@ -10,6 +10,7 @@ processors:
 
 classes:
   Point: Point
+  Anonymous: Anonymous # if it compiles, it works
   Props: Props
   ConfigIgnoreAll: ConfigIgnoreAll
   ConfigIgnore: ConfigIgnore
