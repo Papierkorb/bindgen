@@ -390,6 +390,91 @@ generated methods may use custom markers to distinguish them.
 2. Static method: `void Foo::bar(std::string) -> bg_Foo_STATIC_bar_std__string`
 3. Method without arguments: `void Foo::bar() -> bg_Foo_bar_` (Trailing `_`)
 
+### §3.2 Structures
+
+Structs marked with `copy_structure` are available under `lib Binding`.
+Built-in types can be used directly, as are pointers to wrapped types.
+
+```cpp
+class Wrapper { }; // structure not copied
+
+struct Point {
+  int x, y;
+  bool z;
+  Wrapper *w;
+};
+```
+
+```crystal
+lib Binding
+  struct Point
+    x : Int32
+    y : Int32
+    z : Bool
+    w : Wrapper* # refers to the return value of `Wrapper#to_unsafe`
+  end
+end
+```
+
+#### §3.2.1 Name rewriting
+
+The names of a struct and its enclosing namespaces are CamelCased, and then
+joined together by underscores (`_`).
+
+* `Point` → `Point`
+* `foo_bar` → `FooBar`
+* `MyLib::core::val_array` → `MyLib_Core_ValArray`
+
+#### §3.2.2 Nested anonymous types
+
+Unnamed structs nested inside another struct are also copied, provided that the
+struct names a data member and the enclosing type's structure is also copied.
+
+```cpp
+struct Outer {
+  struct {
+    int bar;
+  } foo;
+};
+
+Outer { }.foo.bar; // => 0
+```
+
+```crystal
+struct Outer
+  foo : Outer_Unnamed0
+end
+
+struct Outer_Unnamed0
+  bar : Int32
+end
+
+Binding::Outer.new.foo.bar # => 0
+```
+
+#### §3.2.3 Anonymous members
+
+If the unnamed struct does not name a member, its contents are merged into the
+enclosing type.
+
+```cpp
+struct Outer {
+  struct {
+    int bar;
+  };
+};
+
+Outer().bar; // => 0
+```
+
+```crystal
+struct Outer
+  bar : Int32
+end
+
+Binding::Outer.new.bar # => 0
+```
+
 ## §4. C++ wrapper functions
 
 For each wrapped C++ function, there is at least one wrapper function generated.
