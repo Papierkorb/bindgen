@@ -29,6 +29,7 @@ module Bindgen
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
           method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
+          next if is_field_anonymous?(field_type) # Skip anonymous members for now
 
           add_getter(klass, access, field_type, field.name, method_name)
           add_setter(klass, access, field_type, field.name, method_name) unless field.const?
@@ -113,6 +114,14 @@ module Bindgen
           code = call.arguments.first.call
           "#{call.name} = #{call.result.apply_conversion code}"
         end
+      end
+
+      # Returns whether a field uses an anonymous type.  Property methods for
+      # these types are ignored.
+      private def is_field_anonymous?(field : Parser::Type)
+        rules = @db[field.base_name]?
+        klass = rules.try(&.graph_node).as?(Graph::Class)
+        klass.try(&.origin.anonymous?)
       end
     end
   end
