@@ -78,6 +78,16 @@ module Bindgen
         @methods.any?(&.virtual?)
       end
 
+      # The full binding function name of the destructor.
+      def destructor_name : String
+        "bg_#{binding_name}_DESTROY"
+      end
+
+      # The name of the class as part of binding methods.
+      def binding_name : String
+        Util.mangle_type_name(@name)
+      end
+
       # Yields each instance field defined in this class.  Does not include
       # fields from base classes.
       def each_field

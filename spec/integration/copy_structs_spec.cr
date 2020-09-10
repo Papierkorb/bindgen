@@ -22,12 +22,11 @@ describe "copied structure functionality" do
           subject.v2.should be_a(Test::Binding::Point)
         end
 
-        # fixed on the c-arrays branch
-        pending "supports pointers to other copied structs" do
+        it "supports pointers to other copied structs" do
           subject = Test::Binding::PolyLine.new
           subject.line.should eq(Pointer(Test::Binding::Line).null)
-          subject.before.should eq(Pointer(Test::Binding::Line).null)
-          subject.after.should eq(Pointer(Test::Binding::Line).null)
+          subject.before.should eq(Pointer(Test::Binding::PolyLine).null)
+          subject.after.should eq(Pointer(Test::Binding::PolyLine).null)
         end
       end
 
