@@ -7,6 +7,23 @@ describe "copied structure functionality" do
         {{ T.instance_vars.map(&.stringify) }}
       end
 
+      # internal compiler error prevents this from working (#9744)
+      def union_like?(_x : T) forall T
+#        {% begin %}
+#          {% for var in T.instance_vars %}
+#            offsetof({{ T }}, @{{ var }})
+#            p sizeof(typeof({{ T }}.new.{{ var }}))
+#          {% end %}
+
+#          {{ T.struct? }} &&
+#            {% for var in T.instance_vars %}
+#              offsetof({{ T }}, @{{ var }}) == 0 &&
+#              sizeof(typeof({{ T }}.new.{{ var }})) <= sizeof({{ T }}) &&
+#            {% end %}
+            true
+#        {% end %}
+      end
+
       context "core functionality" do
         it "supports structs" do
           subject = Test::Binding::Point.new
@@ -24,16 +41,15 @@ describe "copied structure functionality" do
 
         it "supports pointers to other copied structs" do
           subject = Test::Binding::PolyLine.new
-          subject.line.should eq(Pointer(Test::Binding::Line).null)
-          subject.before.should eq(Pointer(Test::Binding::PolyLine).null)
-          subject.after.should eq(Pointer(Test::Binding::PolyLine).null)
+          subject.line.should be_a(Pointer(Test::Binding::Line))
+          subject.before.should be_a(Pointer(Test::Binding::PolyLine))
+          subject.after.should be_a(Pointer(Test::Binding::PolyLine))
         end
 
         it "supports unions" do
           subject = Test::Binding::PlainUnion.new
           instance_var_names(subject).should eq(%w{x y})
-          subject.x = 1_f32.unsafe_as(Int32)
-          subject.y.should eq(1_f32)
+          union_like?(subject).should be_true
         end
       end
 
@@ -45,6 +61,14 @@ describe "copied structure functionality" do
 
           subject = Test::Binding::Nested_Inner.new
           instance_var_names(subject).should eq(%w{a})
+        end
+
+        it "supports nested unions" do
+          subject = Test::Binding::NestedUnion.new
+          instance_var_names(subject).should eq(%w{u c d})
+          union_like?(subject).should be_true
+          instance_var_names(subject.u).should eq(%w{a b})
+          union_like?(subject.u).should be_true
         end
 
         it "supports nested anonymous structs" do
@@ -59,10 +83,23 @@ describe "copied structure functionality" do
           {{ Test::Binding.has_constant?("Anonymous_Unnamed0") }}.should be_false
           {{ Test::Binding.has_constant?("Anonymous_Unnamed0_Unnamed0") }}.should be_false
           {{ Test::Binding.has_constant?("Anonymous_Unnamed1_Unnamed0") }}.should be_false
+          {{ Test::Binding.has_constant?("NestedUnion_Unnamed1") }}.should be_false
         end
 
         it "ignores anonymous structs inside wrapped classes" do
           {{ Test::Binding.has_constant?("Wrapped_Unnamed0") }}.should be_false
+        end
+
+        it "does not inline anonymous union members inside a struct" do
+          subject = Test::Binding::UnionInStruct.new
+          instance_var_names(subject).includes?("c").should be_false
+          instance_var_names(subject).includes?("d").should be_false
+        end
+
+        it "does not inline anonymous struct members inside a union" do
+          subject = Test::Binding::StructInUnion.new
+          instance_var_names(subject).includes?("c").should be_false
+          instance_var_names(subject).includes?("d").should be_false
         end
       end
     end

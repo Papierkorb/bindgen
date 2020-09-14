@@ -12,6 +12,9 @@ classes:
   Anonymous: Anonymous
   Wrapped: Wrapped
   PlainUnion: PlainUnion
+  UnionInStruct: UnionInStruct
+  StructInUnion: StructInUnion
+  NestedUnion: NestedUnion
 
 types:
   Point: { copy_structure: true, generate_binding: false, generate_wrapper: false }
@@ -22,3 +25,6 @@ types:
   Nested::Inner2: { copy_structure: true, generate_binding: false, generate_wrapper: false }
   Anonymous: { copy_structure: true, generate_binding: false, generate_wrapper: false }
   PlainUnion: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  UnionInStruct: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  StructInUnion: { copy_structure: true, generate_binding: false, generate_wrapper: false }
+  NestedUnion: { copy_structure: true, generate_binding: false, generate_wrapper: false }
