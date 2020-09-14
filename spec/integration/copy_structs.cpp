@@ -60,6 +60,42 @@ union PlainUnion {
   float y;
 };
 
+// neither union should be inlined
+struct UnionInStruct {
+  union {
+    char a;
+    int b;
+  } u;
+  union {
+    float c;
+    bool d;
+  };
+};
+
+// neither struct should be inlined
+union StructInUnion {
+  struct {
+    char a;
+    int b;
+  } s;
+  struct {
+    float c;
+    bool d;
+  };
+};
+
+// c and d can be inlined
+union NestedUnion {
+  union {
+    char a; // .u.a
+    int b; // .u.b
+  } u;
+  union {
+    float c; // .c
+    bool d; // .d
+  };
+};
+
 
 
 class Props {

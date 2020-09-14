@@ -45,30 +45,31 @@ module Bindgen
 
         Graph::Struct.new( # Add the struct into the graph
           name: name,
-          fields: fields_to_graph(klass.fields),
+          fields: fields_to_graph(klass),
           parent: root,
           union: klass.c_union?,
         )
       end
 
-      # Turns *fields* into a hash of `Call::Result`s we can store in the graph.
-      private def fields_to_graph(fields : Enumerable(Parser::Field))
+      # Turns *klass*'s fields into a hash of `Call::Result`s we can store in
+      # the graph.
+      private def fields_to_graph(klass)
         calls = {} of String => Call::Result
-        add_fields_to_graph(fields, calls)
+        add_fields_to_graph(klass, calls)
         calls
       end
 
       # Helper for `#fields_to_graph`.  Recursively descends into inlinable
       # member types.
-      private def add_fields_to_graph(fields, calls)
+      private def add_fields_to_graph(klass : Parser::Class, calls)
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
-        fields.each_with_index do |field, idx|
-          field_klass, inlinable = get_field_type(field)
+        klass.fields.each_with_index do |field, idx|
+          field_klass, inlinable = get_field_type(klass, field)
 
           if field_klass && inlinable
-            add_fields_to_graph(field_klass.origin.fields, calls)
+            add_fields_to_graph(field_klass.origin, calls)
           else
             result = pass.to_binding(field)
             var_name = argument.name(field.crystal_name, idx)
@@ -90,7 +91,7 @@ module Bindgen
 
           if klass = doc.classes[cpp_name]?
             klass.fields.each do |field|
-              field_klass, inlinable = get_field_type(field)
+              field_klass, inlinable = get_field_type(klass, field)
               nodes << field_klass if field_klass && inlinable
             end
           end
@@ -99,16 +100,26 @@ module Bindgen
         nodes
       end
 
-      # Looks up the given *field*'s class.  Returns the graph node, and whether
-      # the field's own data members can be inlined.
-      private def get_field_type(field) : {Graph::Class?, Bool}
+      # Looks up the class of the *field* inside the given *klass*.  Returns the
+      # graph node, and whether the field's own data members can be inlined.
+      private def get_field_type(klass, field) : {Graph::Class?, Bool}
         rules = @db[field.base_name]?
-        klass = rules.try(&.graph_node).as?(Graph::Class)
+        node = rules.try(&.graph_node).as?(Graph::Class)
 
-        inlinable = field.name.empty? && rules.try(&.copy_structure) &&
-          klass.try(&.origin.anonymous?)
+        inlinable = case
+        when !field.name.empty?
+          false # named members are never inlined
+        when !rules.try(&.copy_structure)
+          false # cannot inline field if its structure isn't copied
+        when !node.try(&.origin.anonymous?)
+          false # named types are never inlined
+        when klass.c_union? != node.try(&.origin.c_union?)
+          false # a C union cannot be inlined inside a struct, and vice-versa
+        else
+          true
+        end
 
-        {klass, inlinable || false}
+        {node, inlinable}
       end
     end
   end
