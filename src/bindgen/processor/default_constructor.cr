@@ -7,7 +7,6 @@ module Bindgen
         return unless klass.origin.has_default_constructor?
         return if klass.wrapped_class # Skip `Impl` classes.
         return if has_default_initialize?(klass)
-        return if has_private_constructor?(klass.origin)
 
         ctor = build_default_constructor(klass.origin)
 
@@ -44,16 +43,6 @@ module Bindgen
 
         # Found?
         required == 0
-      end
-
-      private def has_private_constructor?(klass)
-        ctor = klass.methods.find { |method| default_constructor? method }
-
-        if ctor
-          ctor.private?
-        else
-          false # Doesn't exist: Not private.
-        end
       end
     end
   end

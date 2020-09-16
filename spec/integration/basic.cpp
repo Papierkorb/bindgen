@@ -53,5 +53,12 @@ public:
 };
 
 struct ImplicitConstructor {
-  int itWorks() { return 1; }
+};
+
+class PrivateConstructor {
+  PrivateConstructor();
+};
+
+struct DeletedConstructor {
+  DeletedConstructor() = delete;
 };
