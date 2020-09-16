@@ -14,7 +14,7 @@ public:
 	void HandleTranslationUnit(clang::ASTContext &ctx) override;
 
 private:
-
+	void gatherTypeInfo(clang::ASTContext &ctx);
 	void evaluateMacros(clang::ASTContext &ctx);
 	void serializeAndOutput();
 
