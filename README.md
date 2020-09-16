@@ -66,18 +66,24 @@ dependencies:
 
 # How To
 
-1. Add bindgen to your `shard.yml` as instructed above under Installation and run `shards`
-2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/`
-3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` and customize it for the library you want to bind to
-4. Run `lib/bindgen/tool.sh your_template.yml`. This will generate the bindings, by default in the `ext/` subdirectory
-5. Develop your Crystal application as usual
+When you have a Crystal project and want to bind to C, C++, or Qt libraries
+with the help of `bindgen`, do as follows:
 
-See `TEMPLATE.yml` for the complete configuration and customization documentation.
-(This documentation will soon be ported to a Markdown document as well.)
+1. Add bindgen to your project's `shard.yml` as instructed above under "Installation" and then run `shards`
+2. Copy `lib/bindgen/assets/bindgen_helper.hpp` into your `ext/` subdirectory, creating it if missing
+3. Copy `lib/bindgen/TEMPLATE.yml` into `your_template.yml` (adjust the name to your linking) and customize it for the library you want to bind to
+4. Run `lib/bindgen/tool.sh your_template.yml`. This will generate the bindings, and by default place the outputs in the `ext/` subdirectory
+5. Develop your Crystal application as usual
 
 **Note**: If you ship the output produced by bindgen along with your application,
 then `bindgen` will not be not required to compile it. In that case, you can move
 its entry in `shard.yml` from `dependencies` to `development_dependencies`.
+
+The `.yml` file that you copy from `TEMPLATE.yml` will contain the complete
+configuration template along with accompanying documentation embedded in
+the comments.
+If you prefer working with shorter files, you can simply remove all the
+comments.
 
 # Projects using bindgen
 
@@ -157,13 +163,13 @@ The code flow is basically `Parser::Runner` to `Graph::Builder` to
 ## The Graph
 
 An important data structure used throughout the program is *the graph*.
-Code-wise, it's represented by `Graph::Node` (And its sub-classes).  The nodes
+Code-wise, it's represented by `Graph::Node` and its sub-classes.  The nodes
 can contain child nodes, making it a hierarchical structure.
 
 This allows to represent (almost) arbitrary structures as defined by the user
 configuration.
 
-Say, we're wrapping `GreetLib`.  As any library, it comes with a bunch of
+Say we're wrapping `GreetLib`.  As any library, it comes with a bunch of
 classes (`Greeter` and `Listener`), enums  (`Greetings`, `Type`) and other stuff
 like constants (`PORT`).  The configuration file could look like this:
 
@@ -185,9 +191,9 @@ Which will generate a graph looking like this:
 
 ## Parser step
 
-The beginning of the actual execution pipeline.  Calls out to the clang-based parser
-tool to read the C/C++ source code and write a JSON-formatted "database" onto
-standard output.  This is directly caught by `bindgen` and subsequently parsed
+This is the beginning of the actual execution pipeline. It calls out to the clang-based parser
+tool () to read the C/C++ source code and write a JSON-formatted "database" onto
+standard output.  This is directly read by `bindgen` and subsequently parsed
 as `Parser::Document`.
 
 ## Graph::Builder step
@@ -203,7 +209,7 @@ they're allowed to do whatever they want really, which makes it a good place
 to add more complex rewriting rules if desired.
 
 Processors are responsible for many core features of bindgen.  The `TEMPLATE.yml`
-has an already set-up pipeline.
+has an already set-up example pipeline.
 
 ## Generator step
 
@@ -537,19 +543,20 @@ end
 
 # Advanced configuration features
 
-YAML configuration files support conditionals elements (So, `if`s), and loading
-external dependency files.
+Bindgen's YAML configuration files support conditional definitions
+as well as loading external dependency files.
 
-Apart from this logic, the configuration file is still valid YAML.
+Apart from that extra logic, the configuration file is still valid YAML.
 
-**Note**: Conditionals and dependencies are *only* supported in
-*mappings* (`Hash` in Crystal).  Any such syntax encountered in something
-other than a *mapping* will not trigger any special behaviour.
+**Note**: Conditionals and dependencies are *only* supported in YAML
+*mappings* (data structures equivalent to `Hash`es in Crystal).
+Any such syntax encountered in something other than a *mapping* will not
+trigger special behaviour.
 
 ## Conditions
 
 YAML documents can define conditional parts in *mappings* by having a
-conditional key, with *mapping* value.  If the condition matches, the
+conditional key with *mapping* value.  If the condition matches, the
 *mapping* value will be transparently embedded.  If it does not match, the
 value will be transparently skipped.
 
@@ -558,14 +565,16 @@ condition, and it looks like `Y_is_Z` or `Y_match_Z`.  You can also use
 (one or more) spaces (` `) instead of exactly one underscore (`_`) to
 separate the words.
 
-* `Y_is_Z` is true if the variable Y equals Z case-sensitively.
-* `Y_isnt_Z` is true if the variable Y doesn't equal Z case-sensitively.
-* `Y_match_Z` is true if the variable Y is matched by the regular expression
+Available conditions:
+
+* `Y_is_Z`: true if the variable Y equals Z case-sensitively.
+* `Y_isnt_Z`: true if the variable Y doesn't equal Z case-sensitively.
+* `Y_match_Z`: true if the variable Y is matched by the regular expression
 in `Z`.  The regular expression is created case-sensitively.
-* `Y_newer_or_Z` is true when variable Y is newer or equals (>=) to Z,
-variables are treated as versions.
-* `Y_older_or_Z` is true when variable Y is older or equals (=<) to Z,
-variables are treated as versions.
+* `Y_newer_or_Z`: true when variable Y is newer or equals (>=) to Z.
+Variables are treated as versions.
+* `Y_older_or_Z`: true when variable Y is older or equals (=<) to Z.
+Variables are treated as versions.
 
 A condition block is opened by the first `if`.  Later condition keys can
 use `elsif` or `else` (or `if` to open a *new* condition block).
@@ -582,7 +591,7 @@ a conditional.  Each *mapping* acts as its own scope.
 
 ### Variables
 
-Variables are set by the user of the class (Probably through
+Variables are set by the user of the class (probably through
 `ConfigReader.from_yaml`).  All variable values are strings.
 
 Variable names are **case-sensitive**.  A missing variable will be treated
@@ -602,7 +611,8 @@ if_platform_is_arm: # In Crystal: `if platform == "arm"`
 # elsif or else blocks.
 not_a_condition: Hello
 
-# An elsif: Matches if 1) the previous conditions didn't match
+# An elsif: It matches if
+# 1) the previous conditions didn't match, and
 # 2) its own condition matches.
 elsif_platform_match_x86: # In Crystal: `elsif platform =~ /x86/`
   company: Many different
@@ -637,7 +647,7 @@ types:
   <<: ignores.yml
 ```
 
-The dependency will be embedded into the open *mapping*: It's transparent
+The dependency will be embedded into the open *mapping*: It is transparent
 to the client code.
 
 It's perfectly possible to mix conditionals with dependencies:
@@ -685,8 +695,8 @@ named after the following pattern on Debian-based systems:
 - [Papierkorb](https://github.com/Papierkorb) Stefan Merettig - creator
 - [docelic](https://github.com/docelic) Davor Ocelic
 - [kalinon](https://github.com/kalinon) Holden Omans
-- [ZaWertun](https://github.com/ZaWertun) Yaroslav Sidlovsky
 - [HertzDevil](https://github.com/HertzDevil) Quinton Miller
+- [ZaWertun](https://github.com/ZaWertun) Yaroslav Sidlovsky
 
 # License
 
