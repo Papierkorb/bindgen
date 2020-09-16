@@ -13,9 +13,26 @@ describe "a basic C++ wrapper" do
         end
       end
 
-      context "if class has implicit default constructor" do
-        it "has a default constructor" do
-          Test::ImplicitConstructor.new.it_works.should eq(1)
+      context "argument-less default constructor" do
+        it "is generated if class is default-constructible" do
+          {{
+            Test::ImplicitConstructor.methods.any? do |m|
+              m.name == "initialize" && m.args.empty?
+            end
+          }}.should be_true
+        end
+
+        it "is omitted if class is not default-constructible" do
+          {{
+            Test::PrivateConstructor.methods.any? do |m|
+              m.name == "initialize" && m.args.empty?
+            end
+          }}.should be_false
+          {{
+            Test::DeletedConstructor.methods.any? do |m|
+              m.name == "initialize" && m.args.empty?
+            end
+          }}.should be_false
         end
       end
 

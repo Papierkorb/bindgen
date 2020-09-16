@@ -55,6 +55,11 @@ module Bindgen
             file.puts %{#include #{path.inspect}}
           end
 
+          file.puts %{#include "#{File.expand_path "#{__DIR__}/../../../assets/parser_helper.hpp"}"}
+          @classes.each do |klass|
+            file.puts %[template class BindgenTypeInfo<#{klass}>;]
+          end
+
           file.flush
           result = yield file.path
         end
