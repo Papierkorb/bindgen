@@ -63,6 +63,10 @@ describe "C++ instance properties" do
           position.x.should eq(13)
           position.y.should eq(35)
         end
+
+        it "supports direct members inside nested anonymous types" do
+          {{ Test::Anonymous.has_method?("x0") }}.should be_true
+        end
       end
 
       context "setter methods" do
@@ -113,6 +117,23 @@ describe "C++ instance properties" do
           got = props.position_val
           got.x.should eq(60)
           got.y.should eq(61)
+        end
+
+      context "C++ unions" do
+        it "works" do
+          u = Test::PlainUnion.new
+          u.x = 123
+          u.y.should eq(123.unsafe_as(Float32))
+          u.y = 123_f32
+          u.x.should eq(123_f32.unsafe_as(Int32))
+        end
+      end
+
+      context "nested members" do
+        it "supports direct members inside nested anonymous types" do
+          subject = Test::Anonymous.new
+          subject.x0 = 5
+          subject.x0.should eq(5)
         end
       end
 

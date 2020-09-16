@@ -2,6 +2,7 @@
 
 processors:
   - filter_methods
+  - default_constructor
   - instance_properties
   - crystal_wrapper
   - cpp_wrapper
@@ -10,8 +11,9 @@ processors:
 
 classes:
   Point: Point
-  Anonymous: Anonymous # if it compiles, it works
+  Anonymous: Anonymous
   Props: Props
+  PlainUnion: PlainUnion
   ConfigIgnoreAll: ConfigIgnoreAll
   ConfigIgnore: ConfigIgnore
   ConfigRename: ConfigRename
