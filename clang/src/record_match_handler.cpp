@@ -75,7 +75,10 @@ bool RecordMatchHandler::runOnMethod(Method &m, Class &klass, const clang::CXXMe
 }
 
 bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *record) {
-	klass.hasDefaultConstructor = record->hasDefaultConstructor();
+	const auto *typeInfoResult = m_document.findTypeInfoResult(klass.name);
+
+	klass.hasDefaultConstructor = record->hasDefaultConstructor() &&
+		!(typeInfoResult && !typeInfoResult->isDefaultConstructible);
 	klass.hasCopyConstructor = record->hasCopyConstructorWithConstParam();
 	klass.isAbstract = record->isAbstract();
 	klass.isClass = record->isClass();

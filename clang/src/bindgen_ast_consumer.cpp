@@ -8,6 +8,13 @@
 #include "enum_match_handler.hpp"
 #include "macro_ast_consumer.hpp"
 
+#include "type_helper.hpp"
+# if defined(__LLVM_VERSION_8)
+  #include "clang_type_name_llvm_8.hpp"
+# else
+  #include "clang_type_name.hpp"
+# endif
+
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
@@ -46,10 +53,36 @@ BindgenASTConsumer::~BindgenASTConsumer() {
 }
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
+	this->gatherTypeInfo(ctx);
 	this->m_matchFinder.matchAST(ctx);
   // FIXME: clang segfaults in 6 or newer when calling ParseAST in destructor
 	this->evaluateMacros(ctx);
 	this->serializeAndOutput();
+}
+
+static void runTypeInfoResult(TypeInfoResult &info, const clang::ClassTemplateSpecializationDecl *spec, clang::ASTContext &ctx) {
+	for (clang::Decl *decl : spec->decls()) {
+		if (auto var_decl = llvm::dyn_cast<clang::VarDecl>(decl)) {
+			if (var_decl->getName() == "isDefaultConstructible") {
+				LiteralData data;
+				TypeHelper::readValue(data, var_decl->getType(), ctx, var_decl->getInit());
+				info.isDefaultConstructible = data.container.bool_value;
+			}
+		}
+	}
+}
+
+void BindgenASTConsumer::gatherTypeInfo(clang::ASTContext &ctx) {
+	for (auto decl : ctx.getTranslationUnitDecl()->decls()) {
+		if (auto spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
+			if (spec->getQualifiedNameAsString() == "BindgenTypeInfo") {
+				clang::QualType qt = spec->getTemplateArgs()[0].getAsType();
+				std::string fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
+				TypeInfoResult &info = m_document.type_infos[fullName];
+				runTypeInfoResult(info, spec, ctx);
+			}
+		}
+	}
 }
 
 static std::string buildMacroEvaluationFile(const std::vector<Macro> &macros) {

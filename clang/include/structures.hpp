@@ -175,11 +175,23 @@ struct Macro {
 
 JsonStream &operator<<(JsonStream &s, const Macro &value);
 
+// type properties gathered from instantiations of `BindgenTypeInfo`
+struct TypeInfoResult {
+	bool isDefaultConstructible;
+};
+
 struct Document {
 	JsonMap<std::string, Enum> enums;
 	JsonMap<std::string, Class> classes;
 	std::vector<Method> functions;
 	std::vector<Macro> macros;
+
+	std::map<std::string, TypeInfoResult> type_infos; // not serialized
+
+	TypeInfoResult *findTypeInfoResult(const std::string &klass) {
+		auto it = type_infos.find(klass);
+		return it != type_infos.end() ? &it->second : nullptr;
+	}
 };
 
 JsonStream &operator<<(JsonStream &s, const Document &value);
