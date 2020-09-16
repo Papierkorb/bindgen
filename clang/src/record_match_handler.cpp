@@ -32,6 +32,9 @@ void RecordMatchHandler::run(const clang::ast_matchers::MatchFinder::MatchResult
 }
 
 bool RecordMatchHandler::runOnMethod(Method &m, Class &klass, const clang::CXXMethodDecl *method, bool isSignal) {
+	if (method->isDeleted())
+		return false;
+
 	m.className = method->getParent()->getQualifiedNameAsString();
 	m.isConst = method->isConst();
 	m.isVirtual = method->isVirtual();
