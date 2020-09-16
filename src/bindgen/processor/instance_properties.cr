@@ -16,10 +16,9 @@ module Bindgen
 
         var_config = @db.try_or(klass.name, VarConfig.new, &.instance_variables)
 
-        klass.origin.each_field do |field|
+        each_direct_field(klass) do |field|
           # Ignore private fields.  Also ignore all reference fields for now.
           next if field.private? || field.reference? || field.move?
-          next if is_field_anonymous?(field) # Skip anonymous members for now
 
           pattern, config = lookup_member_config(var_config, field.name)
           next if config.ignore
@@ -45,6 +44,21 @@ module Bindgen
         end
 
         {Util::FAIL_RX, TypeDatabase::InstanceVariableConfig.new}
+      end
+
+      # Iterates through each direct data member of a structure.  Recursively
+      # descends into fields inside nested anonymous types that don't name a
+      # member.
+      private def each_direct_field(klass, &block : Parser::Field ->)
+        klass.origin.each_field do |field|
+          if is_field_anonymous?(field)
+            if field.name.empty?
+              each_direct_field(@db[field.base_name].graph_node.as(Graph::Class), &block)
+            end
+          else
+            yield field
+          end
+        end
       end
 
       # Builds a C++ wrapper method for an instance variable getter.  The `lib`
