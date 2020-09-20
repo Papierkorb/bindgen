@@ -16,15 +16,15 @@ module Bindgen
 
         var_config = @db.try_or(klass.name, VarConfig.new, &.instance_variables)
 
-        each_direct_field(klass) do |field|
-          # Ignore private fields.  Also ignore all reference fields for now.
-          next if field.private? || field.reference? || field.move?
+        each_direct_field(klass) do |field, nested_access|
+          # Ignore all reference fields for now.
+          next if field.reference? || field.move?
 
           pattern, config = lookup_member_config(var_config, field.name)
           next if config.ignore
 
           # C++'s `protected` is closer to Crystal's `private` than to `protected`
-          access = field.protected? ?
+          access = nested_access.protected? ?
             Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
           method_name = method_name.underscore
@@ -49,14 +49,22 @@ module Bindgen
       # Iterates through each direct data member of a structure.  Recursively
       # descends into fields inside nested anonymous types that don't name a
       # member.
-      private def each_direct_field(klass, &block : Parser::Field ->)
+      private def each_direct_field(
+        klass, nested_access = Parser::AccessSpecifier::Public,
+        &block : Parser::Field, Parser::AccessSpecifier ->
+      )
         klass.origin.each_field do |field|
+          next if field.private? # Ignore private fields.
+          # Public fields nested inside protected members are still protected.
+          field_access = nested_access.protected? ? nested_access : field.access
+
           if is_field_anonymous?(field)
             if field.name.empty?
-              each_direct_field(@db[field.base_name].graph_node.as(Graph::Class), &block)
+              field_klass = @db[field.base_name].graph_node.as(Graph::Class)
+              each_direct_field(field_klass, field_access, &block)
             end
           else
-            yield field
+            yield field, field_access
           end
         end
       end

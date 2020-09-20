@@ -18,6 +18,8 @@ classes:
   ConfigIgnore: ConfigIgnore
   ConfigRename: ConfigRename
   ConfigNilable: ConfigNilable
+  NestedProtected: NestedProtected
+  NestedPrivate: NestedPrivate
 
 types:
   Point:

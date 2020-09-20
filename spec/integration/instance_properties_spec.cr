@@ -63,10 +63,6 @@ describe "C++ instance properties" do
           position.x.should eq(13)
           position.y.should eq(35)
         end
-
-        it "supports direct members inside nested anonymous types" do
-          {{ Test::Anonymous.has_method?("x0") }}.should be_true
-        end
       end
 
       context "setter methods" do
@@ -118,6 +114,7 @@ describe "C++ instance properties" do
           got.x.should eq(60)
           got.y.should eq(61)
         end
+      end
 
       context "C++ unions" do
         it "works" do
@@ -131,9 +128,31 @@ describe "C++ instance properties" do
 
       context "nested members" do
         it "supports direct members inside nested anonymous types" do
-          subject = Test::Anonymous.new
-          subject.x0 = 5
-          subject.x0.should eq(5)
+          {{ Test::Anonymous.has_method?("x0") }}.should be_true
+          {{ Test::Anonymous.has_method?("x0=") }}.should be_true
+        end
+
+        it "supports public nested fields" do
+          {% begin %}
+            {% method = Test::Anonymous.methods.find &.name.== "x0" %}
+            {{ method.visibility }}.should eq(:public)
+            {% method = Test::Anonymous.methods.find &.name.== "x0=" %}
+            {{ method.visibility }}.should eq(:public)
+          {% end %}
+        end
+
+        it "supports public fields nested inside protected members" do
+          {% begin %}
+            {% method = Test::NestedProtected.methods.find &.name.== "x" %}
+            {{ method.visibility }}.should eq(:private)
+            {% method = Test::NestedProtected.methods.find &.name.== "x=" %}
+            {{ method.visibility }}.should eq(:private)
+          {% end %}
+        end
+
+        it "ignores public fields nested inside private members" do
+          {{ Test::NestedPrivate.has_method?("x") }}.should be_false
+          {{ Test::NestedPrivate.has_method?("x=") }}.should be_false
         end
       end
 

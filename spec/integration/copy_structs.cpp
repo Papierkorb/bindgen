@@ -123,6 +123,19 @@ private:
   const int y_priv;
 };
 
+class NestedProtected {
+protected:
+  struct {
+    int x;
+  };
+};
+
+class NestedPrivate {
+  struct {
+    int x;
+  };
+};
+
 struct ConfigIgnoreAll {
   const int a, b;
 };
