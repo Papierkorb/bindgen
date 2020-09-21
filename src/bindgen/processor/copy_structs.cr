@@ -18,7 +18,11 @@ module Bindgen
           next if graph.structure # Already has a structure?
           next if unused_structures.includes?(graph) # Will be inlined?
 
-          graph.structure = copy_structure(klass, root)
+          # Can't use `Struct | CppUnion`, as compiler turns it to `Container+`
+          case structure = copy_structure(klass, root)
+          when Graph::Struct, Graph::CppUnion
+            graph.structure = structure
+          end
         end
       end
 
@@ -43,12 +47,20 @@ module Bindgen
         typename = Crystal::Typename.new(@db)
         name = typename.binding(klass.as_type).first
 
-        Graph::Struct.new( # Add the struct into the graph
-          name: name,
-          fields: fields_to_graph(klass),
-          parent: root,
-          union: klass.c_union?,
-        )
+        # Add the struct or union into the graph
+        if klass.c_union?
+          Graph::CppUnion.new(
+            name: name,
+            fields: fields_to_graph(klass),
+            parent: root,
+          )
+        else
+          Graph::Struct.new(
+            name: name,
+            fields: fields_to_graph(klass),
+            parent: root,
+          )
+        end
       end
 
       # Turns *klass*'s fields into a hash of `Call::Result`s we can store in

@@ -31,7 +31,15 @@ module Bindgen
       end
 
       def visit_struct(structure)
-        puts "#{structure.c_union? ? "union" : "struct"} #{structure.name}"
+        write_structure(structure, false)
+      end
+
+      def visit_union(structure)
+        write_structure(structure, true)
+      end
+
+      private def write_structure(structure, c_union : Bool)
+        puts "#{c_union ? "union" : "struct"} #{structure.name}"
         indented do
           structure.fields.each do |name, result|
             # can't use Void as a struct field type directly

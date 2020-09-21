@@ -35,23 +35,25 @@ module Bindgen
 
         case node
         when Graph::Alias
-          visit_alias(node.as(Graph::Alias))
+          visit_alias(node)
         when Graph::Class
-          visit_class(node.as(Graph::Class))
+          visit_class(node)
         when Graph::Constant
-          visit_constant(node.as(Graph::Constant))
+          visit_constant(node)
         when Graph::Enum
-          visit_enum(node.as(Graph::Enum))
+          visit_enum(node)
         when Graph::Library
-          visit_library(node.as(Graph::Library))
+          visit_library(node)
         when Graph::Method
-          visit_method(node.as(Graph::Method))
+          visit_method(node)
         when Graph::Namespace
-          visit_namespace(node.as(Graph::Namespace))
+          visit_namespace(node)
         when Graph::Struct
-          visit_struct(node.as(Graph::Struct))
+          visit_struct(node)
+        when Graph::CppUnion
+          visit_union(node)
         when Graph::PlatformSpecific
-          visit_platform_specific(node.as(Graph::PlatformSpecific))
+          visit_platform_specific(node)
         else
           raise "BUG: Missing case for type #{node.class} in Graph::Visitor"
         end
@@ -100,6 +102,11 @@ module Bindgen
 
       # Visits a `Graph::Struct`.
       def visit_struct(structure)
+        visit_children(structure)
+      end
+
+      # Visits a `Graph::CppUnion`.
+      def visit_union(structure)
         visit_children(structure)
       end
 
