@@ -1,7 +1,6 @@
 module Bindgen
   module Graph
-    # A `struct` in Crystal (`lib` or not), or a plain `struct` in C++.  Also
-    # represents a `lib union`.
+    # A `struct` in Crystal (`lib` or not), or a plain `struct` in C++.
     #
     # A structure can host both raw variable fields (C-style) and other methods
     # at once.
@@ -16,10 +15,7 @@ module Bindgen
       # generate the jump-table.
       property base_class : String?
 
-      # Does this structure represent a C union?
-      getter? c_union : Bool
-
-      def initialize(@fields, name, parent, @base_class = nil, union @c_union = false)
+      def initialize(@fields, name, parent, @base_class = nil)
         super(name, parent)
       end
     end

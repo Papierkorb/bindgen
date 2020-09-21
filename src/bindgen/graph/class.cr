@@ -33,8 +33,9 @@ module Bindgen
       # Is this class abstract?
       property? abstract : Bool = false
 
-      # If the structure of this class is copied, the `Struct` node.
-      property structure : Struct?
+      # If the structure of this class is copied, the `Struct` or `CppUnion`
+      # node.
+      property structure : (Struct | CppUnion)?
 
       # Crystal instance vars in this class.  Will be ignored by the C++ code
       # paths.
