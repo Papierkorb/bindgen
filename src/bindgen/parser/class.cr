@@ -7,8 +7,7 @@ module Bindgen
 
       JSON.mapping(
         access: {type: AccessSpecifier, default: AccessSpecifier::Public},
-        isClass: Bool,
-        isUnion: Bool,
+        typeKind: TypeKind,
         hasDefaultConstructor: Bool,
         hasCopyConstructor: Bool,
         isAbstract: Bool,
@@ -23,7 +22,7 @@ module Bindgen
 
       def initialize(
         @name, @byteSize = 0, @hasDefaultConstructor = false,
-        @hasCopyConstructor = false, @isClass = true, @isUnion = false,
+        @hasCopyConstructor = false, @typeKind = TypeKind::Class,
         @isAbstract = false, @isAnonymous = false, @isDestructible = true,
         @bases = [] of BaseClass, @fields = [] of Field,
         @methods = [] of Method, @access = AccessSpecifier::Public
@@ -34,20 +33,12 @@ module Bindgen
       # classes may be private.
       delegate public?, protected?, private?, to: @access
 
-      # Is this a `class`?  Implies not a C `union` or `struct`.
-      def class?
-        @isClass && !@isUnion
-      end
+      # Is this a `class`, `struct`, or C `union`?
+      delegate class?, struct?, cpp_union?, to: @typeKind
 
-      # Is this a C `union`?  Implies not a `class` or `struct`.
-      # This is distinct from Crystal `Union`s!
-      def c_union?
-        @isUnion && !@isClass
-      end
-
-      # Is this a `struct`?  Implies not a `class` or C `union`.
-      def struct?
-        !@isClass && !@isUnion
+      # The keyword used to declare this type (`class`, `struct`, or `union`).
+      def type_kind
+        @typeKind
       end
 
       # Does the type have a default, argument-less constructor?
@@ -197,7 +188,14 @@ module Bindgen
         full_name += "&" if reference
         pointer += 1 if reference
 
+        kind = case type_kind
+        when .struct? then Type::Kind::Struct
+        when .enum? then Type::Kind::Enum
+        else Type::Kind::Class
+        end
+
         Type.new(
+          kind: kind,
           isConst: const,
           isReference: reference,
           isMove: false,

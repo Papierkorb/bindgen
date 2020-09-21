@@ -7,6 +7,7 @@ module Bindgen
       CRYSTAL_PROC = "CrystalProc"
 
       # Type kinds.  Currently not used by the clang tool.
+      # TODO: use `Parser::TypeKind` instead
       enum Kind
         Class
         Struct

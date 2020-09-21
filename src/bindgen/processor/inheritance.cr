@@ -193,7 +193,7 @@ module Bindgen
         )
 
         Parser::Class.new(
-          isClass: klass.class?,
+          typeKind: klass.type_kind,
           hasDefaultConstructor: klass.has_default_constructor?,
           hasCopyConstructor: klass.has_copy_constructor?,
           isAbstract: false,

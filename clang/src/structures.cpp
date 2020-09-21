@@ -176,14 +176,24 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 	return s << JsonStream::ObjectEnd;
 }
 
+JsonStream &operator<<(JsonStream &s, clang::TagTypeKind value) {
+	switch (value) {
+		case clang::TTK_Class: return s << "Class";
+		case clang::TTK_Struct: return s << "Struct";
+		case clang::TTK_Union: return s << "CppUnion"; // avoid confusion with Crystal union
+		case clang::TTK_Interface: return s << "Interface";
+		case clang::TTK_Enum: return s << "Enum";
+		default: return s << "BUG IN Bindgen";
+	}
+}
+
 JsonStream &operator<<(JsonStream &s, const Class &value) {
 	auto c = JsonStream::Comma;
 	return s
 		<< JsonStream::ObjectBegin
 		<< std::make_pair("name", value.name) << c
 		<< std::make_pair("byteSize", value.byteSize) << c
-		<< std::make_pair("isClass", value.isClass) << c
-		<< std::make_pair("isUnion", value.isUnion) << c
+		<< std::make_pair("typeKind", value.typeKind) << c
 		<< std::make_pair("isAbstract", value.isAbstract) << c
 		<< std::make_pair("isAnonymous", value.isAnonymous) << c
 		<< std::make_pair("isDestructible", value.isDestructible) << c

@@ -38,8 +38,8 @@ module Bindgen
         write_structure(structure, true)
       end
 
-      private def write_structure(structure, c_union : Bool)
-        puts "#{c_union ? "union" : "struct"} #{structure.name}"
+      private def write_structure(structure, cpp_union : Bool)
+        puts "#{cpp_union ? "union" : "struct"} #{structure.name}"
         indented do
           structure.fields.each do |name, result|
             # can't use Void as a struct field type directly
