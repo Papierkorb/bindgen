@@ -243,15 +243,16 @@ inherits from `MyFoo` and overrides `#bar`, the overriding method may refer to
 ### §2.4 Instance properties
 
 Property methods can be generated for an instance variable in a Crystal wrapper
-if:
+corresponding to a C++ `class`, `struct`, or `union`, if all of the following
+criteria are met:
 
 * The member's visibility is `public` or `protected` (the latter is mapped to
   `private` in Crystal)
 * The member is not an lvalue or rvalue reference
 * The type's `copy_structure` is not set
 * The type's `instance_variable` settings do not reject the member
-* The member is not of an unnamed type, either directly or recursively (they are
-  supported by §3.2.2 and §3.2.3)
+* The member is not inside a nested anonymous type that names another member
+  (this is supported by §3.2.2)
 
 The getter is always defined for every instance variable, but the setter is
 omitted if the instance variable was defined as a `const` member.  Property
@@ -348,6 +349,37 @@ class OutParam
 end
 ```
 
+### §2.4.3 Anonymous members
+
+Properties inside nested anonymous types are allowed as long as they are
+directly accessible from the instance's top level.
+
+```cpp
+struct Props {
+  struct {
+    int x, y; // accessible from top level
+  } point; // not wrapped
+  union {
+    int foo;
+    struct {
+      char bar;
+      char baz;
+    };
+  };
+};
+```
+
+```crystal
+class Props
+  def foo : Int32 end
+  def foo=(foo : Int32) end
+  def bar : Char end
+  def bar=(bar : Char) end
+  def baz : Char end
+  def baz=(baz : Char) end
+end
+```
+
 ## §3. Crystal bindings
 
 ### §3.1 Naming scheme
@@ -394,8 +426,9 @@ generated methods may use custom markers to distinguish them.
 
 ### §3.2 Structures
 
-Structs marked with `copy_structure` are available under `lib Binding`.
-Built-in types can be used directly, as are pointers to other types.
+Structures (`struct` / `union`) marked with `copy_structure` are available under
+`lib Binding`.  Built-in types can be used directly, as are pointers to other
+types.
 
 ```cpp
 class Wrapper { }; // structure not copied
@@ -405,6 +438,11 @@ struct Point {
   bool z;
   Wrapper *w;
   Point *p;
+};
+
+union Conv {
+  int a;
+  float b;
 };
 ```
 
@@ -416,6 +454,11 @@ lib Binding
     z : Bool
     w : Wrapper* # refers to the return value of `Wrapper#to_unsafe`
     p : Point*
+  end
+
+  union Conv
+    a : Int32
+    b : Float32
   end
 end
 ```
@@ -431,8 +474,9 @@ joined together by underscores (`_`).
 
 #### §3.2.2 Nested anonymous types
 
-Unnamed structs nested inside another struct are also copied, provided that the
-struct names a data member and the enclosing type's structure is also copied.
+Unnamed structures nested inside another structure are also copied, provided
+that the structure names a data member and the enclosing structure is also
+copied.
 
 ```cpp
 struct Outer {
@@ -458,25 +502,41 @@ Binding::Outer.new.foo.bar # => 0
 
 #### §3.2.3 Anonymous members
 
-If the unnamed struct does not name a member, its contents are merged into the
-enclosing type.
+If the unnamed structure does not name a member, its contents are merged into
+the enclosing type.  This is only done when the structures are both `struct`s or
+both `union`s; otherwise, a unique member name is generated for the anonymous
+member holding the structure.
 
 ```cpp
 struct Outer {
   struct {
     int bar;
   };
+  union {
+    float baz;
+    bool quux;
+  };
 };
 
-Outer().bar; // => 0
+Outer x;
+x.bar; // => 0
+x.quux; // => false
 ```
 
 ```crystal
 struct Outer
   bar : Int32
+  unnamed_arg_1 : Outer_Unnamed0
 end
 
-Binding::Outer.new.bar # => 0
+struct Outer_Unnamed0
+  baz : Float32
+  quux : Bool
+end
+
+x = Binding::Outer.new
+x.bar # => 0
+x.unnamed_arg_1.quux # => false
 ```
 
 ## §4. C++ wrapper functions
