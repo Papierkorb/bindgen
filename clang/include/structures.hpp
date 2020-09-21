@@ -138,11 +138,10 @@ struct Field : public Type {
 
 JsonStream &operator<<(JsonStream &s, const Field &value);
 
-struct Class {
-	// The following are mutually exclusive
-	bool isClass; // Class or struct?
-	bool isUnion; // Union or struct?
+JsonStream &operator<<(JsonStream &s, clang::TagTypeKind value);
 
+struct Class {
+	clang::TagTypeKind typeKind; // Class, struct, or union?
 	bool hasDefaultConstructor;
 	bool hasCopyConstructor;
 	bool isDestructible = true; // Does this class have a public or protected destructor?

@@ -113,7 +113,6 @@ module Bindgen
           name: Graph::Path.from(name).last_part,
           hasDefaultConstructor: has_default_constructor?(wrapper.constructors, list),
           hasCopyConstructor: false,
-          isClass: true,
           methods: classify_methods(wrapper, config, list),
           bases: bases,
         )

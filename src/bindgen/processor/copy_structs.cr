@@ -48,7 +48,7 @@ module Bindgen
         name = typename.binding(klass.as_type).first
 
         # Add the struct or union into the graph
-        if klass.c_union?
+        if klass.cpp_union?
           Graph::CppUnion.new(
             name: name,
             fields: fields_to_graph(klass),
@@ -125,7 +125,7 @@ module Bindgen
           false # cannot inline field if its structure isn't copied
         when !node.try(&.origin.anonymous?)
           false # named types are never inlined
-        when klass.c_union? != node.try(&.origin.c_union?)
+        when klass.cpp_union? != node.try(&.origin.cpp_union?)
           false # a C union cannot be inlined inside a struct, and vice-versa
         else
           true
