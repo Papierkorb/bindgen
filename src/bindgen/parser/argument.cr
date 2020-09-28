@@ -101,6 +101,28 @@ module Bindgen
         )
       end
 
+      # Performs type substitution on the type part of this argument using the
+      # given *replacements*.
+      def substitute_type(replacements : Hash(String, Type)) : Argument
+        Argument.new(
+          name: @name,
+          type: substitute(replacements),
+          has_default: @has_default,
+          value: @value,
+        )
+      end
+
+      # Substitutes all uses of *name* on the type part of this argument with
+      # the given *type*.
+      def substitute_type(name : String, with type : Type) : Argument
+        Argument.new(
+          name: @name,
+          type: substitute(name, type),
+          has_default: @has_default,
+          value: @value,
+        )
+      end
+
       # Checks if the type-part of this equals the type-part of *other*.
       def type_equals?(other : Type)
         {% for i in %i[base_name full_name const reference move builtin void pointer template] %}
