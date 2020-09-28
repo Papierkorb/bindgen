@@ -208,6 +208,101 @@ module Bindgen
         end
       end
 
+      # Performs type substitution with the given *replacements*.
+      #
+      # Substitution is performed if this type's base name is exactly one of the
+      # type arguments, but not if the type is a templated type of the same
+      # name.  Substitution is applied recursively on template type arguments.
+      # All substitutions are applied simultaneously.
+      def substitute(replacements : Hash(String, Type)) : Type
+        if template = @template
+          substitute_template(replacements, template)
+        elsif type = replacements[@base_name]?
+          substitute_base(type)
+        else
+          self
+        end
+      end
+
+      # Substitutes all uses of *name* with the given *type*.
+      def substitute(name : String, with type : Type) : Type
+        substitute({name, type})
+      end
+
+      # :ditto:
+      def substitute(replacements : Tuple(String, Type)) : Type
+        if template = @template
+          substitute_template(replacements, template)
+        elsif @base_name == replacements[0]
+          substitute_base(replacements[1])
+        else
+          self
+        end
+      end
+
+      # Helper for `#substitute`.  Performs type substitution on the type's
+      # template arguments.
+      private def substitute_template(replacements, template) : Type
+        typer = Cpp::Typename.new
+        template_args = template.arguments.map(&.substitute(replacements))
+        template_base = template.base_name
+        template_full = typer.template_class(template_base, template_args.map(&.full_name))
+
+        subst_template = Template.new(
+          base_name: template_base,
+          full_name: template_full,
+          arguments: template_args,
+        )
+
+        typer = Cpp::Typename.new
+        type_ptr = @pointer - (reference? ? 1 : 0)
+
+        Type.new(
+          kind: @kind,
+          const: @const,
+          reference: @reference,
+          move: @move,
+          builtin: @builtin,
+          void: @void,
+          pointer: @pointer,
+          base_name: template_full,
+          full_name: typer.full(template_full, @const, type_ptr, @reference),
+          template: subst_template,
+          nilable: @nilable,
+        )
+      end
+
+      # Helper for `#substitute`.  Performs basic type substitution on this
+      # type.  Const-ness, references, and pointers are propagated.
+      private def substitute_base(type)
+        const = type.const? || const?
+        reference = type.reference? || reference?
+        move = !reference && (type.move? || move?)
+        pointer = @pointer + type.pointer - (type.reference? && reference? ? 1 : 0)
+
+        if @pointer > 0 && !reference? && type.reference?
+          reference = false
+          pointer -= 1
+        end
+
+        typer = Cpp::Typename.new
+        type_ptr = pointer - (reference ? 1 : 0)
+
+        Type.new(
+          kind: type.kind,
+          const: const,
+          reference: reference,
+          move: move,
+          builtin: type.builtin?,
+          void: type.void?,
+          pointer: pointer,
+          base_name: type.base_name,
+          full_name: typer.full(type.base_name, const, type_ptr, reference),
+          template: type.template,
+          nilable: type.nilable?,
+        )
+      end
+
       def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
         @builtin, @void, @pointer, @kind, @nilable, @template
 

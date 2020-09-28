@@ -98,7 +98,7 @@ module Bindgen
         @name, @class_name, @return_type, @arguments, @first_default_argument = nil,
         @access = AccessSpecifier::Public, @type = Type::MemberMethod,
         @const = false, @virtual = false, @pure = false, @extern_c = false,
-        @builtin = false, @origin = nil, @crystal_name = nil
+        @builtin = false, @origin = nil, @crystal_name = nil, @binding_name = nil
       )
       end
 
@@ -429,7 +429,7 @@ module Bindgen
         return unless @name == "operator++" || @name == "operator--"
         return unless @arguments.size == 1 && @arguments[0].full_name == "int"
 
-        fixed = Method.new(
+        Method.new(
           type: @type,
           name: @name,
           access: @access,
@@ -441,9 +441,8 @@ module Bindgen
           arguments: [] of Argument,
           return_type: @return_type,
           crystal_name: crystal_name,
+          binding_name: binding_method_name,
         )
-        fixed.binding_name = binding_method_name
-        fixed
       end
 
       # Mangled name for the C++ wrapper method name
@@ -469,7 +468,7 @@ module Bindgen
         end
 
         case self
-        when .constructor?           then "_CONSTRUCT"
+        when .constructor?           then "#{@name}_CONSTRUCT"
         when .aggregate_constructor? then "_AGGREGATE"
         when .copy_constructor?      then "_COPY"
         when .member_getter?         then "#{@name}_GETTER"
@@ -478,7 +477,7 @@ module Bindgen
         when .static_method?         then "#{@name}_STATIC"
         when .static_getter?         then "#{@name}_STATIC_GETTER"
         when .static_setter?         then "#{@name}_STATIC_SETTER"
-        when .destructor?            then "_DESTROY"
+        when .destructor?            then "#{@name}_DESTROY"
         else                              @name
         end
       end
@@ -630,11 +629,13 @@ module Bindgen
           args << l.merge(r)
         end
 
-        result = Method.new(
+        Method.new(
           type: @type,
           access: @access,
           name: @name,
           class_name: @class_name,
+          crystal_name: @crystal_name,
+          binding_name: @binding_name,
           arguments: args,
           first_default_argument: @first_default_argument,
           return_type: @return_type,
@@ -643,9 +644,50 @@ module Bindgen
           pure: @pure && other.pure?,
           builtin: @builtin,
         )
+      end
 
-        result.crystal_name = @crystal_name
-        result
+      # Performs type substitution on the argument and return types of this
+      # method using the given *replacements*.
+      def substitute_type(replacements : Hash(String, Parser::Type)) : Method
+        args = arguments.map(&.substitute_type(replacements))
+        ret = @return_type.substitute(replacements)
+
+        Method.new(
+          type: @type,
+          access: @access,
+          name: @name,
+          class_name: @class_name,
+          crystal_name: @crystal_name,
+          binding_name: @binding_name,
+          arguments: args,
+          first_default_argument: @first_default_argument,
+          return_type: ret,
+          const: @const,
+          virtual: @virtual,
+          pure: @pure,
+        )
+      end
+
+      # Substitutes all uses of *name* on the argument and return types of this
+      # method with the given *type*.
+      def substitute_type(name : String, with type : Type) : Method
+        args = arguments.map(&.substitute_type(name, type))
+        ret = @return_type.substitute(name, type)
+
+        Method.new(
+          type: @type,
+          access: @access,
+          name: @name,
+          class_name: @class_name,
+          crystal_name: @crystal_name,
+          binding_name: @binding_name,
+          arguments: args,
+          first_default_argument: @first_default_argument,
+          return_type: ret,
+          const: @const,
+          virtual: @virtual,
+          pure: @pure,
+        )
       end
     end
   end
