@@ -1,3 +1,5 @@
+require "./type/cpp_type_parser"
+
 module Bindgen
   module Parser
     # Stores information about a specific C++ type.
@@ -109,43 +111,10 @@ module Bindgen
         )
       end
 
-      # Parser for qualified C++ type-names.  It's really stupid though.
+      # Returns a `Type` of a fully qualified C++ typename *type_name*.  Extra
+      # pointer indirections can be set by *pointer_depth*.
       def self.parse(type_name : String, pointer_depth = 0)
-        name = type_name.strip # Clean the name
-        reference = false
-        const = false
-
-        # Is it const-qualified?
-        if name.starts_with?("const ")
-          const = true
-          name = name[6..-1] # Remove `const `
-        end
-
-        # Is it a reference?
-        if name.ends_with?('&')
-          reference = true
-          pointer_depth += 1
-          name = name[0..-2] # Remove ampersand
-        end
-
-        # Is it a pointer?
-        while name.ends_with?('*')
-          pointer_depth += 1
-          name = name[0..-2] # Remove star
-        end
-
-        new( # Build the `Type`
-          const: const,
-          move: false,
-          reference: reference,
-          builtin: false, # Oh well
-          void: (name == "void"),
-          pointer: pointer_depth,
-          base_name: name.strip,
-          full_name: type_name,
-          template: nil,
-          nilable: false,
-        )
+        CppTypeParser.new.parse(type_name, pointer_depth)
       end
 
       # Creates a `Type` describing a Crystal `Proc` type, which returns a
@@ -240,7 +209,7 @@ module Bindgen
       end
 
       def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
-        @builtin, @void, @pointer, @kind, @nilable
+        @builtin, @void, @pointer, @kind, @nilable, @template
 
       def initialize(
         @base_name, @full_name, @const, @reference, @pointer, @move = false,
