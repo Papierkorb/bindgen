@@ -19,3 +19,4 @@ containers:
       - [ "int" ]
       - [ "double" ]
       - [ "std::string" ]
+      - [ "std::vector<int>" ]

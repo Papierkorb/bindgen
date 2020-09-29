@@ -39,8 +39,8 @@ module Bindgen
         proc_types = inner_args[1..-1].map { |t| to_crystal(t).as(Call::Result) }
         proc_types.unshift to_cpp(inner_args.first)
 
-        proc_args = typer.full(proc_types).join(", ")
-        "CrystalProc<#{proc_args}>"
+        proc_args = typer.full(proc_types)
+        typer.template_class("CrystalProc", proc_args)
       end
 
       # Computes a result for passing *type* from Crystal to C++.
