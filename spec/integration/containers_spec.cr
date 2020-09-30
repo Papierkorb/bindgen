@@ -16,6 +16,10 @@ describe "container instantiation feature" do
           list = [1.5, 2.5]
           Test::Containers.new.sum(list).should eq(4.0)
         end
+
+        it "works with nested containers" do
+          Test::Containers.new.grid.to_a.map(&.to_a).should eq([[1, 4], [9, 16]])
+        end
       end
     end
   end

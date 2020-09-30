@@ -40,7 +40,7 @@ module Bindgen
     # type database, it defaults to `false`.
     def is_type_copied?(type) : Bool
       if rules = @db[type]?
-        rules.copy_structure || rules.builtin || rules.kind.enum?
+        rules.copy_structure? || rules.builtin? || rules.kind.enum?
       else
         false
       end

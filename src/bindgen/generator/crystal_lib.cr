@@ -20,7 +20,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding?)
         super
       end
 

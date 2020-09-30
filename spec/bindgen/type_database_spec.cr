@@ -77,7 +77,7 @@ describe Bindgen::TypeDatabase do
       end
 
       it "supports false as default value" do
-        db.try_or("", false, &.generate_wrapper).should be_false
+        db.try_or("", false, &.generate_wrapper?).should be_false
       end
     end
 
@@ -93,7 +93,7 @@ describe Bindgen::TypeDatabase do
       end
 
       it "supports false as field value" do
-        db.try_or("CppType", true, &.generate_wrapper).should be_false
+        db.try_or("CppType", true, &.generate_wrapper?).should be_false
       end
     end
   end

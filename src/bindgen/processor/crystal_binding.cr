@@ -51,7 +51,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding?)
 
         # We want a Void alias for *all* classes.
         pass = Crystal::Pass.new(@db)
@@ -110,9 +110,9 @@ module Bindgen
         return if type.builtin? || type.void? # Built-ins don't need aliases
         return if @aliases.has_key? expr.type_name
         if rules = @db[type]?
-          return if rules.builtin
-          return if rules.ignore
-          return if rules.copy_structure
+          return if rules.builtin?
+          return if rules.ignore?
+          return if rules.copy_structure?
           return if rules.kind.enum?
           return if rules.graph_node.is_a?(Graph::Enum)
         end

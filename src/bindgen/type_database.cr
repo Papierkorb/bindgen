@@ -48,141 +48,88 @@ module Bindgen
     # Configuration of types, used in `Configuration#types` (The `types:` map
     # in YAML).  See `TypeDatabase::Configuration`.
     class TypeConfig
-      YAML.mapping(
-        # Ignore any and all methods using this type anywhere.
-        ignore: {
-          type:    Bool,
-          default: false,
-        },
+      include YAML::Serializable
 
-        # Semantics of the type (Kind overwrite)
-        kind: {
-          type:    Parser::Type::Kind,
-          default: Parser::Type::Kind::Class,
-        },
+      # Ignore any and all methods using this type anywhere.
+      property? ignore = false
 
-        # Will copy the definition of the other rule into this one.
-        alias_for: {
-          type:    String,
-          nilable: true,
-        },
+      # Semantics of the type (Kind overwrite)
+      property kind = Bindgen::Parser::Type::Kind::Class
 
-        # The crystal name of this type.
-        crystal_type: {type: String, nilable: true},
+      # Will copy the definition of the other rule into this one.
+      property alias_for : String?
 
-        # The C++ type to pass it around.
-        cpp_type: {type: String, nilable: true},
+      # The crystal name of this type.
+      property crystal_type : String?
 
-        # The type used in Crystal, but only in the `lib` binding.
-        binding_type: {type: String, nilable: true},
+      # The C++ type to pass it around.
+      property cpp_type : String?
 
-        # Template code ran to turn the real C++ type into the crystal type.
-        from_cpp: {
-          type:      Template::Base,
-          default:   Template::None.new,
-          converter: ConversionTemplateConverter,
-        },
+      # The type used in Crystal, but only in the `lib` binding.
+      property binding_type : String?
 
-        # Template code ran to turn the crystal type into the real C++ type.
-        to_cpp: {
-          type:      Template::Base,
-          default:   Template::None.new,
-          converter: ConversionTemplateConverter,
-        },
+      # Template code ran to turn the real C++ type into the crystal type.
+      @[YAML::Field(converter: Bindgen::TypeDatabase::ConversionTemplateConverter)]
+      property from_cpp : Template::Base = Bindgen::Template::None.new
 
-        # Converter for this type in Crystal.  Takes precedence over the
-        # `#to_crystal` and `#from_crystal` fields.
-        converter: {type: String, nilable: true},
+      # Template code ran to turn the crystal type into the real C++ type.
+      @[YAML::Field(converter: Bindgen::TypeDatabase::ConversionTemplateConverter)]
+      property to_cpp : Template::Base = Bindgen::Template::None.new
 
-        # Template code ran to turn the binding type to Crystal.
-        to_crystal: {
-          type:      Template::Base,
-          default:   Template::None.new,
-          converter: ConversionTemplateConverter,
-        },
+      # Converter for this type in Crystal.  Takes precedence over the
+      # `#to_crystal` and `#from_crystal` fields.
+      property converter : String?
 
-        # Template code ran to turn the Crystal type for the binding.
-        from_crystal: {
-          type:      Template::Base,
-          default:   Template::None.new,
-          converter: ConversionTemplateConverter,
-        },
+      # Template code ran to turn the binding type to Crystal.
+      @[YAML::Field(converter: Bindgen::TypeDatabase::ConversionTemplateConverter)]
+      property to_crystal : Template::Base = Bindgen::Template::None.new
 
-        # How to pass this type to C++?
-        pass_by: {
-          type:    PassBy,
-          default: PassBy::Original,
-        },
+      # Template code ran to turn the Crystal type for the binding.
+      @[YAML::Field(converter: Bindgen::TypeDatabase::ConversionTemplateConverter)]
+      property from_crystal : Template::Base = Bindgen::Template::None.new
 
-        # How to pass this type from Crystal?
-        wrapper_pass_by: { # Defaults to `@pass_by`
-          type:    PassBy,
-          nilable: true,
-        },
+      # How to pass this type to C++?
+      property pass_by = Bindgen::TypeDatabase::PassBy::Original
 
-        # If sub-classing of this type is allowed, if it's wrapped and has
-        # virtual methods.
-        sub_class: {
-          type:    Bool,
-          default: true,
-        },
+      # How to pass this type from Crystal?  Defaults to `#pass_by`.
+      property wrapper_pass_by : Bindgen::TypeDatabase::PassBy?
 
-        # If the structure (as in, its fields) shall be tried to replicated in
-        # Crystal.  Implies `instance_variables: false`.
-        # This doesn't support inheritance!
-        copy_structure: {
-          type:    Bool,
-          default: false,
-        },
+      # If sub-classing of this type is allowed, if it's wrapped and has
+      # virtual methods.
+      property? sub_class = true
 
-        # Treat this type as built-in type in C++ and Crystal.
-        builtin: {
-          type:    Bool,
-          default: false,
-        },
+      # If the structure (as in, its fields) shall be tried to replicated in
+      # Crystal.  Implies `instance_variables: false`.
+      # This doesn't support inheritance!
+      property? copy_structure = false
 
-        # If to generate a wrapper in Crystal.
-        generate_wrapper: {
-          type:    Bool,
-          default: true,
-        },
+      # Treat this type as built-in type in C++ and Crystal.
+      property? builtin = false
 
-        # If to generate bindings in C++ and Crystal.
-        generate_binding: {
-          type:    Bool,
-          default: true,
-        },
+      # If to generate a wrapper in Crystal.
+      property? generate_wrapper = true
 
-        # If to generate a superclass wrapper in Crystal.
-        generate_superclass: {
-          type:    Bool,
-          default: true,
-        },
+      # If to generate bindings in C++ and Crystal.
+      property? generate_binding = true
 
-        # Which methods to filter out.
-        ignore_methods: {
-          type:    Array(String),
-          default: [] of String,
-        },
+      # If to generate a superclass wrapper in Crystal.
+      property? generate_superclass = true
 
-        # Which methods to filter out in the superclass wrapper.  A method is
-        # ignored if it matches any of the regex patterns specified.
-        superclass_ignore_methods: {
-          type:    Regex,
-          default: Util::FAIL_RX,
-          converter: ArrayRegexConverter,
-        },
+      # Which methods to filter out.
+      property ignore_methods = [] of String
 
-        # Instance variable configuration.  Each hash key is a regex used to
-        # match instance variable names.
-        instance_variables: {
-          type:      InstanceVariableConfig::Collection,
-          default:   InstanceVariableConfig::Collection.new,
-          converter: Bindgen::Configuration::InstanceVariablesConverter,
-        },
-      )
+      # Which methods to filter out in the superclass wrapper.  A method is
+      # ignored if it matches any of the regex patterns specified.
+      @[YAML::Field(converter: Bindgen::TypeDatabase::ArrayRegexConverter)]
+      property superclass_ignore_methods = Bindgen::Util::FAIL_RX
+
+      # Instance variable configuration.  Each hash key is a regex used to
+      # match instance variable names.
+      @[YAML::Field(converter: Bindgen::Configuration::InstanceVariablesConverter)]
+      property instance_variables = Bindgen::TypeDatabase::InstanceVariableConfig::Collection.new
 
       # The node this type is represented by in the graph, if any
+      @[YAML::Field(ignore: true)]
       property graph_node : Graph::Node?
 
       def initialize(
@@ -198,11 +145,6 @@ module Bindgen
         @instance_variables = InstanceVariableConfig::Collection.new,
         @graph_node = nil, @alias_for = nil
       )
-      end
-
-      # Shall methods using this type be ignored?
-      def ignore? : Bool
-        @ignore
       end
 
       # Type name to use in the Crystal `lib` block.  Namespace operators (`::`)
@@ -237,14 +179,15 @@ module Bindgen
       # rule-sets, the value from *other* wins.
       def merge(other : self) : self
         {% begin %}
-          {% for name in @type.instance_vars %}
-            var_{{name}} = other.{{ name }}
-            var_{{name}} = @{{ name }} if var_{{name}}.nil?
+          {% ivars = @type.instance_vars %}
+          {% for name in ivars %}
+            %var{name} = other.@{{ name }}
+            %var{name} = @{{ name }} if %var{name}.nil?
           {% end %}
 
           self.class.new(
-            {% for name in @type.instance_vars %}
-              {{ name }}: var_{{name}},
+            {% for name in ivars %}
+              {{ name }}: %var{name},
             {% end %}
           )
         {% end %}
@@ -379,7 +322,7 @@ module Bindgen
 
       config.kind = kind if new_config
       config.cpp_type ||= cpp_name
-      config.crystal_type ||= crystal_name if config.generate_wrapper
+      config.crystal_type ||= crystal_name if config.generate_wrapper?
 
       @types[cpp_name] = config
     end

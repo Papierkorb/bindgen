@@ -60,7 +60,7 @@ module Bindgen
           if rules = @db[type]?
             template = type_template(rules.converter, rules.from_crystal, "wrap")
             template = Template.from_string("%.to_unsafe", simple: true) if
-              template.no_op? && to_unsafe && !rules.builtin && !type.builtin?
+              template.no_op? && to_unsafe && !rules.builtin? && !type.builtin?
 
             is_ref, ptr = reconfigure_pass_type(rules.pass_by, is_ref, ptr)
           end
@@ -183,11 +183,11 @@ module Bindgen
             end
 
             # Do not return types like `Bool*?` from the wrapper.
-            if rules.builtin && ptr > 0 && !is_ref
+            if rules.builtin? && ptr > 0 && !is_ref
               nilable = false
             end
 
-            if !rules.builtin && !is_constructor && !rules.converter && rules.to_crystal.no_op? && !in_lib && !rules.kind.enum?
+            if !rules.builtin? && !is_constructor && !rules.converter && rules.to_crystal.no_op? && !in_lib && !rules.kind.enum?
               template = wrapper_initialize_template(rules, type_name, nilable)
             end
 

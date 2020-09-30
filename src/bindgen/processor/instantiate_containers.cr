@@ -70,7 +70,8 @@ module Bindgen
       # the alias in the type-database.
       private def add_cpp_typedef(root, klass, container, instance)
         pass = Cpp::Pass.new(@db)
-        type = Parser::Type.parse("#{container.class}<#{instance.join ", "}>")
+        typer = Cpp::Typename.new
+        type = Parser::Type.parse(typer.template_class(container.class, instance))
 
         # Alias e.g. `QList_QObject_X` to `QList<QObject *>`
         if @db[type.base_name]?.nil?
@@ -129,7 +130,8 @@ module Bindgen
 
       # Name of *container* with *instance* for diagnostic purposes.
       private def diagnostics_name(container, instance)
-        "#{container.class}<#{instance.join(", ")}>"
+        typer = Cpp::Typename.new
+        typer.template_class(container.class, instance)
       end
 
       # Checks if *instance* of *container* is valid.  If not, raises.

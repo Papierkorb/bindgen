@@ -7,6 +7,10 @@ public:
     return std::vector<int>{ 1, 2, 3 };
   }
 
+  std::vector<std::vector<int>> grid() {
+    return { { 1, 4 }, { 9, 16 } };
+  }
+
   std::vector<std::string> strings() {
     return std::vector<std::string>{ "One", "Two", "Three" };
   }

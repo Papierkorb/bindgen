@@ -10,12 +10,12 @@ private class MemoryLoader < Bindgen::ConfigReader::Loader
   end
 end
 
-private class YamlThing
-  YAML.mapping(
-    list: {type: Array(String), nilable: true},
-    string: String,
-    recurse: {type: YamlThing, nilable: true},
-  )
+class YamlThing
+  include YAML::Serializable
+
+  getter list : Array(String)?
+  getter string : String
+  getter recurse : YamlThing?
 
   def_equals_and_hash @list, @string, @recurse
 
