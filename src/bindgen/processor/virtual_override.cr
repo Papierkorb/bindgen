@@ -322,10 +322,10 @@ module Bindgen
         typer = Cpp::Typename.new
         # Pass by reference.
         table_type = Parser::Type.new(
-          baseName: table_name,
-          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
-          isConst: true,
-          isReference: true,
+          base_name: table_name,
+          full_name: typer.full(table_name, const: false, pointer: 0, is_reference: true),
+          const: true,
+          reference: true,
           pointer: 1,
         )
 

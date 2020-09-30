@@ -42,7 +42,7 @@ module Parser
     Bindgen::Parser::Argument.new(
       name: name,
       type: type(cpp_type),
-      hasDefault: has_default,
+      has_default: has_default,
       value: default,
     )
   end

@@ -2,6 +2,8 @@ module Bindgen
   module Parser
     # Stores information about a specific C++ type.
     class Type
+      include JSON::Serializable
+
       # Name of the `CrystalProc` C++ and Crystal type.  This type is a template
       # type in C++, and a `struct` in Crystal.
       CRYSTAL_PROC = "CrystalProc"
@@ -15,42 +17,63 @@ module Bindgen
         Function
       end
 
-      # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`s mapping!!
-      # Also make sure to update other methods in here and in `Argument` as required!
-      JSON.mapping(
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
-      )
+      # ATTENTION: Make sure to update other methods in here and in `Argument`
+      # as required!
+
+      # Type kind.
+      getter kind = Bindgen::Parser::Type::Kind::Class
+
+      # Is this type constant?
+      @[JSON::Field(key: "isConst")]
+      getter? const : Bool
+
+      # Is this a C++ rvalue reference type?
+      @[JSON::Field(key: "isMove")]
+      getter? move : Bool
+
+      # Is this a C++ lvalue reference type?
+      @[JSON::Field(key: "isReference")]
+      getter? reference : Bool
+
+      # Is this type a C++ built-in type?
+      @[JSON::Field(key: "isBuiltin")]
+      getter? builtin : Bool
+
+      # Is it C++ `void`?  Note that `void *` is also void.
+      # See also `#pure_void?`
+      @[JSON::Field(key: "isVoid")]
+      getter? void : Bool
+
+      # Total number of indirections from pointers and lvalue references.
+      getter pointer : Int32
+
+      # Unqualified base name for easier mapping to Crystal.
+      #
+      # E.g., the base name of `const QWidget *&` is `QWidget`.
+      @[JSON::Field(key: "baseName")]
+      getter base_name : String
+
+      # Fully qualified, full name, for the C++ bindings.
+      @[JSON::Field(key: "fullName")]
+      getter full_name : String
+
+      # Is this type nilable?  For compatibility with `Argument`.
+      @[JSON::Field(key: "acceptsNull")]
+      getter? nilable = false
+
+      # Template information, if this type is a template type.
+      getter template : Template?
 
       # `Void` type
       VOID = new(
-        isConst: false,
-        isMove: false,
-        isReference: false,
-        isBuiltin: true,
-        isVoid: true,
+        const: false,
+        move: false,
+        reference: false,
+        builtin: true,
+        void: true,
         pointer: 0,
-        baseName: "void",
-        fullName: "void",
+        base_name: "void",
+        full_name: "void",
         template: nil,
         nilable: false,
       )
@@ -58,14 +81,14 @@ module Bindgen
       # Empty type, as is returned by the parser for constructors.  Only valid
       # as a return type of a constructor method.
       EMPTY = new(
-        isConst: false,
-        isMove: false,
-        isReference: false,
-        isBuiltin: true,
-        isVoid: false,
+        const: false,
+        move: false,
+        reference: false,
+        builtin: true,
+        void: false,
         pointer: 0,
-        baseName: "",
-        fullName: "",
+        base_name: "",
+        full_name: "",
         template: nil,
         nilable: false,
       )
@@ -73,14 +96,14 @@ module Bindgen
       # Returns a `Type` of a C++ built-in type *cpp_name*.
       def self.builtin_type(cpp_name : String, pointer = 0, reference = false)
         new(
-          isConst: false,
-          isMove: false,
-          isReference: reference,
-          isBuiltin: true,
-          isVoid: (cpp_name == "void"),
+          const: false,
+          move: false,
+          reference: reference,
+          builtin: true,
+          void: (cpp_name == "void"),
           pointer: pointer,
-          baseName: cpp_name,
-          fullName: cpp_name,
+          base_name: cpp_name,
+          full_name: cpp_name,
           template: nil,
           nilable: false,
         )
@@ -112,14 +135,14 @@ module Bindgen
         end
 
         new( # Build the `Type`
-isConst: const,
-          isMove: false,
-          isReference: reference,
-          isBuiltin: false, # Oh well
-          isVoid: (name == "void"),
+          const: const,
+          move: false,
+          reference: reference,
+          builtin: false, # Oh well
+          void: (name == "void"),
           pointer: pointer_depth,
-          baseName: name.strip,
-          fullName: type_name,
+          base_name: name.strip,
+          full_name: type_name,
           template: nil,
           nilable: false,
         )
@@ -140,15 +163,15 @@ isConst: const,
         )
 
         new( # Build the `Type`
-kind: Kind::Function,
-          isConst: false,
-          isMove: false,
-          isReference: false,
-          isBuiltin: false,
-          isVoid: false,
+          kind: Kind::Function,
+          const: false,
+          move: false,
+          reference: false,
+          builtin: false,
+          void: false,
           pointer: 0,
-          baseName: base,
-          fullName: base,
+          base_name: base,
+          full_name: base,
           template: template,
           nilable: false,
         )
@@ -163,8 +186,8 @@ kind: Kind::Function,
       # 3. If `#pointer > 0`, remove one (`int *` -> `int`)
       # 4. Else, it's the base-type already.  Return `nil`.
       def decayed : Type?
-        is_const = @isConst
-        is_ref = @isReference
+        is_const = @const
+        is_ref = @reference
         ptr = @pointer
 
         if is_const # 1.
@@ -183,14 +206,14 @@ kind: Kind::Function,
 
         Type.new(
           kind: @kind,
-          isConst: is_const,
-          isReference: is_ref,
-          isMove: false,
-          isBuiltin: @isBuiltin,
-          isVoid: @isVoid,
+          const: is_const,
+          reference: is_ref,
+          move: false,
+          builtin: @builtin,
+          void: @void,
           pointer: ptr,
-          baseName: @baseName,
-          fullName: typer.full(@baseName, is_const, type_ptr, is_ref),
+          base_name: @base_name,
+          full_name: typer.full(@base_name, is_const, type_ptr, is_ref),
           template: @template,
           nilable: @nilable,
         )
@@ -199,89 +222,53 @@ kind: Kind::Function,
       # If the type is a pointer and not a reference, returns a copy of this
       # type that is nilable, otherwise returns `nil`.
       def make_pointer_nilable : Type?
-        if @pointer > 0 && !@isReference && !@isMove
+        if @pointer > 0 && !@reference && !@move
           Type.new(
             kind: @kind,
-            isConst: @isConst,
-            isReference: false,
-            isMove: false,
-            isBuiltin: @isBuiltin,
-            isVoid: @isVoid,
+            const: @const,
+            reference: false,
+            move: false,
+            builtin: @builtin,
+            void: @void,
             pointer: @pointer,
-            baseName: @baseName,
-            fullName: @fullName,
+            base_name: @base_name,
+            full_name: @full_name,
             template: @template,
             nilable: true,
           )
         end
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
+      def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
+        @builtin, @void, @pointer, @kind, @nilable
 
-      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false, @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template = nil, @nilable = false)
+      def initialize(
+        @base_name, @full_name, @const, @reference, @pointer, @move = false,
+        @builtin = false, @void = false, @kind = Kind::Class, @template = nil,
+        @nilable = false
+      )
       end
-
-      # Is this type nilable?  For compatibility with `Argument`.
-      getter? nilable : Bool
 
       # Checks if this type equals the *other* type, except for nil-ability.
       def equals_except_nil?(other : Type)
-        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind] %}
-        return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[base_name full_name const reference move builtin void pointer kind template] %}
+          return false if @{{ i.id }} != other.@{{ i.id }}
         {% end %}
 
         true
       end
 
-      # Is this type constant?
-      def const?
-        @isConst
-      end
-
-      # Does the type use move-semantics?
-      def move?
-        @isMove
-      end
-
-      # Is this a C++ reference type?
-      def reference?
-        @isReference
-      end
-
-      # Is this type a C++ built-in type?
-      def builtin?
-        @isBuiltin
-      end
-
-      # Is it C++ `void`?  Note that `void *` is also void.
-      # See also `#pure_void?`
-      def void?
-        @isVoid
-      end
-
       # Returns `true` if this type is `void`, and nothing else.
       def pure_void?
-        @isVoid && @pointer == 0
-      end
-
-      # Unqualified base name for easier mapping to Crystal.
-      #
-      # E.g., the base name of `const QWidget *&` is `QWidget`.
-      def base_name
-        @baseName
-      end
-
-      # Fully qualified, full name, for the C++ bindings.
-      def full_name
-        @fullName
+        @void && @pointer == 0
       end
 
       # The mangled type name for C++ bindings.
       def mangled_name
         if @kind.function? && (templ = @template)
-          Util.mangle_type_name(@fullName) + "_" + templ.mangled_name
+          Util.mangle_type_name(@full_name) + "_" + templ.mangled_name
         else
-          Util.mangle_type_name @fullName
+          Util.mangle_type_name @full_name
         end
       end
     end

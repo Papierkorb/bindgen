@@ -175,13 +175,13 @@ module Bindgen
 
         Type.new(
           kind: kind,
-          isConst: const,
-          isReference: reference,
-          isMove: false,
-          isVoid: false,
-          isBuiltin: false,
-          baseName: name,
-          fullName: full_name,
+          const: const,
+          reference: reference,
+          move: false,
+          void: false,
+          builtin: false,
+          base_name: name,
+          full_name: full_name,
           pointer: pointer,
         )
       end

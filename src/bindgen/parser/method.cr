@@ -346,13 +346,13 @@ module Bindgen
       def return_type : Parser::Type
         if any_constructor? && @return_type.base_name.empty?
           Parser::Type.new(
-            isConst: false,
-            isReference: false,
-            isMove: false,
-            isVoid: false,
-            isBuiltin: false,
-            baseName: @class_name,
-            fullName: "#{@class_name}*",
+            const: false,
+            reference: false,
+            move: false,
+            void: false,
+            builtin: false,
+            base_name: @class_name,
+            full_name: "#{@class_name}*",
             pointer: 1,
           )
         else
