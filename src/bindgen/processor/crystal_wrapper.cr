@@ -12,7 +12,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
 
         # The parent class already has the `@unwrap`
         if klass.base_class.nil? || klass.tag?(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)

@@ -7,13 +7,10 @@ module Bindgen
     # The user can also use an empty value in the configuration to explicitly
     # use the default.
     #
-    # Use this type in a `YAML.mapping` like this:
+    # Use this type in a serializable field like this:
     #
     # ```crystal
-    # my_option: {
-    #   type: Util::Tribool,
-    #   default: Util::Tribool.unset,
-    # }
+    # getter my_option = Util::Tribool.unset
     # ```
     struct Tribool
       @value : Bool | Nil

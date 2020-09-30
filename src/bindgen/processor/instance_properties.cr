@@ -12,7 +12,7 @@ module Bindgen
       def visit_class(klass : Graph::Class)
         # Skip `Impl` classes.  Also skip classes whose structures are copied
         # into `Binding`, as all fields are directly accessible anyway.
-        return if klass.wrapped_class || @db[klass.name]?.try(&.copy_structure)
+        return if klass.wrapped_class || @db[klass.name]?.try(&.copy_structure?)
 
         var_config = @db.try_or(klass.name, VarConfig.new, &.instance_variables)
 
