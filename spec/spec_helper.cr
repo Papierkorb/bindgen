@@ -62,10 +62,10 @@ module Parser
       type: type,
       access: Bindgen::Parser::AccessSpecifier::Public,
       name: name,
-      className: class_name,
+      class_name: class_name,
       arguments: args,
-      returnType: ret,
-      firstDefaultArgument: args.index(&.has_default?),
+      return_type: ret,
+      first_default_argument: args.index(&.has_default?),
     )
   end
 

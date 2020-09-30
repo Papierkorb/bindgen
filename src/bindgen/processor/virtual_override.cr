@@ -77,13 +77,11 @@ module Bindgen
 
         # Types inheriting from another sub-classed type must themselves also be
         # sub-classed, to support implicitly inherited methods.
-        klass.each_base do |base|
+        klass.bases.any? do |base|
           if base_klass = class_by_name?(base.name)
-            return true if subclass?(base_klass)
+            subclass?(base_klass)
           end
         end
-
-        false
       end
 
       # Creates the `Superclass` Crystal struct for the given *klass*.
@@ -93,7 +91,7 @@ module Bindgen
         node = Parser::Class.new(
           name: SUPERCLASS_NAME,
           access: Parser::AccessSpecifier::Private,
-          typeKind: Parser::TypeKind::Struct,
+          type_kind: Parser::TypeKind::Struct,
           methods: [] of Parser::Method,
         )
         # TODO: return a Crystal struct instead

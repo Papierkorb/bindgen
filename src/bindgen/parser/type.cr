@@ -134,8 +134,8 @@ isConst: const,
 
         template_args = [return_type] + arguments.to_a
         template = Template.new(
-          fullName: base,
-          baseName: base,
+          full_name: base,
+          base_name: base,
           arguments: template_args,
         )
 

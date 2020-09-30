@@ -2,74 +2,68 @@ module Bindgen
   module Parser
     # Describes a C++ `class`, `struct`, or `union`.
     class Class
+      include JSON::Serializable
+
       # Collection of classes.
       alias Collection = Hash(String, Class)
 
-      JSON.mapping(
-        access: {type: AccessSpecifier, default: AccessSpecifier::Public},
-        typeKind: TypeKind,
-        hasDefaultConstructor: Bool,
-        hasCopyConstructor: Bool,
-        isAbstract: Bool,
-        isAnonymous: Bool,
-        isDestructible: Bool,
-        name: String,
-        byteSize: Int32,
-        bases: Array(BaseClass),
-        fields: Array(Field),
-        methods: Array(Method),
-      )
+      # Visibility of the class.  Default is public, but some generated Crystal
+      # classes may be private.
+      getter access = Bindgen::Parser::AccessSpecifier::Public
+
+      # The keyword used to declare this type (`class`, `struct`, or `union`).
+      @[JSON::Field(key: "typeKind")]
+      getter type_kind : TypeKind
+
+      # Does the type have a default, argument-less constructor?
+      @[JSON::Field(key: "hasDefaultConstructor")]
+      getter? has_default_constructor : Bool
+
+      # Is the type copy-constructible?
+      @[JSON::Field(key: "hasCopyConstructor")]
+      getter? has_copy_constructor : Bool
+
+      # Is this class abstract?
+      @[JSON::Field(key: "isAbstract")]
+      getter? abstract : Bool
+
+      # Is this class anonymous?
+      @[JSON::Field(key: "isAnonymous")]
+      getter? anonymous : Bool
+
+      # Is this class publicly destructible?
+      @[JSON::Field(key: "isDestructible")]
+      getter? destructible : Bool
+
+      # Fully qualified name of the class.
+      getter name : String
+
+      # Size of an instance of the class in memory.
+      @[JSON::Field(key: "byteSize")]
+      getter byte_size : Int32
+
+      # Direct bases of the class.
+      getter bases : Array(BaseClass)
+
+      # Data members defined in the class.
+      getter fields : Array(Field)
+
+      # Methods defined in the class.
+      getter methods : Array(Method)
 
       def initialize(
-        @name, @byteSize = 0, @hasDefaultConstructor = false,
-        @hasCopyConstructor = false, @typeKind = TypeKind::Class,
-        @isAbstract = false, @isAnonymous = false, @isDestructible = true,
+        @name, @byte_size = 0, @has_default_constructor = false,
+        @has_copy_constructor = false, @type_kind = TypeKind::Class,
+        @abstract = false, @anonymous = false, @destructible = true,
         @bases = [] of BaseClass, @fields = [] of Field,
         @methods = [] of Method, @access = AccessSpecifier::Public
       )
       end
 
-      # Visibility of the class.  Default is public, but some generated Crystal
-      # classes may be private.
       delegate public?, protected?, private?, to: @access
 
       # Is this a `class`, `struct`, or C `union`?
-      delegate class?, struct?, cpp_union?, to: @typeKind
-
-      # The keyword used to declare this type (`class`, `struct`, or `union`).
-      def type_kind
-        @typeKind
-      end
-
-      # Does the type have a default, argument-less constructor?
-      def has_default_constructor?
-        @hasDefaultConstructor
-      end
-
-      # Is the type copy-constructable?
-      def has_copy_constructor?
-        @hasCopyConstructor
-      end
-
-      # Size of an instance of the class in memory.
-      def byte_size : Int32
-        @byteSize
-      end
-
-      # Is this class publicly destructible?
-      def destructible?
-        @isDestructible
-      end
-
-      # Is this class abstract?
-      def abstract?
-        @isAbstract
-      end
-
-      # Is this class anonymous?
-      def anonymous?
-        @isAnonymous
-      end
+      delegate class?, struct?, cpp_union?, to: @type_kind
 
       # Does this class have any virtual methods?
       def has_virtual_methods?
@@ -86,34 +80,19 @@ module Bindgen
         Util.mangle_type_name(@name)
       end
 
-      # Yields each instance field defined in this class.  Does not include
-      # fields from base classes.
-      def each_field
-        @fields.each do |field|
-          yield field
-        end
-      end
-
-      # Yields each base class.
-      def each_base
-        @bases.each do |base|
-          yield base
-        end
-      end
-
       # Constructs a method destroying an instance of this class.
       def destructor_method : Method
         Parser::Method.new(
           type: Method::Type::Destructor,
           name: "DESTROY",
           access: AccessSpecifier::Public,
-          isConst: false,
-          isVirtual: true, # Hopefully.
-          isPure: false,
-          className: @name,
+          const: false,
+          virtual: true, # Hopefully.
+          pure: false,
+          class_name: @name,
           arguments: [] of Argument,
-          firstDefaultArgument: nil,
-          returnType: Type::VOID,
+          first_default_argument: nil,
+          return_type: Type::VOID,
         )
       end
 
@@ -148,7 +127,7 @@ module Bindgen
           next if method.has_move_semantics? # Move semantics are hard to wrap.
 
           # Don't try to wrap copy-constructors in an abstract class.
-          next if @isAbstract && method.copy_constructor?
+          next if abstract? && method.copy_constructor?
 
           yield method
         end

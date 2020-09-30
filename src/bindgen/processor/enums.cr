@@ -25,7 +25,7 @@ module Bindgen
         Parser::Enum.new(
           name: enumeration.name,
           type: enumeration.type, # Make configurable?
-          isFlags: is_flags,
+          flags: is_flags,
           values: camelcase_fields(config, fields),
         )
       end

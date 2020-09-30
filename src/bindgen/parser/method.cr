@@ -2,6 +2,8 @@ module Bindgen
   module Parser
     # Describes a method as found by the clang tool.
     class Method
+      include JSON::Serializable
+
       # Collection of methods
       alias Collection = Array(Method)
 
@@ -20,31 +22,60 @@ module Bindgen
         Signal
       end
 
-      JSON.mapping(
-        type: Method::Type,
-        name: String,
-        access: AccessSpecifier,
-        isConst: Bool,
-        isVirtual: Bool,
-        isPure: Bool,
-        isExternC: Bool,
-        className: String,
-        arguments: Array(Argument),
-        firstDefaultArgument: Int32?,
-        returnType: Parser::Type,
-      )
+      # Type of the method.
+      getter type : Method::Type
 
-      # For hard-wiring a methods final wrapper name.
-      @crystal_name : String? = nil
+      # Name of the method.
+      getter name : String
+
+      # Visibility of the method.
+      getter access : AccessSpecifier
+
+      # Returns if the method is const-qualified:
+      #   `std::string getName() const;`
+      @[JSON::Field(key: "isConst")]
+      getter? const : Bool
+
+      # Is this a virtual function?
+      @[JSON::Field(key: "isVirtual")]
+      getter? virtual : Bool
+
+      # Is this a pure virtual function?
+      @[JSON::Field(key: "isPure")]
+      getter? pure : Bool
+
+      # Does this function use the C ABI?
+      @[JSON::Field(key: "isExternC")]
+      getter? extern_c : Bool
+
+      # Fully qualified name of the class in which the method is defined.
+      @[JSON::Field(key: "className")]
+      getter class_name : String
+
+      # Arguments of the method.
+      property arguments : Array(Argument)
+
+      # The index of the first argument with a default value, if any.
+      @[JSON::Field(key: "firstDefaultArgument")]
+      getter first_default_argument : Int32?
+
+      # Return type of the method.
+      @[JSON::Field(key: "returnType")]
+      getter return_type : Parser::Type
+
+      # Forces the wrapper to use the specified name.
+      @[JSON::Field(ignore: true)]
+      setter crystal_name : String?
 
       # The method this method is based on.  Used by `#variants` to indicate
       # the methods origin when splitting occurs.
+      @[JSON::Field(ignore: true)]
       getter origin : Method?
 
       def initialize(
-        @name, @className, @returnType, @arguments, @firstDefaultArgument = nil,
+        @name, @class_name, @return_type, @arguments, @first_default_argument = nil,
         @access = AccessSpecifier::Public, @type = Type::MemberMethod,
-        @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false,
+        @const = false, @virtual = false, @pure = false, @extern_c = false,
         @origin = nil, @crystal_name = nil
       )
       end
@@ -60,10 +91,10 @@ module Bindgen
           type: type,
           access: access,
           name: name,
-          isConst: false,
-          className: class_name,
-          firstDefaultArgument: nil,
-          returnType: return_type,
+          const: false,
+          class_name: class_name,
+          first_default_argument: nil,
+          return_type: return_type,
           arguments: arguments,
         )
 
@@ -75,22 +106,8 @@ module Bindgen
         member_setter?, static_method?, signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
-      def_equals_and_hash @type, @name, @className, @access, @arguments, @firstDefaultArgument, @returnType, @isConst, @isVirtual, @isPure, @isExternC
-
-      # Is this a virtual function?
-      def virtual? : Bool
-        @isVirtual
-      end
-
-      # Is this a pure virtual function?
-      def pure? : Bool
-        @isPure
-      end
-
-      # Does this function use the C ABI?
-      def extern_c? : Bool
-        @isExternC
-      end
+      def_equals_and_hash @type, @name, @class_name, @access, @arguments,
+        @first_default_argument, @return_type, @const, @virtual, @pure, @extern_c
 
       # Does this function take a variable amount of arguments?
       def variadic? : Bool
@@ -116,10 +133,10 @@ module Bindgen
       #
       # Also see `#find_variant_splits` for the algorithm.
       def variants
-        first_default = @firstDefaultArgument || @arguments.size
+        first_default = @first_default_argument || @arguments.size
 
         find_variant_splits.each do |idx|
-          # Adjust yielded Methods `@firstDefaultArgument` to the correct value.
+          # Adjust yielded Methods `@first_default_argument` to the correct value.
           first = first_default
           first = nil if first >= idx
 
@@ -143,13 +160,13 @@ module Bindgen
             type: @type,
             access: @access,
             name: @name,
-            className: @className,
+            class_name: @class_name,
             arguments: args,
-            firstDefaultArgument: first,
-            returnType: @returnType,
-            isConst: @isConst,
-            isVirtual: @isVirtual,
-            isPure: @isPure,
+            first_default_argument: first,
+            return_type: @return_type,
+            const: @const,
+            virtual: @virtual,
+            pure: @pure,
             origin: self,
           )
 
@@ -169,7 +186,7 @@ module Bindgen
 
       # Finds the indices in `@arguments` `#variants` should yield.
       private def find_variant_splits
-        first_default = @firstDefaultArgument
+        first_default = @first_default_argument
         return {@arguments.size} if first_default.nil?
 
         # If we're here, the method has default arguments.
@@ -199,44 +216,41 @@ module Bindgen
           type: @type,
           name: "#{@name}_SUPER",
           access: @access,
-          className: @className,
+          class_name: @class_name,
           arguments: @arguments,
-          firstDefaultArgument: @firstDefaultArgument,
-          returnType: @returnType,
-          isConst: @isConst,
-          isVirtual: false,
-          isPure: false,
+          first_default_argument: @first_default_argument,
+          return_type: @return_type,
+          const: @const,
+          virtual: false,
+          pure: false,
           origin: self,
         )
       end
 
       # Try to deduce if this is a getter.
       def getter?(name = @name)
-        @arguments.empty? && !@returnType.void? && /^get[_A-Z]/.match(name)
+        @arguments.empty? && !@return_type.void? && /^get[_A-Z]/.match(name)
       end
 
       # Try to deduce if this is a setter.
       def setter?(name = @name)
-        @arguments.size == 1 && @returnType.void? && /^set[_A-Z]/.match(name)
+        @arguments.size == 1 && @return_type.void? && /^set[_A-Z]/.match(name)
       end
 
       # Try to deduce if this is a getter for a boolean value.
       def question_getter?(name = @name)
         return unless @arguments.empty?
-        return unless @returnType.builtin?
-        return unless @returnType.full_name == "bool"
+        return unless @return_type.builtin?
+        return unless @return_type.full_name == "bool"
 
         /^(?:get|has|is)[_A-Z]/.match(name)
       end
 
       # Does this method have move semantics anywhere?
       def has_move_semantics? : Bool
-        return true if @returnType.move?
+        return true if @return_type.move?
         @arguments.any?(&.move?)
       end
-
-      # Forces the wrapper to use the specified name
-      setter crystal_name : String?
 
       # Checks if the `#crystal_name` was set explicitly (`true`), or will be
       # generated (`false`).
@@ -291,19 +305,13 @@ module Bindgen
         end
       end
 
-      # Returns if the method is const-qualified:
-      #   `std::string getName() const;`
-      def const?
-        @isConst
-      end
-
       # Checks if this method is equal to *other*, except for the
       # const-qualification.
       def equals_except_const?(other : Method) : Bool
         # Note: Don't look at the return type for this, as it'll likely be
         # `const` itself too for the `const` method version.
-        {% for i in %i[type name className isVirtual isPure] %}
-        return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[type name class_name virtual pure] %}
+          return false if @{{ i.id }} != other.@{{ i.id }}
         {% end %}
 
         # Check arguments only by their type, NOT their name.
@@ -321,8 +329,8 @@ module Bindgen
       def equals_virtually?(other : Method) : Bool
         # Don't check if they're both pure or not: One may not in an abstract
         # base.
-        {% for i in %i[type name isVirtual isConst returnType] %}
-        return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[type name virtual const return_type] %}
+          return false if @{{ i.id }} != other.@{{ i.id }}
         {% end %}
 
         # Check arguments only by their type, NOT their name.
@@ -334,26 +342,21 @@ module Bindgen
         true
       end
 
-      # Returns the index of the first argument with a default value, if any.
-      def first_default_argument
-        @firstDefaultArgument
-      end
-
       # The return type of this method
       def return_type : Parser::Type
-        if any_constructor? && @returnType.base_name.empty?
+        if any_constructor? && @return_type.base_name.empty?
           Parser::Type.new(
             isConst: false,
             isReference: false,
             isMove: false,
             isVoid: false,
             isBuiltin: false,
-            baseName: @className,
-            fullName: "#{@className}*",
+            baseName: @class_name,
+            fullName: "#{@class_name}*",
             pointer: 1,
           )
         else
-          @returnType
+          @return_type
         end
       end
 
@@ -364,12 +367,7 @@ module Bindgen
 
       # Returns if this method returns something, or not
       def has_result?
-        !@returnType.void?
-      end
-
-      # Name of the class this method is in
-      def class_name
-        @className
+        !@return_type.void?
       end
 
       # Is this method filtered out?
@@ -377,10 +375,10 @@ module Bindgen
       # TODO: Can we move this into `Processor::FilterMethods`?
       def filtered?(db : TypeDatabase) : Bool
         return true if private?
-        return true if db[@returnType]?.try(&.ignore?)
+        return true if db[@return_type]?.try(&.ignore?)
         return true if @arguments.any? { |arg| db[arg]?.try(&.ignore?) }
 
-        if list = db[@className]?.try(&.ignore_methods)
+        if list = db[@class_name]?.try(&.ignore_methods)
           return true if list.includes?(@name)
         end
 
@@ -403,7 +401,7 @@ module Bindgen
 
       # Mangled name for the C++ wrapper method name
       def mangled_name
-        class_name = Util.mangle_type_name(@className)
+        class_name = Util.mangle_type_name(@class_name)
         "bg_#{class_name}_#{binding_method_name}_#{binding_arguments_name}"
       end
 
@@ -444,10 +442,10 @@ module Bindgen
 
       # Generates a C++ function pointer type matching this methods prototype.
       def function_pointer(name : String? = nil) : String
-        prefix = "#{@className}::" if needs_instance?
+        prefix = "#{@class_name}::" if needs_instance?
         suffix = "const" if const?
         args = @arguments.map(&.full_name)
-        "#{@returnType.full_name}(#{prefix}*#{name})(#{args.join(", ")})#{suffix}"
+        "#{@return_type.full_name}(#{prefix}*#{name})(#{args.join(", ")})#{suffix}"
       end
 
       # Merges this and the *other* method with regards to default values and
@@ -467,13 +465,13 @@ module Bindgen
           type: @type,
           access: @access,
           name: @name,
-          className: @className,
+          class_name: @class_name,
           arguments: args,
-          firstDefaultArgument: @firstDefaultArgument,
-          returnType: @returnType,
-          isConst: @isConst,
-          isVirtual: @isVirtual,
-          isPure: @isPure && other.pure?,
+          first_default_argument: @first_default_argument,
+          return_type: @return_type,
+          const: @const,
+          virtual: @virtual,
+          pure: @pure && other.pure?,
         )
 
         result.crystal_name = @crystal_name

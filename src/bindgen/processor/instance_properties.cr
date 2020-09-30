@@ -53,7 +53,7 @@ module Bindgen
         klass, nested_access = Parser::AccessSpecifier::Public,
         &block : Parser::Field, Parser::AccessSpecifier ->
       )
-        klass.origin.each_field do |field|
+        klass.origin.fields.each do |field|
           next if field.private? # Ignore private fields.
           # Public fields nested inside protected members are still protected.
           field_access = nested_access.protected? ? nested_access : field.access
@@ -75,12 +75,12 @@ module Bindgen
         method_origin = Parser::Method.new(
           name: field_name,
           crystal_name: method_name,
-          className: klass.origin.name,
-          returnType: field_type,
+          class_name: klass.origin.name,
+          return_type: field_type,
           arguments: [] of Parser::Argument,
           type: Parser::Method::Type::MemberGetter,
           access: access,
-          isConst: true,
+          const: true,
         )
 
         method = Graph::Method.new(
@@ -111,8 +111,8 @@ module Bindgen
         method_origin = Parser::Method.new(
           name: field_name,
           crystal_name: method_name + "=",
-          className: klass.origin.name,
-          returnType: Parser::Type::VOID,
+          class_name: klass.origin.name,
+          return_type: Parser::Type::VOID,
           arguments: [arg],
           type: Parser::Method::Type::MemberSetter,
           access: access,

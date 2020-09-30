@@ -89,7 +89,7 @@ module Bindgen
           name: name,
           values: values,
           type: (config.type || ENUM_DEFAULT_TYPE),
-          isFlags: config.flags,
+          flags: config.flags,
         )
       end
     end
