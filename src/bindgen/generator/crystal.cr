@@ -26,7 +26,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
 
         scope = "private" if klass.origin.private?
         prefix = "abstract" if klass.abstract?

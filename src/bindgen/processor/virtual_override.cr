@@ -29,7 +29,7 @@ module Bindgen
 
       def visit_class(klass : Graph::Class)
         return if klass.wrapped_class # Don't change `Impl` classes.
-        if subclass?(klass.origin) && @db.try_or(klass.origin.name, true, &.sub_class)
+        if subclass?(klass.origin) && @db.try_or(klass.origin.name, true, &.sub_class?)
           superclass = create_superclass(klass)
           add_superclass_init(superclass, klass)
           add_superclass_method(superclass, klass)
@@ -88,7 +88,7 @@ module Bindgen
 
       # Creates the `Superclass` Crystal struct for the given *klass*.
       private def create_superclass(klass) : Graph::Class?
-        return nil unless @db.try_or(klass.origin.name, true, &.generate_superclass)
+        return nil unless @db.try_or(klass.origin.name, true, &.generate_superclass?)
 
         node = Parser::Class.new(
           name: SUPERCLASS_NAME,

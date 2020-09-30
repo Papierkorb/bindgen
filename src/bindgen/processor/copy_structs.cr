@@ -11,7 +11,7 @@ module Bindgen
         unused_structures = find_unused_structures(doc)
 
         @db.each do |cpp_name, rules|
-          next unless rules.copy_structure # Only care about copy-able structures
+          next unless rules.copy_structure? # Only care about copy-able structures
 
           klass = find_structure(doc, cpp_name)
           graph = rules.graph_node.as(Graph::Class)
@@ -99,7 +99,7 @@ module Bindgen
         nodes.compare_by_identity
 
         @db.each do |cpp_name, rules|
-          next unless rules.copy_structure
+          next unless rules.copy_structure?
 
           if klass = doc.classes[cpp_name]?
             klass.fields.each do |field|
@@ -121,7 +121,7 @@ module Bindgen
         inlinable = case
         when !field.name.empty?
           false # named members are never inlined
-        when !rules.try(&.copy_structure)
+        when !rules.try(&.copy_structure?)
           false # cannot inline field if its structure isn't copied
         when !node.try(&.origin.anonymous?)
           false # named types are never inlined

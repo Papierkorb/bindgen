@@ -18,7 +18,7 @@ module Bindgen
 
             @db.add(klass.name,
               binding_type: klass.name,
-              copy_structure: @db.try_or(enclosing_type, false, &.copy_structure),
+              copy_structure: @db.try_or(enclosing_type, false, &.copy_structure?),
               generate_binding: false,
               generate_wrapper: false,
             )
