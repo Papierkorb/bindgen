@@ -2,31 +2,23 @@ module Bindgen
   module Parser
     # Stores information about a template `Type`.
     class Template
-      JSON.mapping(
-        # Full name, like `std::vector<_Tp, _Alloc>`
-        fullName: String,
-
-        # Base name of the type, like `std::vector`
-        baseName: String,
-
-        # Template arguments
-        arguments: Array(Type),
-      )
-
-      def initialize(@fullName, @baseName, @arguments)
-      end
-
-      def_equals_and_hash @fullName, @baseName, @arguments
+      include JSON::Serializable
 
       # Full name, like `std::vector<_Tp, _Alloc>`
-      def full_name : String
-        @fullName
-      end
+      @[JSON::Field(key: "fullName")]
+      getter full_name : String
 
       # Base name of the type, like `std::vector`
-      def base_name : String
-        @baseName
+      @[JSON::Field(key: "baseName")]
+      getter base_name : String
+
+      # Template arguments
+      getter arguments : Array(Type)
+
+      def initialize(@full_name, @base_name, @arguments)
       end
+
+      def_equals_and_hash @full_name, @base_name, @arguments
 
       # Returns the mangled name of the template arguments.
       def mangled_name : String

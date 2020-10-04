@@ -173,33 +173,33 @@ module Bindgen
           type: method.type,
           name: method.name,
           access: method.access,
-          isConst: method.const?,
-          isVirtual: method.virtual?,
-          isPure: false,
-          className: method.className, # Keep original class!
+          const: method.const?,
+          virtual: method.virtual?,
+          pure: false,
+          class_name: method.class_name, # Keep original class!
           arguments: method.arguments,
-          firstDefaultArgument: method.first_default_argument,
-          returnType: method.return_type,
+          first_default_argument: method.first_default_argument,
+          return_type: method.return_type,
         )
       end
 
       # Returns a non-abstract copy of *klass*.
       private def unabstract_class(klass)
         base = Parser::BaseClass.new(
-          isVirtual: false,
-          inheritedConstructor: true,
+          virtual: false,
+          inherited_constructor: true,
           name: klass.name,
           access: Parser::AccessSpecifier::Public,
         )
 
         Parser::Class.new(
-          typeKind: klass.type_kind,
-          hasDefaultConstructor: klass.has_default_constructor?,
-          hasCopyConstructor: klass.has_copy_constructor?,
-          isAbstract: false,
-          isDestructible: klass.destructible?,
+          type_kind: klass.type_kind,
+          has_default_constructor: klass.has_default_constructor?,
+          has_copy_constructor: klass.has_copy_constructor?,
+          abstract: false,
+          destructible: klass.destructible?,
           name: "#{klass.name}Impl",
-          byteSize: klass.byteSize,
+          byte_size: klass.byte_size,
           bases: [base],
           fields: klass.fields.dup,
           methods: klass.methods.map { |m| unabstract_method(m) },

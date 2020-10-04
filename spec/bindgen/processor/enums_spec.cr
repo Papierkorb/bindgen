@@ -49,7 +49,7 @@ describe Bindgen::Processor::Enums do
   flags_enum = Bindgen::Parser::Enum.new(
     name: "flags_enum",
     type: "int",
-    isFlags: true,
+    flags: true,
     values: {
       "Flags_One"       => 1i64,
       "Flags_Two"       => 2i64,
@@ -60,7 +60,7 @@ describe Bindgen::Processor::Enums do
   normal_enum = Bindgen::Parser::Enum.new(
     name: "normal_enum",
     type: "int",
-    isFlags: false,
+    flags: false,
     values: {
       "Normal_One"   => 1i64,
       "Normal_Two"   => 2i64,
@@ -71,7 +71,7 @@ describe Bindgen::Processor::Enums do
   uppercased_enum = Bindgen::Parser::Enum.new(
     name: "uppercased_enum",
     type: "int",
-    isFlags: false,
+    flags: false,
     values: {
       "UPPER_FIRST_ONE"  => 1i64,
       "UPPER_SECOND_ONE" => 2i64,
@@ -82,7 +82,7 @@ describe Bindgen::Processor::Enums do
   fixable_enum = Bindgen::Parser::Enum.new(
     name: "fixable_enum",
     type: "int",
-    isFlags: false,
+    flags: false,
     values: {
       "1"         => 10i64,
       "_1"        => 11i64,

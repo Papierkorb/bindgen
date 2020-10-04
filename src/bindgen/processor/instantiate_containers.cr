@@ -164,7 +164,7 @@ module Bindgen
         klass_type = Parser::Type.parse(container.class)
         name = "Container_#{klass_type.mangled_name}_#{suffix}"
 
-        Parser::Class.new(name: name, hasDefaultConstructor: true)
+        Parser::Class.new(name: name, has_default_constructor: true)
       end
 
       # Builds a method defining a default constructor for *klass*.
