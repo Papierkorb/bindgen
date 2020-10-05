@@ -207,21 +207,14 @@ JsonStream &operator<<(JsonStream &s, const Class &value) {
 
 JsonStream &operator<<(JsonStream &s, const Enum &value) {
 	auto c = JsonStream::Comma;
-	s << JsonStream::ObjectBegin
+	return s
+		<< JsonStream::ObjectBegin
 		<< std::make_pair("name", value.name) << c
 		<< std::make_pair("type", value.type) << c
 		<< std::make_pair("isFlags", value.isFlags) << c
-		<< "values" << JsonStream::Separator << JsonStream::ObjectBegin;
-
-	bool first = true;
-	for (const std::pair<std::string, int64_t> &elem : value.values) {
-		if (!first) s << c;
-		s << std::make_pair(elem.first, elem.second);
-		first = false;
-	}
-
-	s << JsonStream::ObjectEnd << JsonStream::ObjectEnd;
-	return s;
+		<< std::make_pair("isAnonymous", value.isAnonymous) << c
+		<< std::make_pair("values", value.values)
+		<< JsonStream::ObjectEnd;
 }
 
 JsonStream &operator<<(JsonStream &s, const Macro &value) {

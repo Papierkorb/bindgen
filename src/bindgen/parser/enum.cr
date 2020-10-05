@@ -17,10 +17,14 @@ module Bindgen
       @[JSON::Field(key: "isFlags")]
       getter? flags : Bool
 
+      # Is this enumeration anonymous?
+      @[JSON::Field(key: "isAnonymous")]
+      getter? anonymous : Bool
+
       # Enum fields
       getter values : Hash(String, Int64)
 
-      def initialize(@name, @values, @type = "unsigned int", @flags = false)
+      def initialize(@name, @values, @type = "unsigned int", @flags = false, @anonymous = false)
       end
 
       def_equals_and_hash @name, @type, @flags, @values
