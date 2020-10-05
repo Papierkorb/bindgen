@@ -160,7 +160,8 @@ struct Enum {
 	std::string name;
 	std::string type;
 	bool isFlags = false;
-	std::vector<std::pair<std::string, int64_t>> values;
+	bool isAnonymous = false;
+	JsonMap<std::string, int64_t> values;
 };
 
 JsonStream &operator<<(JsonStream &s, const Enum &value);

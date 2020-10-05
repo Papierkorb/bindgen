@@ -1,5 +1,6 @@
 #include "common.hpp"
 #include "record_match_handler.hpp"
+#include "enum_match_handler.hpp"
 #include "type_helper.hpp"
 
 RecordMatchHandler::RecordMatchHandler(Document &doc, const std::string &name)
@@ -117,6 +118,19 @@ bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *r
 				std::string ident = "Unnamed" + std::to_string(unnamedCount++);
 				tag->setDeclName(&tag->getASTContext().Idents.get(ident));
 				m_classesToRun.push_back(std::make_pair(tag, klass.name + "::" + ident));
+			}
+		} else if (clang::EnumDecl *enumeration = llvm::dyn_cast<clang::EnumDecl>(decl)) {
+			if (!enumeration->getIdentifier()) {
+				std::string ident = "Unnamed" + std::to_string(unnamedCount++);
+				enumeration->setDeclName(&enumeration->getASTContext().Idents.get(ident));
+
+				Enum e;
+				e.name = klass.name + "::" + ident;
+				e.isAnonymous = true;
+				EnumMatchHandler enumHandler {this->m_document, e.name};
+				if (enumHandler.runOnEnum(e, enumeration)) {
+					this->m_document.enums[e.name] = e;
+				}
 			}
 		}
 	}

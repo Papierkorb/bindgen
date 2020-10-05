@@ -2,59 +2,66 @@
 #include "enum_match_handler.hpp"
 
 EnumMatchHandler::EnumMatchHandler(Document &doc, const std::string &name)
-	: m_document(doc)
+	: m_document(doc), m_enumName(name)
 {
-	this->m_enum.name = name;
 }
 
 void EnumMatchHandler::run(const clang::ast_matchers::MatchFinder::MatchResult &Result) {
 	const clang::EnumDecl *enumeration = Result.Nodes.getNodeAs<clang::EnumDecl>("enumDecl");
 	const clang::TypedefNameDecl *typeDecl = Result.Nodes.getNodeAs<clang::TypedefNameDecl>("typedefNameDecl");
 
-	if (enumeration) runOnEnum(enumeration);
-	if (typeDecl) runOnTypedef(typeDecl);
+	Enum e;
+	if (enumeration && runOnEnum(e, enumeration)) {
+		this->m_document.enums[e.name] = e;
+	}
+	else if (typeDecl && runOnTypedef(e, typeDecl)) {
+		this->m_document.enums[e.name] = e;
+	}
 }
 
-void EnumMatchHandler::runOnEnum(const clang::EnumDecl *enumeration) {
-	this->m_enum.type = enumeration->getIntegerType().getUnqualifiedType().getAsString();
+bool EnumMatchHandler::runOnEnum(Enum &e, const clang::EnumDecl *enumeration) {
+	e.name = this->m_enumName;
+	e.type = enumeration->getIntegerType().getUnqualifiedType().getAsString();
 
 	for (const clang::EnumConstantDecl *field : enumeration->enumerators()) {
 		std::string name = field->getNameAsString();
 		int64_t value = field->getInitVal().getExtValue();
-		this->m_enum.values.push_back(std::make_pair(name, value));
+		e.values[name] = value;
 	}
 
-	this->m_document.enums[this->m_enum.name] = this->m_enum;
+	return true;
 }
 
-void EnumMatchHandler::runOnTypedef(const clang::TypedefNameDecl *typeDecl) {
+bool EnumMatchHandler::runOnTypedef(Enum &e, const clang::TypedefNameDecl *typeDecl) {
 	clang::QualType qt = typeDecl->getUnderlyingType();
 
 	// Support typedef'd enum types.
 	if (const clang::EnumType *eType = qt->getAs<clang::EnumType>()) {
-		runOnEnum(eType->getDecl());
+		return runOnEnum(e, eType->getDecl());
 	} else if (auto tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(qt->getAsCXXRecordDecl())) {
 		std::string templateName = tmpl->getTemplateInstantiationPattern()->getNameAsString();
 
 		// Check if we have a `QFlags` template type
 		if (templateName == "QFlags") {
-			handleQFlagsType(tmpl);
+			return handleQFlagsType(e, tmpl);
 		}
 	}
+
+	return false;
 }
 
-void EnumMatchHandler::handleQFlagsType(const clang::ClassTemplateSpecializationDecl *tmpl) {
+bool EnumMatchHandler::handleQFlagsType(Enum &e, const clang::ClassTemplateSpecializationDecl *tmpl) {
 	if (tmpl->getTemplateInstantiationArgs().size() != 1)
-		return; // Size is expected to be "1"!
+		return false; // Size is expected to be "1"!
 
 	// Grab the template argument, check if it's an `enum`, and if so, process it!
 	const clang::TemplateArgument &arg = tmpl->getTemplateInstantiationArgs().get(0);
 	clang::QualType qt = arg.getAsType();
 
 	if (!qt->isEnumeralType())
-		return;
+		return false;
 
-	this->m_enum.isFlags = true;
+	e.isFlags = true;
 	const clang::EnumType *enumType = qt->getAs<clang::EnumType>();
-	runOnEnum(llvm::dyn_cast<clang::EnumDecl>(enumType->getDecl()));
+	return runOnEnum(e, llvm::dyn_cast<clang::EnumDecl>(enumType->getDecl()));
 }
