@@ -2,6 +2,9 @@
 
 # Uses the default processor pipeline.
 
+classes:
+  Nested: Nested
+
 enums:
   TopLevel: TopLevel
   U8Enum: U8Enum
