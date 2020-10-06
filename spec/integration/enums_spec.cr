@@ -44,6 +44,9 @@ describe "enumeration types functionality" do
           Test::Nested::X.should be_a(UInt32)
           Test::Nested::Y.should eq(20)
           Test::Nested::Y.should be_a(UInt32)
+
+          Test::MyRenamed::Z.should eq(30)
+          {{ Test.has_constant?("Renamed") }}.should be_false
         end
       end
     end
