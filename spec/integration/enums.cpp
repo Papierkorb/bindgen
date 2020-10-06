@@ -33,3 +33,9 @@ enum FlagEnum {
 
 template class QFlags<FlagEnum>;
 typedef QFlags<FlagEnum> Flags;
+
+
+
+struct Nested {
+  enum { X = 10, Y = 20 };
+};

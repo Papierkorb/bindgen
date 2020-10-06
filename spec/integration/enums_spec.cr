@@ -37,6 +37,15 @@ describe "enumeration types functionality" do
           Test::Flags::All.value.should eq(13)
         end
       end
+
+      context "nested anonymous enums" do
+        it "writes enum values to the enclosing scope as constants" do
+          Test::Nested::X.should eq(10)
+          Test::Nested::X.should be_a(UInt32)
+          Test::Nested::Y.should eq(20)
+          Test::Nested::Y.should be_a(UInt32)
+        end
+      end
     end
   end
 end
