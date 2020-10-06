@@ -7,7 +7,6 @@ module Bindgen
           if enumeration.anonymous?
             config = Configuration::Enum.new(
               destination: enumeration.name,
-              camelcase: false,
             )
           else
             config = @config.enums[name]
@@ -24,9 +23,10 @@ module Bindgen
         if origin.anonymous?
           # Re-parent the anonumous enum if the enclosing class is wrapped.
           path = Graph::Path.from(config.destination)
-          parent = path.parent.to_s
-          if wrapper_name = @db[parent]?.try(&.wrapper_type)
-            path = Graph::Path.from(wrapper_name, path.last_part)
+          if parent = @db[path.parent.to_s]?
+            if parent.generate_wrapper? && (wrapper_name = parent.wrapper_type)
+              path = Graph::Path.from(wrapper_name, path.last_part)
+            end
           end
 
           emit_enum(origin, path, root)

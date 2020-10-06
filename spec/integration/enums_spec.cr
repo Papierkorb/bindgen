@@ -11,7 +11,7 @@ describe "enumeration types functionality" do
 
       context "core functionality" do
         it "supports top-level enums" do
-          Test::TopLevel.names.should eq(%w{A B C})
+          Test::TopLevel.names.should eq(%w{A B CC})
           Test::TopLevel.values.map(&.to_i).should eq([0, 0, -1])
           enum_type(Test::TopLevel).should eq(Int32)
         end
