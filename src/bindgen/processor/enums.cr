@@ -22,7 +22,14 @@ module Bindgen
         origin = reconfigure_enum(config, enumeration)
 
         if origin.anonymous?
-          emit_enum(origin, config.destination, root)
+          # Re-parent the anonumous enum if the enclosing class is wrapped.
+          path = Graph::Path.from(config.destination)
+          parent = path.parent.to_s
+          if wrapper_name = @db[parent]?.try(&.wrapper_type)
+            path = Graph::Path.from(wrapper_name, path.last_part)
+          end
+
+          emit_enum(origin, path, root)
         else
           builder = Graph::Builder.new(@db)
           builder.build_enum(origin, config.destination, root)

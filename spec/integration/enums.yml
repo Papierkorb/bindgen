@@ -4,6 +4,7 @@
 
 classes:
   Nested: Nested
+  Renamed: MyRenamed
 
 enums:
   TopLevel: TopLevel
