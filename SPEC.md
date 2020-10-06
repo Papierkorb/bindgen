@@ -563,8 +563,29 @@ Given a `QFlags<ApplicationFlag>`, the generated enumeration will look like
 
 ```cr
 @[Flags]
-enum ApplicationFlag : Int32
+enum ApplicationFlag : UInt32
   # Constants ...
+end
+```
+
+### §5.4 Nested anonymous enums
+
+An unnamed enumeration type inside a wrapped class will dump its enumerators
+into the enclosing wrapper as constants, instead of generating an enumeration.
+The underlying type of the enumeration type is respected.
+
+```cpp
+struct Calculator {
+  enum { PLUS, MINUS, TIMES, DIVIDE };
+};
+```
+
+```crystal
+class Calculator
+  Plus = 0u32
+  Minus = 1u32
+  Times = 2u32
+  Divide = 3u32
 end
 ```
 

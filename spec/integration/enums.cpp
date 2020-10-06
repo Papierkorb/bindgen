@@ -2,8 +2,8 @@
 
 enum TopLevel {
   A,
-  B = A,
-  C = -1,
+  b = A,
+  c_c = -1,
 };
 
 namespace NS1 {
