@@ -1,0 +1,10 @@
+<<: spec_base.yml
+
+# Uses the default processor pipeline.
+
+enums:
+  TopLevel: TopLevel
+  U8Enum: U8Enum
+  NS1::InnerEnum: NS1::InnerEnum
+  NS1::NS2::InnerEnum2: NS1::NS2::InnerEnum2
+  Flags: Flags
