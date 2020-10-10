@@ -98,8 +98,8 @@ module Bindgen
       # virtual methods.
       property? sub_class = true
 
-      # If the structure (as in, its fields) shall be tried to replicated in
-      # Crystal.  Implies `instance_variables: false`.
+      # If the structure (as in, its non-static fields) shall be tried to
+      # replicated in Crystal.  Implies `instance_variables: false`.
       # This doesn't support inheritance!
       property? copy_structure = false
 

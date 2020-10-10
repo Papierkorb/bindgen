@@ -201,7 +201,7 @@ module Bindgen
           name: "#{klass.name}Impl",
           byte_size: klass.byte_size,
           bases: [base],
-          fields: klass.fields.dup,
+          fields: klass.fields.select { |f| !f.static? },
           methods: klass.methods.map { |m| unabstract_method(m) },
         )
       end
