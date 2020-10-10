@@ -27,7 +27,7 @@ describe "copied structure functionality" do
       context "core functionality" do
         it "supports structs" do
           subject = Test::Binding::Point.new
-          instance_var_names(subject).should eq(%w{x y})
+          instance_var_names(subject).should eq(%w{x y}) # ignores `dimensions`
           subject.x.should be_a(Int32)
           subject.y.should be_a(Int32)
         end

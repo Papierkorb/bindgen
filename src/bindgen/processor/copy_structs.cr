@@ -26,8 +26,8 @@ module Bindgen
         end
       end
 
-      # Finds the class *name* in the *doc*.  If not found, or if no fields have
-      # been found, raises.
+      # Finds the class *name* in the *doc*.  If not found, or if no non-static
+      # fields have been found, raises.
       private def find_structure(doc, name) : Parser::Class
         klass = doc.classes[name]?
 
@@ -35,8 +35,8 @@ module Bindgen
           raise "Can't copy structure of unknown class #{name.inspect}"
         end
 
-        if klass.fields.empty? # We can actually copy something
-          raise "Can't copy structure of class #{name.inspect}: It has no fields"
+        if klass.fields.none? { |f| !f.static? } # We can actually copy something
+          raise "Can't copy structure of class #{name.inspect}: It has no non-static fields"
         end
 
         klass
@@ -63,8 +63,8 @@ module Bindgen
         end
       end
 
-      # Turns *klass*'s fields into a hash of `Call::Result`s we can store in
-      # the graph.
+      # Turns *klass*'s non-static fields into a hash of `Call::Result`s we can
+      # store in the graph.
       private def fields_to_graph(klass)
         calls = {} of String => Call::Result
         add_fields_to_graph(klass, calls)
@@ -77,15 +77,15 @@ module Bindgen
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
-        klass.fields.each_with_index do |field, idx|
+        klass.fields.each do |field|
+          next if field.static?
           field_klass, inlinable = get_field_type(klass, field)
 
           if field_klass && inlinable
             add_fields_to_graph(field_klass.origin, calls)
           else
             result = pass.to_binding(field)
-            var_name = argument.name(field.crystal_name, idx)
-
+            var_name = argument.name(field.crystal_name, calls.size)
             calls[var_name] = result
           end
         end
@@ -121,6 +121,8 @@ module Bindgen
         inlinable = case
         when !field.name.empty?
           false # named members are never inlined
+        when field.static?
+          false # Static data members are never inlined
         when !rules.try(&.copy_structure?)
           false # cannot inline field if its structure isn't copied
         when !node.try(&.origin.anonymous?)

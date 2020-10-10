@@ -45,7 +45,7 @@ module Bindgen
       # Direct bases of the class.
       getter bases : Array(BaseClass)
 
-      # Data members defined in the class.
+      # Data members defined in the class, both static and non-static.
       getter fields : Array(Field)
 
       # Methods defined in the class.
