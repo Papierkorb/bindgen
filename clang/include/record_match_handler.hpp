@@ -12,7 +12,9 @@ private:
 
 	bool runOnRecord(Class &klass, const clang::CXXRecordDecl *record);
 
-	bool runOnField(Field &f, Class &klass, const clang::FieldDecl *field);
+	bool runOnField(Field &f, const clang::FieldDecl *field);
+
+	bool runOnStaticField(Field &f, const clang::VarDecl *var);
 
 	bool checkAccessSpecForSignal(clang::AccessSpecDecl *spec);
 

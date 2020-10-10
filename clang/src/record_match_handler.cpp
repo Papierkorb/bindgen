@@ -110,7 +110,12 @@ bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *r
 			isSignal = checkAccessSpecForSignal(spec);
 		} else if (clang::FieldDecl *field = llvm::dyn_cast<clang::FieldDecl>(decl)) {
 			Field f;
-			if (runOnField(f, klass, field)) {
+			if (runOnField(f, field)) {
+				klass.fields.push_back(f);
+			}
+		} else if (clang::VarDecl *var = llvm::dyn_cast<clang::VarDecl>(decl)) {
+			Field f;
+			if (runOnStaticField(f, var)) {
 				klass.fields.push_back(f);
 			}
 		} else if (clang::CXXRecordDecl *tag = llvm::dyn_cast<clang::CXXRecordDecl>(decl)) {
@@ -138,13 +143,26 @@ bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *r
 	return true;
 }
 
-bool RecordMatchHandler::runOnField(Field &f, Class &klass, const clang::FieldDecl *field) {
+bool RecordMatchHandler::runOnField(Field &f, const clang::FieldDecl *field) {
 	f.name = field->getNameAsString();
 	f.access = field->getAccess();
 	// f.bitField = TODO
 
 	TypeHelper::qualTypeToType(f, field->getType(), field->getASTContext());
 	return true;
+}
+
+bool RecordMatchHandler::runOnStaticField(Field &f, const clang::VarDecl *var) {
+	if (var->isStaticDataMember()) {
+		f.name = var->getNameAsString();
+		f.access = var->getAccess();
+		f.isStatic = true;
+
+		TypeHelper::qualTypeToType(f, var->getType(), var->getASTContext());
+		return true;
+	}
+
+	return false;
 }
 
 bool RecordMatchHandler::checkAccessSpecForSignal(clang::AccessSpecDecl *spec) {
