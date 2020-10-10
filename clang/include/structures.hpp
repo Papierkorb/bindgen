@@ -133,6 +133,7 @@ JsonStream &operator<<(JsonStream &s, const BaseClass &value);
 struct Field : public Type {
 	clang::AccessSpecifier access;
 	std::string name;
+	bool isStatic = false;
 	int bitField = -1;
 };
 

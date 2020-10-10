@@ -10,6 +10,10 @@ module Bindgen
       # Name of the field.
       getter name : String
 
+      # Is this field a static data member?
+      @[JSON::Field(key: "isStatic")]
+      getter? static : Bool
+
       # The size of this field, if it is a bitfield.
       @[JSON::Field(key: "bitField")]
       getter! bit_field : Int32

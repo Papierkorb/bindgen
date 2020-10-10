@@ -166,7 +166,8 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 	s << JsonStream::ObjectBegin;
 	writeTypeJson(s, value) << c;
 	s << std::make_pair("name", value.name) << c
-		<< std::make_pair("access", value.access) << c;
+		<< std::make_pair("access", value.access) << c
+		<< std::make_pair("isStatic", value.isStatic) << c;
 
 	if (value.bitField > 0)
 		s << std::make_pair("bitField", value.name);
