@@ -39,7 +39,7 @@ module Bindgen
           else
             "#{self_var}->#{method.name}"
           end
-        when .static_method?
+        when .static?
           qualified(method)
         else
           raise "BUG: Missing case for method type #{method.type.inspect}"

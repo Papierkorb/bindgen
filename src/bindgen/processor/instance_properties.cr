@@ -1,6 +1,7 @@
 module Bindgen
   module Processor
-    # Processor to add getter and setter methods for instance variables.
+    # Processor to add getter and setter methods for static and instance
+    # variables.
     class InstanceProperties < Base
       # Mapping from member name patterns to configurations.
       private alias VarConfig = TypeDatabase::InstanceVariableConfig::Collection
@@ -30,14 +31,14 @@ module Bindgen
           method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
 
-          add_getter(klass, access, field_type, field.name, method_name)
-          add_setter(klass, access, field_type, field.name, method_name) unless field.const?
+          add_getter(klass, access, field_type, field.name, field.static?, method_name)
+          add_setter(klass, access, field_type, field.name, field.static?, method_name) unless field.const?
         end
 
         super
       end
 
-      # Looks up the configuration used for an instance variable.
+      # Looks up the configuration used for a data member.
       private def lookup_member_config(var_config, field_name)
         var_config.each do |key, config|
           return {key, config} if key.matches?(field_name)
@@ -69,16 +70,19 @@ module Bindgen
         end
       end
 
-      # Builds a C++ wrapper method for an instance variable getter.  The `lib`
-      # binding and the Crystal wrapper method are generated later.
-      private def add_getter(klass, access, field_type, field_name, method_name)
+      # Builds a C++ wrapper method for a static or instance variable getter.
+      # The `lib` binding and the Crystal wrapper method are generated later.
+      private def add_getter(klass, access, field_type, field_name, is_static, method_name)
+        method_type = is_static ?
+          Parser::Method::Type::StaticGetter : Parser::Method::Type::MemberGetter
+
         method_origin = Parser::Method.new(
           name: field_name,
           crystal_name: method_name,
           class_name: klass.origin.name,
           return_type: field_type,
           arguments: [] of Parser::Argument,
-          type: Parser::Method::Type::MemberGetter,
+          type: method_type,
           access: access,
           const: true,
         )
@@ -95,7 +99,7 @@ module Bindgen
         method.calls[Graph::Platform::Cpp] = call
       end
 
-      # Code body for reading from a C++ instance variable.
+      # Code body for reading from a C++ data member.
       private class GetterBody < Call::Body
         def to_code(call : Call, _platform : Graph::Platform) : String
           code = call.name
@@ -103,9 +107,11 @@ module Bindgen
         end
       end
 
-      # Builds a C++ wrapper method for an instance variable setter.  The `lib`
-      # binding and the Crystal wrapper method are generated later.
-      private def add_setter(klass, access, field_type, field_name, method_name)
+      # Builds a C++ wrapper method for a static or instance variable setter.
+      # The `lib` binding and the Crystal wrapper method are generated later.
+      private def add_setter(klass, access, field_type, field_name, is_static, method_name)
+        method_type = is_static ?
+          Parser::Method::Type::StaticSetter : Parser::Method::Type::MemberSetter
         arg = Parser::Argument.new(field_name, field_type)
 
         method_origin = Parser::Method.new(
@@ -114,7 +120,7 @@ module Bindgen
           class_name: klass.origin.name,
           return_type: Parser::Type::VOID,
           arguments: [arg],
-          type: Parser::Method::Type::MemberSetter,
+          type: method_type,
           access: access,
         )
 
@@ -130,7 +136,7 @@ module Bindgen
         method.calls[Graph::Platform::Cpp] = call
       end
 
-      # Code body for writing to a C++ instance variable.
+      # Code body for writing to a C++ data member.
       private class SetterBody < Call::Body
         def to_code(call : Call, _platform : Graph::Platform) : String
           code = call.arguments.first.call

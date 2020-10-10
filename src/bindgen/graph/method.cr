@@ -39,7 +39,7 @@ module Bindgen
       # Returns a dot (`.`) if the origin method is static.  Returns a number
       # sign (`#`) otherwise.
       def crystal_prefix : String
-        if @origin.static_method?
+        if @origin.static?
           "."
         else
           "#"
