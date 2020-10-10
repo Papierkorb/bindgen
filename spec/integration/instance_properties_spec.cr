@@ -63,6 +63,15 @@ describe "C++ instance properties" do
           position.x.should eq(13)
           position.y.should eq(35)
         end
+
+        it "supports static members" do
+          Test::Point.dimensions.should eq(2)
+
+          position = Test::Props.corner
+          position.should be_a(Test::Point)
+          position.x.should eq(800)
+          position.y.should eq(600)
+        end
       end
 
       context "setter methods" do
@@ -97,6 +106,8 @@ describe "C++ instance properties" do
           methods.includes?("y_pub=").should be_false
           methods.includes?("y_prot=").should be_false
           methods.includes?("y_priv=").should be_false
+
+          {{ Test::Props.class.has_method?("dimensions=") }}.should be_false
         end
 
         it "supports pointer members" do
@@ -113,6 +124,14 @@ describe "C++ instance properties" do
           got = props.position_val
           got.x.should eq(60)
           got.y.should eq(61)
+        end
+
+        it "supports static members" do
+          Test::Props.corner = Test::Point.new(1024, 768)
+          got = Test::Props.corner
+          got.should be_a(Test::Point)
+          got.x.should eq(1024)
+          got.y.should eq(768)
         end
       end
 

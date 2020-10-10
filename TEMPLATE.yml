@@ -36,7 +36,7 @@ processors:
   - copy_structs # Copy structures as marked
   - macros # Support for macro mapping
   - functions # Add non-class functions
-  - instance_properties # Add property methods for public instance members
+  - instance_properties # Add property methods for static and instance members
   - filter_methods # Throw out filtered methods
   - extern_c # Directly bind to pure C functions
   - instantiate_containers # Actually instantiate containers
@@ -433,26 +433,26 @@ types:
     # Defaults to `false`.
     copy_structure: true | false
 
-    # Whether to generate property methods for instance variables.  It may take
-    # a boolean or a hash:
+    # Whether to generate property methods for static and instance variables.
+    # It accepts a boolean or a hash:
     # * `true`: Generate all methods with their default settings.
     # * `false`: Disable all methods.
-    # * Hash: Each key is a regex pattern matching the names of the instance
-    #   variables, and the corresponding value controls the behaviour of the
-    #   matched variables.
+    # * Hash: Each key is a regex pattern matching the names of the data
+    #   members, and the corresponding value controls the behaviour of the
+    #   matched members.
     # Defaults to `true`.  `copy_structure: true` will suppress the generation
     # of property methods regardless of this setting.
     instance_variables:
       "^m_i(.*)$":
-        # Do not generate the getter(s) and setter(s) for the matched variables.
+        # Do not generate the getter(s) and setter(s) for the matched members.
         # Defaults to `false`.
         ignore: true | false
         # Optional: renames the property method(s).  Regex backreferences are
         # supported.  Underscore transformation is applied after renaming.
         # By default no renaming is applied.
         rename: "\\1"
-        # Marks the instance variable(s) as nilable, allowing the property
-        # methods to use `nil`.  Only applied to pointer variables.
+        # Marks the data member(s) as nilable, allowing the property methods to
+        # use `nil`.  Only applied to members of pointer types.
         # Defaults to `false`.
         nilable: true | false
 

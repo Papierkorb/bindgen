@@ -242,9 +242,9 @@ inherits from `MyFoo` and overrides `#bar`, the overriding method may refer to
 
 ### §2.4 Instance properties
 
-Property methods can be generated for an instance variable in a Crystal wrapper
-corresponding to a C++ `class`, `struct`, or `union`, if all of the following
-criteria are met:
+Property methods can be generated for any static or instance variable in a
+Crystal wrapper corresponding to a C++ `class`, `struct`, or `union`, if all of
+the following criteria are met:
 
 * The member's visibility is `public` or `protected` (the latter is mapped to
   `private` in Crystal)
@@ -254,9 +254,8 @@ criteria are met:
 * The member is not inside a nested anonymous type that names another member
   (this is supported by §3.2.2)
 
-The getter is always defined for every instance variable, but the setter is
-omitted if the instance variable was defined as a `const` member.  Property
-methods are underscored.
+The getter is always defined for every member, but the setter is omitted if the
+member was defined as a `const` member.  Property methods are underscored.
 
 ```cpp
 struct Point {
@@ -280,10 +279,9 @@ end
 
 ### §2.4.1 Class type properties
 
-If an instance variable is a value of another wrapped type, by default the
-getter allocates a copy of the variable in C/C++ (using the C++ type's copy
-constructor), so it is safe to modify the returned object without altering the
-original instance.
+If a data member is a value of another wrapped type, the getter allocates a copy
+of the variable in C/C++ (using the C++ type's copy constructor), so it is safe
+to modify the returned object without altering the original value.
 
 ```cpp
 struct Line {
@@ -306,10 +304,10 @@ end
 
 ### §2.4.2 Pointer properties
 
-If an instance variable is a pointer to a wrapped type, instances of the wrapped
-type can be passed directly without forming any pointers.  These properties may
-additionally be configured as nilable, in which case they may accept and return
-`nil` as well, corresponding to C++'s `nullptr`.
+If a data member is a pointer to a wrapped type, instances of the wrapped type
+can be passed to C++ directly without having to construct any pointers in
+Crystal.  These properties may additionally be configured as nilable, in which
+case they may accept and return `nil` as well, corresponding to C++'s `nullptr`.
 
 ```cpp
 struct LinkedList {
@@ -372,11 +370,32 @@ struct Props {
 ```crystal
 class Props
   def foo : Int32 end
-  def foo=(foo : Int32) end
+  def foo=(foo : Int32) : Void end
   def bar : Char end
-  def bar=(bar : Char) end
+  def bar=(bar : Char) : Void end
   def baz : Char end
-  def baz=(baz : Char) end
+  def baz=(baz : Char) : Void end
+end
+```
+
+### §2.4.4 Static data members
+
+Static variables have the wrapper class itself as the receiver.  The names for
+constant member getters are still underscored, and their initializers are NOT
+copied to the Crystal wrappers.
+
+```cpp
+struct Application {
+  static Application *instance;
+  static const int VERSION = 103;
+};
+```
+
+```crystal
+class Application
+  def self.instance : Application end
+  def self.instance=(instance : Application) : Void end
+  def self.version : Int32 end
 end
 ```
 
@@ -415,6 +434,7 @@ generated methods may use custom markers to distinguish them.
 
 * Member methods don't have a marker
 * Static methods use `STATIC`
+* Property methods use either `GETTER` or `SETTER` (see §2.4)
 * Constructors use `CONSTRUCT`
 * Destructors use `DESTRUCT`
 

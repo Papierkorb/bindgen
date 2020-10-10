@@ -16,10 +16,17 @@ module Bindgen
         MemberGetter
         MemberSetter
         StaticMethod
+        StaticGetter
+        StaticSetter
         Operator
 
         # Qt signal
         Signal
+
+        # Is this one of the static method types?
+        def static? : Bool
+          static_method? || static_getter? || static_setter?
+        end
       end
 
       # Type of the method.
@@ -103,7 +110,8 @@ module Bindgen
       end
 
       delegate constructor?, copy_constructor?, member_method?, member_getter?,
-        member_setter?, static_method?, signal?, operator?, destructor?, to: @type
+        member_setter?, static?, static_method?, static_getter?, static_setter?,
+        signal?, operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
       def_equals_and_hash @type, @name, @class_name, @access, @arguments,
@@ -269,7 +277,7 @@ module Bindgen
 
         name = (override || @name).underscore
 
-        case self
+        case @type
         when .operator?
           name[8..-1] # Remove `operator` prefix
         when .signal?
@@ -290,9 +298,9 @@ module Bindgen
           else
             name # Normal method
           end
-        when .member_getter?
+        when .member_getter?, .static_getter?
           name
-        when .member_setter?
+        when .member_setter?, .static_setter?
           name + "="
         when .constructor?
           "initialize"
@@ -362,7 +370,7 @@ module Bindgen
 
       # Returns if this method needs a class instance to be called.
       def needs_instance?
-        !(any_constructor? || static_method?)
+        !(any_constructor? || static?)
       end
 
       # Returns if this method returns something, or not
@@ -421,6 +429,8 @@ module Bindgen
         when .member_setter?    then "#{name}_SETTER"
         when .operator?         then operator_name
         when .static_method?    then "#{name}_STATIC"
+        when .static_getter?    then "#{name}_STATIC_GETTER"
+        when .static_setter?    then "#{name}_STATIC_SETTER"
         when .destructor?       then "#{name}_DESTROY"
         else                         name
         end

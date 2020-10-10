@@ -73,7 +73,7 @@ module Bindgen
             name: call.name,
             arguments: arguments,
             result: result,
-            static: call.origin.static_method?,
+            static: call.origin.static?,
             abstract: call.origin.pure?,
             protected: call.origin.protected?,
             private: call.origin.private?,

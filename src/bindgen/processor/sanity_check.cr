@@ -131,7 +131,7 @@ module Bindgen
           overloads.each_combination(2, reuse: true) do |perm|
             method1, call1 = perm[0]
             method2, call2 = perm[1]
-            if method1.origin.static_method? == method2.origin.static_method?
+            if method1.origin.static? == method2.origin.static?
               if ambiguous_signatures?(call1.arguments, call2.arguments)
                 add_error(method1, "Ambiguous call")
                 add_error(method2, "Ambiguous call")

@@ -119,6 +119,7 @@ The following rules are automatically applied to all bindings:
 |  +- Member methods                               | **YES** |
 |  +- Static methods                               | **YES** |
 |  +- Getters and setters for instance variables   | **YES** |
+|  +- Getters and setters for static variables     | **YES** |
 |  +- Constructors                                 | **YES** |
 |  +- Overloaded operators                         |   TBD   |
 |  +- Conversion functions                         |   TBD   |
@@ -406,7 +407,7 @@ return instances to the (otherwise) abstract class.
 * **Run after**: No specific dependency
 * **Run before**: No specific dependency
 
-Generates getter and setter methods for instance members.
+Generates getter and setter methods for static and instance members.
 
 ## `InstantiateContainers`
 

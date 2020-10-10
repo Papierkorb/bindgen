@@ -116,6 +116,8 @@ public:
   Point *position_ptr = new Point(12, 34);
   Point position_val {13, 35};
 
+  static Point corner;
+
 protected:
   int x_prot;
   const int y_prot;
@@ -124,6 +126,8 @@ private:
   int x_priv;
   const int y_priv;
 };
+
+Point Props::corner = Point(800, 600);
 
 class NestedProtected {
 protected:
