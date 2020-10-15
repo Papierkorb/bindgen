@@ -39,7 +39,6 @@ struct LiteralData {
 		UIntKind,
 		DoubleKind,
 		StringKind,
-		TerminalKind,
 	};
 
 	Kind kind;
@@ -49,7 +48,6 @@ struct LiteralData {
 		int64_t int_value;
 		uint64_t uint_value;
 		double double_value;
-		JsonStream::Terminal terminal_value;
 		std::string *string_value;
 	} container;
 
@@ -68,11 +66,11 @@ struct LiteralData {
 
 	// Setters
 
+	void clear();
 	void set(bool v);
 	void set(int64_t v);
 	void set(uint64_t v);
 	void set(double v);
-	void set(JsonStream::Terminal v);
 	void set(const std::string &v);
 };
 
@@ -134,6 +132,8 @@ struct Field : public Type {
 	clang::AccessSpecifier access;
 	std::string name;
 	bool isStatic = false;
+	bool hasDefault = false; // Does this field have a default value?
+	LiteralData value; // Default value of the field
 	int bitField = -1;
 };
 
