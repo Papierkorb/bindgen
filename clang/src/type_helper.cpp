@@ -85,7 +85,7 @@ Argument TypeHelper::processFunctionParameter(const clang::ParmVarDecl *decl) {
 	arg.name = decl->getQualifiedNameAsString();
 	arg.isVariadic = false;
 	arg.hasDefault = decl->hasDefaultArg();
-	arg.value = JsonStream::Null;
+	arg.value.clear();
 
 	// If the parameter has a default value, try to figure out this value.  Can
 	// fail if e.g. the call has side-effects (Like calling another method).  Will
@@ -113,6 +113,8 @@ static bool stringLiteralFromExpression(LiteralData &literal, const clang::Expr 
 #else
 		return stringLiteralFromExpression(literal, argExpr->GetTemporaryExpr());
 #endif
+	} else if (const clang::ExprWithCleanups *cleanupExpr = llvm::dyn_cast<clang::ExprWithCleanups>(expr)) {
+		return stringLiteralFromExpression(literal, cleanupExpr->getSubExpr());
 	} else if (const clang::CXXBindTemporaryExpr *bindExpr = llvm::dyn_cast<clang::CXXBindTemporaryExpr>(expr)) {
 		return stringLiteralFromExpression(literal, bindExpr->getSubExpr());
 	} else if (const clang::CastExpr *castExpr = llvm::dyn_cast<clang::CastExpr>(expr)) {
@@ -157,13 +159,20 @@ bool TypeHelper::valueFromApValue(LiteralData &value, const clang::APValue &apVa
 		if (qt->isSignedIntegerType())
 			value = v.getExtValue();
 		else {
-      value = v.getZExtValue();
-      // FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
-      // Then translate it on the other end?
-      // value = std::to_string(v.getZExtValue());
-    }
+			value = v.getZExtValue();
+			// FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
+			// Then translate it on the other end?
+			// value = std::to_string(v.getZExtValue());
+		}
 	} else if (qt->isFloatingType()) {
-		value = apValue.getFloat().convertToDouble();
+		const llvm::APFloat &f = apValue.getFloat();
+		if (&f.getSemantics() == &llvm::APFloat::IEEEsingle()) {
+			value = static_cast<double>(f.convertToFloat());
+		} else if (&f.getSemantics() == &llvm::APFloat::IEEEdouble()) {
+			value = f.convertToDouble();
+		} else {
+			return false;
+		}
 	} else {
 		return false;
 	}

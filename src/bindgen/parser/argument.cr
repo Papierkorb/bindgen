@@ -17,7 +17,7 @@ module Bindgen
       # Name of this argument.
       getter name : String
 
-      # Default value for this argument, if any.
+      # Default value for this argument, if an initializer literal is found.
       @[JSON::Field(converter: Bindgen::Parser::ValueConverter)]
       getter value : DefaultValueTypes?
 

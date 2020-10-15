@@ -143,12 +143,30 @@ bool RecordMatchHandler::runOnRecord(Class &klass, const clang::CXXRecordDecl *r
 	return true;
 }
 
+static void readDefaultValue(Field &f, const clang::ValueDecl *decl, const clang::Expr *init) {
+	if (init) {
+		f.hasDefault = true;
+		clang::QualType qt = decl->getType();
+		if (qt->isArithmeticType()) { // Don't read string literals here (yet).
+			if (!TypeHelper::readValue(f.value, qt, decl->getASTContext(), init)) {
+				f.value.clear();
+			}
+		}
+	} else {
+		f.hasDefault = false;
+	}
+}
+
 bool RecordMatchHandler::runOnField(Field &f, const clang::FieldDecl *field) {
 	f.name = field->getNameAsString();
 	f.access = field->getAccess();
 	// f.bitField = TODO
 
-	TypeHelper::qualTypeToType(f, field->getType(), field->getASTContext());
+	clang::QualType qt = field->getType();
+	clang::ASTContext &ctx = field->getASTContext();
+	TypeHelper::qualTypeToType(f, qt, ctx);
+	readDefaultValue(f, field, field->getInClassInitializer());
+
 	return true;
 }
 
@@ -158,7 +176,11 @@ bool RecordMatchHandler::runOnStaticField(Field &f, const clang::VarDecl *var) {
 		f.access = var->getAccess();
 		f.isStatic = true;
 
-		TypeHelper::qualTypeToType(f, var->getType(), var->getASTContext());
+		clang::QualType qt = var->getType();
+		clang::ASTContext &ctx = var->getASTContext();
+		TypeHelper::qualTypeToType(f, qt, ctx);
+		readDefaultValue(f, var, var->getAnyInitializer());
+
 		return true;
 	}
 

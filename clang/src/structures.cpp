@@ -51,11 +51,11 @@ bool LiteralData::hasValue() const {
 	return (this->kind != None);
 }
 
+void LiteralData::clear() { this->kind = None; }
 void LiteralData::set(bool v) { this->kind = BoolKind; this->container.bool_value = v; }
 void LiteralData::set(int64_t v) { this->kind = IntKind; this->container.int_value = v; }
 void LiteralData::set(uint64_t v) { this->kind = UIntKind; this->container.uint_value = v; }
 void LiteralData::set(double v) { this->kind = DoubleKind; this->container.double_value = v; }
-void LiteralData::set(JsonStream::Terminal v) { this->kind = TerminalKind; this->container.terminal_value = v; }
 void LiteralData::set(const std::string &v) {
 	this->kind = StringKind;
 	this->container.string_value = new std::string(v);
@@ -75,9 +75,6 @@ JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
 		break;
 	case LiteralData::DoubleKind:
 		s << value.container.double_value;
-		break;
-	case LiteralData::TerminalKind:
-		s << value.container.terminal_value;
 		break;
 	case LiteralData::StringKind:
 		s << *value.container.string_value;
@@ -167,7 +164,12 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 	writeTypeJson(s, value) << c;
 	s << std::make_pair("name", value.name) << c
 		<< std::make_pair("access", value.access) << c
-		<< std::make_pair("isStatic", value.isStatic) << c;
+		<< std::make_pair("isStatic", value.isStatic) << c
+		<< std::make_pair("hasDefault", value.hasDefault) << c;
+
+	if (value.hasDefault && value.value.hasValue()) {
+		s << std::make_pair("value", value.value) << c;
+	}
 
 	if (value.bitField > 0)
 		s << std::make_pair("bitField", value.name);

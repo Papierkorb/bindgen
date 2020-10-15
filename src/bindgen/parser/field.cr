@@ -18,6 +18,14 @@ module Bindgen
       @[JSON::Field(key: "bitField")]
       getter! bit_field : Int32
 
+      # Does this field have a default value?
+      @[JSON::Field(key: "hasDefault")]
+      getter? has_default : Bool
+
+      # Default value for this field, if an initializer literal is found.
+      @[JSON::Field(converter: Bindgen::Parser::ValueConverter)]
+      getter value : DefaultValueTypes?
+
       delegate public?, private?, protected?, to: @access
 
       # Suitable name for Crystal code
