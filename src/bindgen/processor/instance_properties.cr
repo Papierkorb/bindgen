@@ -24,15 +24,21 @@ module Bindgen
           pattern, config = lookup_member_config(var_config, field.name)
           next if config.ignore
 
-          # C++'s `protected` is closer to Crystal's `private` than to `protected`
+          # C++'s `protected` is closer to Crystal's `private` than to
+          # `protected`
           access = nested_access.protected? ?
             Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
           method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
+          static = field.static?
 
-          add_getter(klass, access, field_type, field.name, field.static?, method_name)
-          add_setter(klass, access, field_type, field.name, field.static?, method_name) unless field.const?
+          if static && field.const? && field.has_default? && (init = field.value)
+            add_static_constant(klass, field, init)
+          else
+            add_getter(klass, access, field_type, field.name, static, method_name)
+            add_setter(klass, access, field_type, field.name, static, method_name) unless field.const?
+          end
         end
 
         super
@@ -68,6 +74,20 @@ module Bindgen
             yield field, field_access
           end
         end
+      end
+
+      # Builds a static constant for the *field* in the given *klass*, whose
+      # initializer is *value*.
+      private def add_static_constant(klass, field, value)
+        # Retype the constant value if possible (JSON deserialization may
+        # produce a value of a larger type than the actual field type).
+        type = Crystal::Type.new(@db)
+        typed_value = type.convert(value, field) || value
+        Graph::Constant.new(
+          name: field.name.underscore.upcase,
+          parent: klass,
+          value: typed_value,
+        )
       end
 
       # Builds a C++ wrapper method for a static or instance variable getter.

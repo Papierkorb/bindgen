@@ -76,8 +76,10 @@ module Bindgen
       # valid a Crystal literal, and can be directly written.
       def number_literal(type_name, value) : String?
         if suffix = number_literal_suffix(type_name)
-          if floating_type?(type_name)
-            value = value.to_f
+          if type_name == "Float32"
+            value = value.to_f32
+          elsif type_name == "Float64"
+            value = value.to_f64
           elsif !value.is_a?(Int)
             value = value.to_i
           end
@@ -131,11 +133,6 @@ module Bindgen
         else # All names found: Build a nice `.flags` list
           ".flags(#{names.join(", ")})"
         end
-      end
-
-      # Returns `true` if *type_name* is a Crystal floating-type.
-      def floating_type?(type_name) : Bool
-        {"Float32", "Float64"}.includes?(type_name)
       end
 
       # Returns the literal-suffix for Crystal code, to signify a literal
