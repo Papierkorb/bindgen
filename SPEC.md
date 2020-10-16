@@ -253,9 +253,11 @@ the following criteria are met:
 * The type's `instance_variable` settings do not reject the member
 * The member is not inside a nested anonymous type that names another member
   (this is supported by §3.2.2)
+* The member does not satisfy the requirements for wrapped static constants (see
+  §2.4.5)
+* The method is not a setter for a `const` member
 
-The getter is always defined for every member, but the setter is omitted if the
-member was defined as a `const` member.  Property methods are underscored.
+The names of property methods are underscored according to the member name.
 
 ```cpp
 struct Point {
@@ -387,7 +389,7 @@ copied to the Crystal wrappers.
 ```cpp
 struct Application {
   static Application *instance;
-  static const int VERSION = 103;
+  static const int VERSION; // not defined
 };
 ```
 
@@ -396,6 +398,29 @@ class Application
   def self.instance : Application end
   def self.instance=(instance : Application) : Void end
   def self.version : Int32 end
+end
+```
+
+### §2.4.5 Static constants
+
+If a static variable additionally satisfies the following conditions, a wrapped
+constant will be generated instead of a getter method:
+
+* The member is `const` or `constexpr`
+* The member's initializer is available in the parsed C++ sources
+* The member is an integral, floating-point, or boolean value
+
+```cpp
+struct Application {
+  static const int VERSION = 103;
+  static constexpr double epsilon = 0.000001;
+};
+```
+
+```crystal
+class Application
+  VERSION = 103
+  EPSILON = 1.0e-6
 end
 ```
 

@@ -117,6 +117,9 @@ public:
   Point position_val {13, 35};
 
   static Point corner;
+  static const Point origin;
+  static constexpr float c_f32 = 1.2;
+  static const bool c_b = true;
 
 protected:
   int x_prot;
@@ -128,6 +131,7 @@ private:
 };
 
 Point Props::corner = Point(800, 600);
+const Point Props::origin = Point(0, 0);
 
 class NestedProtected {
 protected:

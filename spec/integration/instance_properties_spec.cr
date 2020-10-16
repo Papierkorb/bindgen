@@ -65,12 +65,32 @@ describe "C++ instance properties" do
         end
 
         it "supports static members" do
-          Test::Point.dimensions.should eq(2)
-
           position = Test::Props.corner
           position.should be_a(Test::Point)
           position.x.should eq(800)
           position.y.should eq(600)
+
+          position = Test::Props.origin
+          position.should be_a(Test::Point)
+          position.x.should eq(0)
+          position.y.should eq(0)
+        end
+
+        it "ignores wrapped constants" do
+          {{ Test::Point.class.has_method?("dimensions") }}.should be_false
+          {{ Test::Props.class.has_method?("c_f32") }}.should be_false
+          {{ Test::Props.class.has_method?("c_b") }}.should be_false
+        end
+      end
+
+      context "static const members" do
+        it "supports static constants with arithmetic initializers" do
+          Test::Point::DIMENSIONS.should eq(2)
+          Test::Point::DIMENSIONS.should be_a(Int32)
+          Test::Props::C_F32.should eq(1.2_f32)
+          Test::Props::C_F32.should be_a(Float32)
+          Test::Props::C_B.should eq(true)
+          Test::Props::C_B.should be_a(Bool)
         end
       end
 
@@ -106,8 +126,6 @@ describe "C++ instance properties" do
           methods.includes?("y_pub=").should be_false
           methods.includes?("y_prot=").should be_false
           methods.includes?("y_priv=").should be_false
-
-          {{ Test::Props.class.has_method?("dimensions=") }}.should be_false
         end
 
         it "supports pointer members" do
@@ -132,6 +150,13 @@ describe "C++ instance properties" do
           got.should be_a(Test::Point)
           got.x.should eq(1024)
           got.y.should eq(768)
+        end
+
+        it "is ignored for static const members" do
+          {{ Test::Point.class.has_method?("dimensions=") }}.should be_false
+          {{ Test::Props.class.has_method?("origin=") }}.should be_false
+          {{ Test::Props.class.has_method?("c_f32=") }}.should be_false
+          {{ Test::Props.class.has_method?("c_b=") }}.should be_false
         end
       end
 
