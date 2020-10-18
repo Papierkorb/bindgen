@@ -164,6 +164,15 @@ module Bindgen
         end
       end
 
+      # Is this type anonymous?
+      def anonymous? : Bool
+        case @kind
+        when .class? then !!@graph_node.as?(Graph::Class).try(&.origin.anonymous?)
+        when .enum?  then !!@graph_node.as?(Graph::Enum).try(&.origin.anonymous?)
+        else              false
+        end
+      end
+
       # Type name to use in the Crystal wrapper.
       def wrapper_type : String?
         @crystal_type || @binding_type

@@ -26,11 +26,9 @@ module Bindgen
         end
 
         # Rule 3: Anonymous types
-        remove ||= class_by_name?(m.class_name).try(&.anonymous?)
-        remove ||= class_by_name?(m.return_type.base_name).try(&.anonymous?)
-        remove ||= m.arguments.any? do |arg|
-          class_by_name?(arg.base_name).try(&.anonymous?)
-        end
+        remove ||= type_ignored?(m.class_name)
+        remove ||= type_ignored?(m.return_type)
+        remove ||= m.arguments.any? { |arg| type_ignored?(arg) }
 
         # Remove if ignored
         remove_method(method) if remove
@@ -44,7 +42,7 @@ module Bindgen
 
       # Checks if *type* is ignored.
       private def type_ignored?(type) : Bool
-        @db.get_or(type, false, &.ignore?)
+        @db.try_or(type, false) { |config| config.ignore? || config.anonymous? }
       end
     end
   end

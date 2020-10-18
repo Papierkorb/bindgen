@@ -390,12 +390,6 @@ module Bindgen
       # TODO: Can we move this into `Processor::FilterMethods`?
       def filtered?(db : TypeDatabase) : Bool
         return true if private?
-        return true if db[@return_type]?.try(&.ignore?)
-        return true if @arguments.any? { |arg| db[arg]?.try(&.ignore?) }
-
-        if list = db[@class_name]?.try(&.ignore_methods)
-          return true if list.includes?(@name)
-        end
 
         # Check that all arguments, which pass in explicit by-value, either take
         # the value directly, or a const-reference to it.
