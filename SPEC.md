@@ -424,6 +424,88 @@ class Application
 end
 ```
 
+### §2.5 Constructors
+
+Bindgen copies the non-special constructors of each class to the corresponding
+Crystal wrapper, provided they are accessible and not deleted.  Copy
+constructors and move constructors are not copied.
+
+```cpp
+struct Foo {
+  Foo();
+  Foo(const Foo &);
+  Foo(Foo &&);
+  Foo(int) = delete;
+};
+
+class Bar {
+  Bar();
+};
+```
+
+generates
+
+```crystal
+class Foo
+  def initialize() end
+end
+
+class Bar
+  # `#initialize()` is not defined
+end
+```
+
+### §2.5.1 Implicit constructors
+
+Bindgen is able to generate default constructors for classes that are
+default-constructible in C++ but have no user-provided constructors.
+
+```cpp
+struct Foo {
+  int x;
+};
+
+struct Bar {
+  int &x;
+};
+```
+
+```crystal
+class Foo
+  def initialize() end
+end
+
+class Bar
+  # `#initialize()` is not defined
+end
+```
+
+### §2.5.2 Aggregate constructors
+
+Wrapper classes that obey the following rules receive an aggregate constructor
+where each field of the class is initialized by a named argument:
+
+* The class contains at least 1 non-static data member.
+* All fields of the class are public, non-anonymous members that do not have
+  in-class default initializers.
+* The class is not polymorphic.
+* The class does not inherit from any other class.
+* The class has no user-provided constructors.
+* The class is not a C++ `union`.
+
+```cpp
+struct Point {
+  int x;
+  int y;
+};
+```
+
+```crystal
+class Point
+  def initialize(*, x : Int32, y : Int32) end
+end
+```
+
 ## §3. Crystal bindings
 
 ### §3.1 Naming scheme

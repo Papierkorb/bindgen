@@ -320,7 +320,8 @@ Generates the Crystal methods in the wrapper classes.
 * **Run before**: No specific dependency
 
 Clang doesn't expose default constructors methods for implicit default
-constructors.  This processor finds these cases and adds an explicit constructor.
+constructors.  This processor finds these cases and adds an explicit
+constructor.  Also, generates constructors for aggregate types.
 
 ## `DumpGraph`
 

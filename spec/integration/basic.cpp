@@ -55,6 +55,12 @@ public:
 struct ImplicitConstructor {
 };
 
+struct Aggregate {
+  int x;
+  double y;
+  const bool z;
+};
+
 class PrivateConstructor {
   PrivateConstructor();
 };
