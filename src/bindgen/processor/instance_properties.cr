@@ -65,7 +65,7 @@ module Bindgen
           # Public fields nested inside protected members are still protected.
           field_access = nested_access.protected? ? nested_access : field.access
 
-          if is_field_anonymous?(field)
+          if @db[field]?.try(&.anonymous?)
             if field.name.empty?
               field_klass = @db[field.base_name].graph_node.as(Graph::Class)
               each_direct_field(field_klass, field_access, &block)
@@ -162,14 +162,6 @@ module Bindgen
           code = call.arguments.first.call
           "#{call.name} = #{call.result.apply_conversion code}"
         end
-      end
-
-      # Returns whether a field uses an anonymous type.  Property methods for
-      # these types are ignored.
-      private def is_field_anonymous?(field : Parser::Type)
-        rules = @db[field.base_name]?
-        klass = rules.try(&.graph_node).as?(Graph::Class)
-        klass.try(&.origin.anonymous?)
       end
     end
   end
