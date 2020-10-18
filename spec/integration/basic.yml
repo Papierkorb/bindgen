@@ -5,6 +5,7 @@
 classes:
   Adder: AdderWrap
   ImplicitConstructor: ImplicitConstructor
+  Aggregate: Aggregate
   PrivateConstructor: PrivateConstructor
   DeletedConstructor: DeletedConstructor
   TypeConversion: TypeConversion

@@ -37,7 +37,7 @@ describe "a basic C++ wrapper" do
       end
 
       context "crystal wrapper features" do
-        it "adds #initialize(unwrap: Binding::T*)" do
+        it "adds `#initialize(unwrap: Binding::T*)`" do
           {{
             Test::AdderWrap.methods.any? do |m|
               m.name == "initialize" && \
@@ -45,6 +45,16 @@ describe "a basic C++ wrapper" do
                  m.args.any? do |a|
                   a.name.stringify == "unwrap"
                 end
+            end
+          }}.should be_true
+        end
+
+        it "adds `#initialize(*, ...)` for aggregate types" do
+          {{
+            Test::Aggregate.methods.any? do |m|
+              m.name == "initialize" && \
+                m.splat_index == 0 && \
+                m.args.map(&.name.stringify) == ["", "x", "y", "z"]
             end
           }}.should be_true
         end
