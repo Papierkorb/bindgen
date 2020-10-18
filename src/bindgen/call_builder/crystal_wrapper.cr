@@ -77,6 +77,7 @@ module Bindgen
             abstract: call.origin.pure?,
             protected: call.origin.protected?,
             private: call.origin.private?,
+            named_args: call.origin.aggregate_constructor?,
           )
 
           %[#{head_line}\n] \

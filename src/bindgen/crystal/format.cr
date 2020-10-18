@@ -42,14 +42,24 @@ module Bindgen
         "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{meta}#{default}"
       end
 
-      # Formats *arguments* as `type name, ...`.  If *binding* is `true`, treat
-      # this as argument for a `fun` declaration.
+      # Formats *arguments* as `name : type, ...`.  If *binding* is `true`,
+      # treats this as argument for a `fun` declaration.
       def argument_list(arguments : Enumerable(Call::Argument), binding = false) : String
         first_optional = arguments.rindex(&.default_value.nil?) || -1
 
         arguments.map_with_index do |arg, idx|
           argument(arg, idx, expose_default: idx > first_optional, binding: binding)
         end.join(", ")
+      end
+
+      # Formats *arguments* as `*, name : type, ...`.
+      def named_argument_list(arguments : Enumerable(Call::Argument), binding = false) : String
+        String.build do |b|
+          b << '*'
+          arguments.each_with_index do |arg, idx|
+            b << ", " << argument(arg, idx)
+          end
+        end
       end
 
       # Generates a literal value suitable for Crystal code, using the *value*
