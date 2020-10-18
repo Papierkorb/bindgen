@@ -42,6 +42,7 @@ bool RecordMatchHandler::runOnMethod(Method &m, Class &klass, const clang::CXXMe
 	m.isPure = method->isPure();
 	m.isExternC = method->isExternC();
 	m.access = method->getAccess();
+	m.isBuiltin = !method->isUserProvided();
 
 	clang::ASTContext &ctx = method->getASTContext();
 	const clang::CXXConstructorDecl* ctor = llvm::dyn_cast<clang::CXXConstructorDecl>(method);

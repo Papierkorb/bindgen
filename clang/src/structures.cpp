@@ -119,6 +119,7 @@ JsonStream &operator<<(JsonStream &s, const Method &value) {
 		<< std::make_pair("type", value.type) << c
 		<< std::make_pair("access", value.access) << c
 		<< std::make_pair("name", value.name) << c
+		<< std::make_pair("isBuiltin", value.isBuiltin) << c
 		<< std::make_pair("isConst", value.isConst) << c
 		<< std::make_pair("isVirtual", value.isVirtual) << c
 		<< std::make_pair("isPure", value.isPure) << c
