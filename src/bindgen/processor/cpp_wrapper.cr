@@ -35,7 +35,9 @@ module Bindgen
           original_method = method.origin.origin.not_nil!
           method_name = namer.generate(original_method, "_self_", exact_member: true)
         end
-        target = call.build(method.origin, name: method_name)
+
+        braces = method.origin.aggregate_constructor?
+        target = call.build(method.origin, name: method_name, braces: braces)
 
         method.calls[PLATFORM] = wrapper.build(
           method: method.origin,

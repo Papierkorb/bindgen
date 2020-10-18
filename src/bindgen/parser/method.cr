@@ -10,6 +10,7 @@ module Bindgen
       # Method types
       enum Type
         Constructor
+        AggregateConstructor
         CopyConstructor
         Destructor
         MemberMethod
@@ -22,6 +23,11 @@ module Bindgen
 
         # Qt signal
         Signal
+
+        # Is this one of the constructors?
+        def any_constructor? : Bool
+          constructor? || aggregate_constructor? || copy_constructor?
+        end
 
         # Is this one of the static method types?
         def static? : Bool
@@ -113,9 +119,10 @@ module Bindgen
         method
       end
 
-      delegate constructor?, copy_constructor?, member_method?, member_getter?,
-        member_setter?, static?, static_method?, static_getter?, static_setter?,
-        signal?, operator?, destructor?, to: @type
+      delegate constructor?, aggregate_constructor?, copy_constructor?,
+        any_constructor?, member_method?, member_getter?, member_setter?,
+        static?, static_method?, static_getter?, static_setter?, signal?,
+        operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
       def_equals_and_hash @type, @name, @class_name, @access, @arguments,
@@ -127,9 +134,10 @@ module Bindgen
         !!@arguments.last?.try(&.variadic?)
       end
 
-      # Is this a `Type::Constructor` or a `Type::CopyConstructor`?
-      def any_constructor? : Bool
-        @type.constructor? || @type.copy_constructor?
+      # Is this a constructor that can take no arguments?
+      def any_default_constructor? : Bool
+        # only count exposed default values
+        any_constructor? && @arguments.none?(&.value.nil?)
       end
 
       # Yields all variants of this method, going through an increasing level of
@@ -309,7 +317,7 @@ module Bindgen
           name
         when .member_setter?, .static_setter?
           name + "="
-        when .constructor?
+        when .constructor?, .aggregate_constructor?
           "initialize"
         when .copy_constructor?
           "clone"
@@ -424,16 +432,17 @@ module Bindgen
         name = Util.mangle_type_name(@name)
 
         case self
-        when .constructor?      then "#{name}_CONSTRUCT"
-        when .copy_constructor? then "#{name}_COPY"
-        when .member_getter?    then "#{name}_GETTER"
-        when .member_setter?    then "#{name}_SETTER"
-        when .operator?         then operator_name
-        when .static_method?    then "#{name}_STATIC"
-        when .static_getter?    then "#{name}_STATIC_GETTER"
-        when .static_setter?    then "#{name}_STATIC_SETTER"
-        when .destructor?       then "#{name}_DESTROY"
-        else                         name
+        when .constructor?           then "#{name}_CONSTRUCT"
+        when .aggregate_constructor? then "#{name}_AGGREGATE"
+        when .copy_constructor?      then "#{name}_COPY"
+        when .member_getter?         then "#{name}_GETTER"
+        when .member_setter?         then "#{name}_SETTER"
+        when .operator?              then operator_name
+        when .static_method?         then "#{name}_STATIC"
+        when .static_getter?         then "#{name}_STATIC_GETTER"
+        when .static_setter?         then "#{name}_STATIC_SETTER"
+        when .destructor?            then "#{name}_DESTROY"
+        else                              name
         end
       end
 

@@ -26,7 +26,7 @@ module Bindgen
       )
         type ||= method.type
         case type
-        when .copy_constructor?, .constructor?
+        when .any_constructor?
           if is_type_copied?(method.class_name)
             method.class_name
           else # Support shadow sub-classing.

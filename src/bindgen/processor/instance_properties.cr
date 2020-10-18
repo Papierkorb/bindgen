@@ -85,7 +85,7 @@ module Bindgen
         typed_value = type.convert(value, field) || value
         Graph::Constant.new(
           name: field.name.underscore.upcase,
-          parent: klass,
+          parent: klass.platform_specific(Graph::Platform::Crystal),
           value: typed_value,
         )
       end
