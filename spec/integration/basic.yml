@@ -4,6 +4,7 @@
 
 classes:
   Adder: AdderWrap
+  Ops: Ops
   ImplicitConstructor: ImplicitConstructor
   Aggregate: Aggregate
   PrivateConstructor: PrivateConstructor
