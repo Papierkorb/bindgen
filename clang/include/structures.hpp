@@ -97,6 +97,7 @@ struct Method {
 		MemberMethod,
 		StaticMethod,
 		Operator, // Overloaded operator
+		ConversionOperator, // Conversion operator
 		Signal, // Qt signal
 	};
 

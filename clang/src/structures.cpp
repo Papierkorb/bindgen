@@ -108,6 +108,7 @@ JsonStream &operator<<(JsonStream &s, Method::MethodType value) {
 		case Method::MemberMethod: return s << "MemberMethod";
 		case Method::StaticMethod: return s << "StaticMethod";
 		case Method::Operator: return s << "Operator";
+		case Method::ConversionOperator: return s << "ConversionOperator";
 		case Method::Signal: return s << "Signal";
 		default: return s << "BUG IN BINDGEN";
 	}

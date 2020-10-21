@@ -90,7 +90,7 @@ considered.
 |`()(T...)`|`call(*T)`|
 
 The following C++ operators are ignored: `=(T)`, `<=>(T)`, `&()`, `->()`,
-`->*(T)`, `,(T)`.
+`->*(T)`, `,(T)`, all conversion operators.
 
 The following Crystal operators are overloadable, but unused by Bindgen:
 `&+`, `&-`, `&+(T)`, `&-(T)`, `&*(T)`, `&**(T)`, `//(T)`, `===(T)`, `<=>(T)`,
