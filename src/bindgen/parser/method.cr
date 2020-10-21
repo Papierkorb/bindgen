@@ -294,7 +294,7 @@ module Bindgen
 
         case @type
         when .operator?
-          name[8..-1] # Remove `operator` prefix
+          to_crystal_operator_name(name)
         when .signal?
           name # Don't butcher signal names
         when .member_method?, .static_method?
@@ -419,42 +419,149 @@ module Bindgen
       # Mangled name for the C++ wrapper method name
       def mangled_name
         class_name = Util.mangle_type_name(@class_name)
-        "bg_#{class_name}_#{binding_method_name}_#{binding_arguments_name}"
+        method_name = Util.mangle_type_name(binding_method_name)
+        args_name = binding_arguments_name
+
+        "bg_#{class_name}_#{method_name}_#{args_name}"
       end
 
       # Mangles the list of argument types into a flat string.
-      def binding_arguments_name
+      private def binding_arguments_name
         @arguments.map(&.mangled_name).join("_")
       end
 
       # Name of the method in C++ and Crystal bindings.
-      def binding_method_name
-        name = Util.mangle_type_name(@name)
-
+      private def binding_method_name
         case self
-        when .constructor?           then "#{name}_CONSTRUCT"
-        when .aggregate_constructor? then "#{name}_AGGREGATE"
-        when .copy_constructor?      then "#{name}_COPY"
-        when .member_getter?         then "#{name}_GETTER"
-        when .member_setter?         then "#{name}_SETTER"
-        when .operator?              then operator_name
-        when .static_method?         then "#{name}_STATIC"
-        when .static_getter?         then "#{name}_STATIC_GETTER"
-        when .static_setter?         then "#{name}_STATIC_SETTER"
-        when .destructor?            then "#{name}_DESTROY"
-        else                              name
+        when .constructor?           then "_CONSTRUCT"
+        when .aggregate_constructor? then "_AGGREGATE"
+        when .copy_constructor?      then "_COPY"
+        when .member_getter?         then "#{@name}_GETTER"
+        when .member_setter?         then "#{@name}_SETTER"
+        when .operator?              then "_OPERATOR_#{binding_operator_name}"
+        when .static_method?         then "#{@name}_STATIC"
+        when .static_getter?         then "#{@name}_STATIC_GETTER"
+        when .static_setter?         then "#{@name}_STATIC_SETTER"
+        when .destructor?            then "_DESTROY"
+        else                              @name
         end
       end
 
-      # Name of the operator method in C++ and Crystal bindings.
-      private def operator_name
+      # Converts *name* to an operator method in Crystal wrappers.
+      private def to_crystal_operator_name(name)
+        return "call" if name == "operator()"
+
+        case @arguments.size
+        when 0 then to_crystal_operator1_name(name)
+        when 1 then to_crystal_operator2_name(name)
+        else
+          raise "Unexpected operator #{name.inspect}"
+        end
+      end
+
+      # Name of the unary operator method in C++ and Crystal bindings.
+      private def binding_operator_name
+        # call operator can take any number of arguments
+        return "call" if @name == "operator()"
+
+        case @arguments.size
+        when 0 then binding_operator1_name
+        when 1 then binding_operator2_name
+        else
+          raise "Unexpected operator #{@name.inspect}"
+        end
+      end
+
+      # Converts *name* to a unary operator method in Crystal wrappers.
+      private def to_crystal_operator1_name(name)
+        case name
+        when "operator++" then "succ!"
+        when "operator--" then "pred!"
+        when "operator*"  then "deref"
+        when "operator!"  then "not"
+        else
+          name[8..-1] # Remove `operator` prefix
+        end
+      end
+
+      # Name of the unary operator method in C++ and Crystal bindings.
+      private def binding_operator1_name
         case @name
-        when "operator<"  then "OPERATOR_lt"
-        when "operator>"  then "OPERATOR_gt"
-        when "operator<=" then "OPERATOR_le"
-        when "operator>=" then "OPERATOR_ge"
-        when "operator==" then "OPERATOR_eq"
-        when "operator!=" then "OPERATOR_ne"
+        when "operator++" then "succ"
+        when "operator--" then "pred"
+        when "operator+"  then "plus"
+        when "operator-"  then "neg"
+        when "operator*"  then "deref"
+        when "operator~"  then "bit_not"
+        when "operator!"  then "not"
+        else
+          raise "Unexpected operator #{@name.inspect}"
+        end
+      end
+
+      # Converts *name* to a binary operator method in Crystal wrappers.
+      private def to_crystal_operator2_name(name)
+        case name
+        # compound assignment operators
+        when "operator="   then "assign!"
+        when "operator+="  then "add!"
+        when "operator-="  then "sub!"
+        when "operator*="  then "mul!"
+        when "operator/="  then "div!"
+        when "operator%="  then "mod!"
+        when "operator&="  then "bit_and!"
+        when "operator|="  then "bit_or!"
+        when "operator^="  then "bit_xor!"
+        when "operator<<=" then "lshift!"
+        when "operator>>=" then "rshift!"
+        when "operator++"  then "post_succ!"
+        when "operator--"  then "post_pred!"
+
+        # non-overridable Crystal operators
+        when "operator&&"  then "and"
+        when "operator||"  then "or"
+
+        else
+          name[8..-1] # Remove `operator` prefix
+        end
+      end
+
+      # Name of the binary operator method in C++ and Crystal bindings.
+      private def binding_operator2_name
+        case @name
+        when "operator="   then "assign"
+        when "operator+="  then "add_assign"
+        when "operator-="  then "sub_assign"
+        when "operator*="  then "mul_assign"
+        when "operator/="  then "div_assign"
+        when "operator%="  then "mod_assign"
+        when "operator&="  then "bit_and_assign"
+        when "operator|="  then "bit_or_assign"
+        when "operator^="  then "bit_xor_assign"
+        when "operator<<=" then "lshift_assign"
+        when "operator>>=" then "rshift_assign"
+        when "operator++"  then "post_succ"
+        when "operator--"  then "post_pred"
+        when "operator+"   then "add"
+        when "operator-"   then "sub"
+        when "operator*"   then "mul"
+        when "operator/"   then "div"
+        when "operator%"   then "mod"
+        when "operator&"   then "bit_and"
+        when "operator|"   then "bit_or"
+        when "operator^"   then "bit_xor"
+        when "operator<<"  then "lshift"
+        when "operator>>"  then "rshift"
+        when "operator&&"  then "and"
+        when "operator||"  then "or"
+        when "operator=="  then "eq"
+        when "operator!="  then "ne"
+        when "operator<"   then "lt"
+        when "operator>"   then "gt"
+        when "operator<="  then "le"
+        when "operator>="  then "ge"
+        when "operator<=>" then "comp"
+        when "operator[]"  then "at"
         else
           raise "Unexpected operator #{@name.inspect}"
         end
