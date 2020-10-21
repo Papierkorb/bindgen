@@ -52,6 +52,50 @@ A setter is a method which:
 If these rules are fulfilled, then the `set` prefix is removed, and a Crystal
 writer method is created: `setWindowTitle() -> #window_title=`
 
+#### §2.1.4 Overloaded operators
+
+An overloaded operator is a method which:
+
+1. Appears inside the class definition
+2. Is not a `friend` declaration
+3. Corresponds to a Crystal method in the table below
+
+Both `T` and the return type can be anything; const-ness of the method is not
+considered.
+
+|C++ operator|Crystal method|
+|-|-|
+|`+()`, `-()`, `~()`|`operator` dropped|
+|`++()`|`succ!`|
+|`++(int)`|`post_succ!`|
+|`--()`|`pred!`|
+|`--(int)`|`post_pred!`|
+|`!()`|`not`|
+|`*()`|`deref`|
+|`==(T)`, `!=(T)`, `<(T)`, `>(T)`, `<=(T)`, `>=(T)`|`operator` dropped|
+|`+(T)`, `-(T)`, `*(T)`, `/(T)`, `%(T)`, `&(T)`, `|(T)`, `^(T)`, `<<(T)`, `>>(T)`|`operator` dropped|
+|`+=(T)`|`add!(T)`|
+|`-=(T)`|`sub!(T)`|
+|`*=(T)`|`mul!(T)`|
+|`/=(T)`|`div!(T)`|
+|`%=(T)`|`mod!(T)`|
+|`&=(T)`|`bit_and!(T)`|
+|`|=(T)`|`bit_or!(T)`|
+|`^=(T)`|`bit_xor!(T)`|
+|`<<=(T)`|`lshift!(T)`|
+|`>>=(T)`|`rshift!(T)`|
+|`&&(T)`|`and(T)`|
+|`||(T)`|`or(T)`|
+|`[](T)`|`[](T)`|
+|`()(T...)`|`call(*T)`|
+
+The following C++ operators are ignored: `=(T)`, `<=>(T)`, `&()`, `->()`,
+`->*(T)`, `,(T)`.
+
+The following Crystal operators are overloadable, but unused by Bindgen:
+`&+`, `&-`, `&+(T)`, `&-(T)`, `&*(T)`, `&**(T)`, `//(T)`, `===(T)`, `<=>(T)`,
+`[]?(*T)`, `[]=(*T, U)`.
+
 ### §2.2 Arguments
 
 #### §2.2.1 Conversion
@@ -544,12 +588,17 @@ generated methods may use custom markers to distinguish them.
 * Property methods use either `GETTER` or `SETTER` (see §2.4)
 * Constructors use `CONSTRUCT`
 * Destructors use `DESTRUCT`
+* Overloaded operators use `OPERATOR`, followed by a name that uniquely
+  identifies the operator
 
 #### Examples
 
-1. Member method `void Foo::bar(int *&) -> bg_Foo_bar_int_XR`
-2. Static method: `void Foo::bar(std::string) -> bg_Foo_STATIC_bar_std__string`
-3. Method without arguments: `void Foo::bar() -> bg_Foo_bar_` (Trailing `_`)
+1. Member method `void Foo::bar(int *&)` -> `bg_Foo_bar_int_XR`
+2. Static method: `void Foo::bar(std::string)` ->
+   `bg_Foo_STATIC_bar_std__string`
+3. Method without arguments: `void Foo::bar()` -> `bg_Foo_bar_` (Trailing `_`)
+4. Operator method: `bool Foo::operator==(const Foo &)` ->
+   `bg_Foo__OPERATOR_eq_const_Foo_R`
 
 ### §3.2 Structures
 
