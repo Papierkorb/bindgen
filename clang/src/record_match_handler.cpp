@@ -68,8 +68,7 @@ bool RecordMatchHandler::runOnMethod(Method &m, Class &klass, const clang::CXXMe
 		if (method->getOverloadedOperator() != clang::OO_None) {
 			m.type = Method::Operator;
 		} else if (auto conv = llvm::dyn_cast<clang::CXXConversionDecl>(method)) {
-			m.type = Method::Operator; // TODO: Add conversion method support.
-
+			m.type = Method::ConversionOperator; // TODO: Add conversion method support.
 		} else if (isSignal && m.type == Method::MemberMethod && method->isUserProvided()) {
 			m.type = Method::Signal;
 		}

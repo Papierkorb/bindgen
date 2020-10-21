@@ -20,6 +20,7 @@ module Bindgen
         StaticGetter
         StaticSetter
         Operator
+        ConversionOperator
 
         # Qt signal
         Signal
@@ -126,7 +127,7 @@ module Bindgen
       delegate constructor?, aggregate_constructor?, copy_constructor?,
         any_constructor?, member_method?, member_getter?, member_setter?,
         static?, static_method?, static_getter?, static_setter?, signal?,
-        operator?, destructor?, to: @type
+        operator?, conversion_operator?, destructor?, to: @type
       delegate public?, protected?, private?, to: @access
 
       def_equals_and_hash @type, @name, @class_name, @access, @arguments,
