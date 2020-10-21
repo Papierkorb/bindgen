@@ -11,15 +11,21 @@ module Bindgen
       )
         pass = Cpp::Pass.new(@db)
 
-        method_name = Cpp::MethodName.new(@db)
-        name ||= method_name.generate(method, self_var)
+        if method.operator?
+          name ||= self_var
+          body ||= OperatorBody.new
+        else
+          method_name = Cpp::MethodName.new(@db)
+          name ||= method_name.generate(method, self_var)
+          body ||= braces ? BraceBody.new : Body.new
+        end
 
         Call.new(
           origin: method,
           name: name,
           arguments: pass.arguments_to_cpp(method.arguments),
           result: pass.to_crystal(method.return_type),
-          body: (body || (braces ? BraceBody.new : Body.new)),
+          body: body,
         )
       end
 
@@ -37,6 +43,32 @@ module Bindgen
         def to_code(call : Call, _platform : Graph::Platform) : String
           pass_args = call.arguments.map(&.call).join(", ")
           code = %[#{call.name} {#{pass_args}}]
+          call.result.apply_conversion(code)
+        end
+      end
+
+      # Body invoking a C++ operator.
+      class OperatorBody < Call::Body
+        def to_code(call : Call, _platform : Graph::Platform) : String
+          case call.origin.binding_operator_name
+          when "call"
+            pass_args = call.arguments.map(&.call).join(", ")
+            code = %[(*#{call.name})(#{pass_args})]
+          when "succ", "pred", "plus", "neg", "deref", "bit_not", "not"
+            op = call.origin.name[8..] # Remove `operator` prefix
+            code = %[#{op}(*#{call.name})]
+          when "post_succ", "post_pred"
+            op = call.origin.name[8..]
+            code = %[(*#{call.name})#{op}]
+          when "at"
+            pass_arg = call.arguments.first.call
+            code = %{(*#{call.name})[#{pass_arg}]}
+          else # remaining binary operators
+            op = call.origin.name[8..]
+            pass_arg = call.arguments.first.call
+            code = %[(*#{call.name}) #{op} (#{pass_arg})]
+          end
+
           call.result.apply_conversion(code)
         end
       end

@@ -80,7 +80,11 @@ module Bindgen
       @[JSON::Field(key: "returnType")]
       getter return_type : Parser::Type
 
-      # Forces the wrapper to use the specified name.
+      # Forces the bindings to use the specified name.
+      @[JSON::Field(ignore: true)]
+      setter binding_name : String?
+
+      # Forces the Crystal wrapper to use the specified name.
       @[JSON::Field(ignore: true)]
       setter crystal_name : String?
 
@@ -281,8 +285,8 @@ module Bindgen
         !@crystal_name.nil?
       end
 
-      # Turns the method name into something canonical to Crystal.  If a
-      # explicit `#crystal_name` name is set, it'll be returned without furtehr
+      # Turns the method name into something canonical to Crystal.  If an
+      # explicit `#crystal_name` name is set, it'll be returned without further
       # processing.  If *override* is not `nil`, it'll be used over `#name`.
       # Otherwise, the generated name will be based on `#name`.
       def crystal_name(override : String? = nil) : String
@@ -416,6 +420,33 @@ module Bindgen
         false # This method is fine.
       end
 
+      # Checks if this method needs to be fixed up.  Returns the fixed method
+      # if any of the following criteria is met:
+      #
+      # * The method is a post-increment or post-decrement method which takes
+      #   a placeholder `int` argument in C++.
+      def fix_up? : Method?
+        return unless operator?
+        return unless @name == "operator++" || @name == "operator--"
+        return unless @arguments.size == 1 && @arguments[0].full_name == "int"
+
+        fixed = Method.new(
+          type: @type,
+          name: @name,
+          access: @access,
+          const: @const,
+          virtual: @virtual,
+          pure: @pure,
+          extern_c: @extern_c,
+          class_name: @class_name,
+          arguments: [] of Argument,
+          return_type: @return_type,
+          crystal_name: crystal_name,
+        )
+        fixed.binding_name = binding_method_name
+        fixed
+      end
+
       # Mangled name for the C++ wrapper method name
       def mangled_name
         class_name = Util.mangle_type_name(@class_name)
@@ -430,8 +461,14 @@ module Bindgen
         @arguments.map(&.mangled_name).join("_")
       end
 
-      # Name of the method in C++ and Crystal bindings.
+      # Name of the method in C++ and Crystal bindings.  If an explicit
+      # `#binding_name` name is set, it'll be returned without further
+      # processing.
       private def binding_method_name
+        if enforced_name = @binding_name
+          return enforced_name
+        end
+
         case self
         when .constructor?           then "_CONSTRUCT"
         when .aggregate_constructor? then "_AGGREGATE"
@@ -459,10 +496,16 @@ module Bindgen
         end
       end
 
-      # Name of the unary operator method in C++ and Crystal bindings.
-      private def binding_operator_name
+      # Name of the unary operator method in C++ and Crystal bindings.  Uniquely
+      # identifies a C++ operator.
+      def binding_operator_name
         # call operator can take any number of arguments
         return "call" if @name == "operator()"
+
+        # special case for operator++ and operator--
+        if n = @binding_name
+          return n[10..] if n.starts_with?("_OPERATOR_") # Remove `_OPERATOR_` prefix
+        end
 
         case @arguments.size
         when 0 then binding_operator1_name
