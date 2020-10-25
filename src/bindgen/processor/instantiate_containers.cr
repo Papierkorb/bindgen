@@ -8,11 +8,11 @@ module Bindgen
       # generated `#size` method, and `#unsafe_fetch` of sequential containers.
       CPP_INTEGER_TYPE = "int"
 
-      # Base class of sequential containers
-      SEQUENTIAL_BASECLASS = "BindgenHelper::SequentialContainer"
+      # Module for sequential containers
+      SEQUENTIAL_MODULE = "BindgenHelper::SequentialContainer"
 
-      # Base class of associative containers
-      ASSOCIATIVE_BASECLASS = "BindgenHelper::AssociativeContainer"
+      # Module for associative containers
+      ASSOCIATIVE_MODULE = "BindgenHelper::AssociativeContainer"
 
       def process(graph : Graph::Node, _doc : Parser::Document)
         root = graph.as(Graph::Container)
@@ -54,14 +54,14 @@ module Bindgen
 
         graph = builder.build_class(klass, klass.name, root)
         graph.set_tag(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
-        graph.base_class = container_base_class(SEQUENTIAL_BASECLASS, var_type)
+        graph.included_modules << container_module(SEQUENTIAL_MODULE, var_type)
       end
 
-      # Generates the Crystal base-class name of a container class.
-      private def container_base_class(kind, *types)
+      # Generates the Crystal module name of a container class.
+      private def container_module(kind, *types)
         pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
-        args = types.each.map { |t| typer.full pass.to_wrapper(t) }.join(", ")
+        args = types.map { |t| typer.full pass.to_wrapper(t) }.join(", ")
 
         "#{kind}(#{args})"
       end
@@ -157,8 +157,8 @@ module Bindgen
       # Takes a `Configuration::Container` and returns a `Parser::Class` for a
       # specific *instantiation*.
       #
-      # Note: The returned class doesn't inherit from anything.  For the crystal
-      # generator, see `CrystalGenerator#container_baseclass`.
+      # Note: The returned class doesn't include any modules.  This is done on
+      # the `Graph::Class` of the Crystal wrapper, see `#container_module`.
       private def container_class(container, instantiation : Enumerable(Parser::Type)) : Parser::Class
         suffix = instantiation.map(&.mangled_name).join("_")
         klass_type = Parser::Type.parse(container.class)
