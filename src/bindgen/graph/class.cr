@@ -30,6 +30,10 @@ module Bindgen
       # point at types outside the graph.
       property base_class : String?
 
+      # List of included Crystal modules.  Used by wrapper classes only, and may
+      # point at modules outside the graph.  Ignored by C++ structs.
+      getter included_modules = [] of String
+
       # Is this class abstract?
       property? abstract : Bool = false
 
