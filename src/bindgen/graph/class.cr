@@ -32,7 +32,7 @@ module Bindgen
 
       # List of included Crystal modules.  Used by wrapper classes only, and may
       # point at modules outside the graph.  Ignored by C++ structs.
-      getter included_modules = [] of String
+      getter included_modules = Set(String).new
 
       # Is this class abstract?
       property? abstract : Bool = false
