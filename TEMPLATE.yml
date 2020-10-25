@@ -37,6 +37,7 @@ processors:
   - macros # Support for macro mapping
   - functions # Add non-class functions
   - instance_properties # Add property methods for static and instance members
+  - operators # Support for overloaded operators
   - filter_methods # Throw out filtered methods
   - extern_c # Directly bind to pure C functions
   - instantiate_containers # Actually instantiate containers

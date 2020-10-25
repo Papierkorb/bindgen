@@ -121,7 +121,7 @@ The following rules are automatically applied to all bindings:
 |  +- Getters and setters for instance variables   | **YES** |
 |  +- Getters and setters for static variables     | **YES** |
 |  +- Constructors                                 | **YES** |
-|  +- Overloaded operators                         |   TBD   |
+|  +- Overloaded operators                         | Partial |
 |  +- Conversion functions                         |   TBD   |
 | Mapping C/C++ global functions                   |         |
 |  +- Mapping global functions                     | **YES** |
@@ -437,6 +437,14 @@ function-like macros are silently skipped.
 // Not mapped:
 #define SOME_FUNCTION(x) (x + 1)
 ```
+
+## `Operators`
+
+* **Kind**: Refining
+* **Run after**: No specific dependency
+* **Run before**: No specific dependency
+
+Performs special handling for operator methods.
 
 ## `Qt`
 

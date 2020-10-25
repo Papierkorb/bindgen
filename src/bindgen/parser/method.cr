@@ -421,12 +421,10 @@ module Bindgen
         false # This method is fine.
       end
 
-      # Checks if this method needs to be fixed up.  Returns the fixed method
-      # if any of the following criteria is met:
-      #
-      # * The method is a post-increment or post-decrement method which takes
-      #   a placeholder `int` argument in C++.
-      def fix_up? : Method?
+      # Checks if this method is a post-increment or post-decrement method that
+      # takes a placeholder `int` argument.  If true, returns a copy of this
+      # method with the `int` argument removed.
+      def fix_post_succ_or_pred? : Method?
         return unless operator?
         return unless @name == "operator++" || @name == "operator--"
         return unless @arguments.size == 1 && @arguments[0].full_name == "int"
@@ -490,8 +488,8 @@ module Bindgen
         return "call" if name == "operator()"
 
         case @arguments.size
-        when 0 then to_crystal_operator1_name(name)
-        when 1 then to_crystal_operator2_name(name)
+        when 0 then to_crystal_unary_operator_name(name)
+        when 1 then to_crystal_binary_operator_name(name)
         else
           raise "Unexpected operator #{name.inspect}"
         end
@@ -509,15 +507,15 @@ module Bindgen
         end
 
         case @arguments.size
-        when 0 then binding_operator1_name
-        when 1 then binding_operator2_name
+        when 0 then binding_unary_operator_name
+        when 1 then binding_binary_operator_name
         else
           raise "Unexpected operator #{@name.inspect}"
         end
       end
 
       # Converts *name* to a unary operator method in Crystal wrappers.
-      private def to_crystal_operator1_name(name)
+      private def to_crystal_unary_operator_name(name)
         case name
         when "operator++" then "succ!"
         when "operator--" then "pred!"
@@ -529,7 +527,7 @@ module Bindgen
       end
 
       # Name of the unary operator method in C++ and Crystal bindings.
-      private def binding_operator1_name
+      private def binding_unary_operator_name
         case @name
         when "operator++" then "succ"
         when "operator--" then "pred"
@@ -544,7 +542,7 @@ module Bindgen
       end
 
       # Converts *name* to a binary operator method in Crystal wrappers.
-      private def to_crystal_operator2_name(name)
+      private def to_crystal_binary_operator_name(name)
         case name
         # compound assignment operators
         when "operator="   then "assign!"
@@ -571,7 +569,7 @@ module Bindgen
       end
 
       # Name of the binary operator method in C++ and Crystal bindings.
-      private def binding_operator2_name
+      private def binding_binary_operator_name
         case @name
         when "operator="   then "assign"
         when "operator+="  then "add_assign"
