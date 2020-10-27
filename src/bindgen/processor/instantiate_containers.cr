@@ -18,8 +18,35 @@ module Bindgen
         root = graph.as(Graph::Container)
 
         @config.containers.each do |container|
+          build_container_module(container, root)
           instantiate_container(container, root)
         end
+      end
+
+      # Builds the wrapper module under *root* for the given *container*.  The
+      # module is responsible for naming instantiated container wrappers.
+      private def build_container_module(container, root)
+        sizes = container.instantiations.map(&.size)
+        unless sizes.uniq.size == 1
+          raise "All instantiations of #{container.class} must have the same number of arguments"
+        end
+        arg_count = sizes.first
+
+        formal_args = arg_count == 1 ? %w[T] : Array(String).new(arg_count) { |i| "T#{i + 1}" }
+        crystal_name = "#{container.class}(#{formal_args.join(", ")})"
+        path = Graph::Path.from(crystal_name, generic: true).camelcase
+
+        builder = Graph::Builder.new(@db)
+        parent = builder.get_or_create_path(root, path).as(Graph::Container)
+        call = CallBuilder::CrystalContainerOf.new(@db)
+
+        macro_method = of_macro(container)
+        macro_node = Graph::Method.new(
+          origin: macro_method,
+          name: macro_method.name,
+          parent: parent.platform_specific(Graph::Platform::Crystal),
+        )
+        macro_node.calls[Graph::Platform::Crystal] = call.build(macro_method, container)
       end
 
       # Instantiates the *container* (Of any type), placing the built classes
@@ -66,6 +93,7 @@ module Bindgen
         graph = builder.build_class(klass, klass.name, root)
         graph.set_tag(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
         graph.included_modules << container_module(SEQUENTIAL_MODULE, templ_args)
+        graph.included_modules << container_module(container.class, templ_args)
       end
 
       # Generates the C++ template name of a container class.
@@ -80,7 +108,7 @@ module Bindgen
         typer = Crystal::Typename.new(@db)
         args = types.map { |t| typer.full pass.to_wrapper(t) }.join(", ")
 
-        "#{kind}(#{args})"
+        "#{Graph::Path.from(kind).camelcase}(#{args})"
       end
 
       # Adds a `typedef Container<T...> Container_T...` for C++.
@@ -215,6 +243,17 @@ module Bindgen
           arguments: [] of Parser::Argument,
           return_type: Parser::Type.builtin_type(CPP_INTEGER_TYPE),
           crystal_name: "size", # `Indexable#size`
+        )
+      end
+
+      # Builds the `.of` macro of the given *container* module.
+      private def of_macro(container)
+        Parser::Method.build(
+          type: Parser::Method::Type::Macro,
+          class_name: container.class,
+          name: "of",
+          return_type: Parser::Type::EMPTY,
+          arguments: [] of Parser::Argument,
         )
       end
     end
