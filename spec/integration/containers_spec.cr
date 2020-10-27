@@ -15,6 +15,11 @@ describe "container instantiation feature" do
         it "works with auto instantiated container (argument)" do
           list = [1.5, 2.5]
           Test::Containers.new.sum(list).should eq(4.0)
+          Test::Containers.new.sum(Test::Std::Vector.of(Float64).from(list)).should eq(4.0)
+
+          list = {3.5, 4.5}
+          Test::Containers.new.sum(list).should eq(8.0)
+          Test::Containers.new.sum(Test::Std::Vector.of(Float64).from(list)).should eq(8.0)
         end
 
         it "works with auto instantiated container (aliased container)" do
