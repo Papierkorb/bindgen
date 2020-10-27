@@ -27,6 +27,9 @@ module Bindgen
       # Regular expression for a camel-cased symbol
       CAMEL_CASE_RX = /^[A-Z_][A-Za-z0-9_]*$/
 
+      # Regular expression for a type declaration, possibly generic
+      TYPE_DECL_RX = /^[A-Z_][A-Za-z0-9_]*(?:\(\*?[A-Z_][A-Za-z0-9_]*(?:, \*?[A-Z_][A-Za-z0-9_]*)*\))?$/
+
       # Regular expression describing a method name
       METHOD_NAME_RX = /^[a-z_][A-Za-z0-9_]*[?!=]?$/
 
@@ -205,6 +208,8 @@ module Bindgen
       private def check_node_name!(node)
         if node.is_a?(Graph::Constant)
           check_valid_constant_name!(node)
+        elsif node.is_a?(Graph::Class) || node.is_a?(Graph::Namespace)
+          check_valid_type_name!(node)
         elsif node.constant?
           check_valid_camel_case_name!(node)
         else
@@ -215,6 +220,13 @@ module Bindgen
       # Checks if *node* has a valid camel-case name.  If not, adds an error.
       private def check_valid_camel_case_name!(node)
         unless CAMEL_CASE_RX.matches?(node.name)
+          add_error(node, "Invalid #{node.kind_name.downcase} name #{node.name.inspect}")
+        end
+      end
+
+      # Checks if *node* has a valid type name.  If not, adds an error.
+      private def check_valid_type_name!(node)
+        unless TYPE_DECL_RX.matches?(node.name)
           add_error(node, "Invalid #{node.kind_name.downcase} name #{node.name.inspect}")
         end
       end
