@@ -17,8 +17,7 @@
   #include "clang_type_name.hpp"
 # endif
 
-static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
-	const clang::ClassTemplateSpecializationDecl *decl);
+static CopyPtr<Template> handleTemplate(const clang::TemplateSpecializationType *tmpl, clang::ASTContext &ctx);
 static bool tryReadStringConstructor(LiteralData &literal, const clang::CXXConstructExpr *expr);
 
 Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ctx) {
@@ -28,6 +27,9 @@ Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ct
 }
 
 void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx) {
+	const auto *elab = llvm::dyn_cast<clang::ElaboratedType>(qt.getTypePtr());
+	clang::QualType ut = elab ? elab->getNamedType() : qt;
+
 	if (target.fullName.empty()) {
 		target.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
 	}
@@ -39,33 +41,31 @@ void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::
 		return qualTypeToType(target, qt->getPointeeType(), ctx); // Recurse
 	}
 
-	if (const auto *record = qt->getAsCXXRecordDecl()) {
-		if (const auto *tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record)) {
-			target.templ = handleTemplate(record, tmpl);
-		}
-	}
-
 	// Not a reference or pointer.
 	target.isConst = qt.isConstQualified();
 	target.isVoid = qt->isVoidType();
 	target.isBuiltin = qt->isBuiltinType();
 	target.baseName = ClangTypeName::getFullyQualifiedName(qt.getUnqualifiedType(), ctx);
+
+	if (const auto *tmpl = llvm::dyn_cast<clang::TemplateSpecializationType>(ut.getTypePtr())) {
+		target.templ = handleTemplate(tmpl, ctx);
+		if (target.templ) {
+			target.templ->fullName = target.baseName;
+		}
+	}
 }
 
-static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record, const clang::ClassTemplateSpecializationDecl *decl) {
+static CopyPtr<Template> handleTemplate(const clang::TemplateSpecializationType *tmpl, clang::ASTContext &ctx) {
 	Template t;
-	clang::ASTContext &ctx = decl->getASTContext();
 
-	if (!record) return CopyPtr<Template>();
+	if (!tmpl) return CopyPtr<Template>();
 
-	const clang::Type *typePtr = record->getTypeForDecl();
-	clang::QualType qt(typePtr, 0);
-	t.baseName = record->getQualifiedNameAsString();
-	t.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
+	if (const clang::TemplateDecl *decl = tmpl->getTemplateName().getAsTemplateDecl()) {
+		t.baseName = decl->getQualifiedNameAsString();
+	}
 
-	for (const clang::TemplateArgument &argument : decl->getTemplateInstantiationArgs().asArray()) {
-
-		// Sanity check, ignore whole template otherwise.
+	for (const clang::TemplateArgument &argument : tmpl->template_arguments()) {
+		// Don't allow non-type template arguments yet.
 		if (argument.getKind() != clang::TemplateArgument::Type)
 			return CopyPtr<Template>();
 

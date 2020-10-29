@@ -256,7 +256,7 @@ module Bindgen
         wrapper.build(orig_method, target)
       end
 
-      # Adds the `BgInherit` struct for Crystal to *klass*.
+      # Adds the `BgJumptable` struct for Crystal to *klass*.
       private def add_crystal_jumptable_struct(klass)
         build_jumptable_struct(klass, binding) do |method|
           crystal_jumptable_field method
@@ -293,14 +293,9 @@ module Bindgen
       private def cpp_jumptable_field(method) : Call::Result
         m = method.origin
         proc_type = Parser::Type.proc(m.return_type, m.arguments)
-        pass = Cpp::Pass.new(@db)
 
-        Call::Result.new(
-          type: proc_type,
-          type_name: pass.crystal_proc_name(proc_type),
-          reference: false,
-          pointer: 0,
-        )
+        pass = Cpp::Pass.new(@db)
+        pass.to_cpp(proc_type)
       end
 
       # Returns the Crystal type to a `CrystalProc`
@@ -308,12 +303,8 @@ module Bindgen
         m = method.origin
         proc_type = Parser::Type.proc(m.return_type, m.arguments)
 
-        Call::Result.new(
-          type: proc_type,
-          type_name: proc_type.base_name,
-          reference: false,
-          pointer: 0,
-        )
+        pass = Crystal::Pass.new(@db)
+        pass.to_binding(proc_type)
       end
 
       # Adds the `JUMPTABLE` method to *klass*, which will be used to pass the

@@ -66,7 +66,11 @@ module Bindgen
           end
 
           if type.kind.function?
-            template = Template::ProcFromWrapper.new(type, @db).followed_by(template)
+            type_name = Parser::Type::CRYSTAL_PROC
+            template = Template::ProcFromWrapper.new(type, @db).followed_by(
+              Template.from_string("BindgenHelper.wrap_proc(%)", simple: true).followed_by(template))
+            ptr = 0
+            is_ref = false
           end
 
           ptr += 1 if is_ref # Translate reference to pointer
@@ -103,6 +107,11 @@ module Bindgen
             end
 
             is_ref, ptr = reconfigure_pass_type(rules.crystal_pass_by, is_ref, ptr)
+          end
+
+          if type.kind.function?
+            is_ref = false
+            ptr = 0
           end
 
           ptr += 1 if is_ref # Translate reference to pointer

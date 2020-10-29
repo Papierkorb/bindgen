@@ -16,7 +16,7 @@ module Bindgen
         Class
         Struct
         Enum
-        Function
+        Function # `CrystalProc`; template type in C++, non-generic in Crystal
       end
 
       # ATTENTION: Make sure to update other methods in here and in `Argument`
@@ -120,9 +120,9 @@ module Bindgen
       # Creates a `Type` describing a Crystal `Proc` type, which returns a
       # *return_type* using *arguments*.
       #
-      # The generated type will use `CrystalProc` as base type.
+      # The generated type will be considered a built-in type.
       def self.proc(return_type : Type, arguments : Enumerable(Type))
-        base = "CrystalProc"
+        base = CRYSTAL_PROC
 
         template_args = [return_type] + arguments.to_a
         template = Template.new(
@@ -131,16 +131,19 @@ module Bindgen
           arguments: template_args,
         )
 
+        typer = Cpp::Typename.new
+        specialization = typer.template_class(base, template_args.map(&.full_name))
+
         new( # Build the `Type`
           kind: Kind::Function,
           const: false,
           move: false,
           reference: false,
-          builtin: false,
+          builtin: true,
           void: false,
           pointer: 0,
-          base_name: base,
-          full_name: base,
+          base_name: specialization,
+          full_name: specialization,
           template: template,
           nilable: false,
         )
@@ -329,11 +332,7 @@ module Bindgen
 
       # The mangled type name for C++ bindings.
       def mangled_name
-        if @kind.function? && (templ = @template)
-          Util.mangle_type_name(@full_name) + "_" + templ.mangled_name
-        else
-          Util.mangle_type_name @full_name
-        end
+        Util.mangle_type_name @full_name
       end
     end
   end
