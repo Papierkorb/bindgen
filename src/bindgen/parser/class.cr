@@ -162,11 +162,7 @@ module Bindgen
 
       # Returns a `Type` referencing this class.
       def as_type(pointer = 1, reference = false, const = false) : Type
-        full_name = name
-        full_name = "const #{name}" if const
-        full_name += "*" * pointer if pointer > 0
-        full_name += "&" if reference
-        pointer += 1 if reference
+        typer = Cpp::Typename.new
 
         kind = case type_kind
         when .struct? then Type::Kind::Struct
@@ -182,8 +178,8 @@ module Bindgen
           void: false,
           builtin: false,
           base_name: name,
-          full_name: full_name,
-          pointer: pointer,
+          full_name: typer.full(name, const, pointer, reference),
+          pointer: pointer + (reference ? 1 : 0),
         )
       end
     end

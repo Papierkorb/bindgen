@@ -380,7 +380,7 @@ module Bindgen
             void: false,
             builtin: false,
             base_name: @class_name,
-            full_name: "#{@class_name}*",
+            full_name: "#{@class_name} *",
             pointer: 1,
           )
         else

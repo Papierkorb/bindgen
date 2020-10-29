@@ -40,7 +40,7 @@ module Bindgen
         proc_types.unshift to_cpp(inner_args.first)
 
         proc_args = typer.full(proc_types)
-        typer.template_class("CrystalProc", proc_args)
+        typer.template_class(Parser::Type::CRYSTAL_PROC, proc_args)
       end
 
       # Computes a result for passing *type* from Crystal to C++.
@@ -68,11 +68,15 @@ module Bindgen
         pass_by = TypeDatabase::PassBy::Original
 
         type_name = type.base_name
-        type_name = crystal_proc_name(type) if type.kind.function?
 
-        # If the method expects a value, but we don't copy its structure, we pass
-        # a reference to it instead.
-        if is_val && !is_copied
+        if type.kind.function?
+          type_name = crystal_proc_name(type)
+          pass_by = TypeDatabase::PassBy::Value
+          is_ref = false
+          ptr = 0
+        elsif is_val && !is_copied
+          # If the method expects a value, but we don't copy its structure, we
+          # pass a reference to it instead.
           is_ref = true
           ptr = 0
         end

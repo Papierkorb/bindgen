@@ -23,8 +23,8 @@ module Bindgen
 
       def initialize(
         @name, @base_name, @full_name, @const, @reference, @move, @builtin,
-        @void, @pointer, @kind = Type::Kind::Class, @has_default = false,
-        @value = nil, @nilable = false, @variadic = false
+        @void, @pointer, @template, @kind = Type::Kind::Class,
+        @has_default = false, @value = nil, @nilable = false, @variadic = false
       )
       end
 
@@ -44,7 +44,8 @@ module Bindgen
       end
 
       def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
-        @builtin, @void, @pointer, @has_default, @name, @value, @nilable
+        @builtin, @void, @pointer, @has_default, @name, @value, @nilable,
+        @template
 
       # Does this argument have an exposed default value?
       def has_exposed_default?
@@ -73,6 +74,7 @@ module Bindgen
           builtin: @builtin,
           void: @void,
           pointer: @pointer,
+          template: @template,
           kind: @kind,
           has_default: false,
           value: nil,
@@ -94,6 +96,7 @@ module Bindgen
           builtin: @builtin,
           void: @void,
           pointer: @pointer,
+          template: @template,
           kind: @kind,
           has_default: @has_default || other.has_default?,
           value: @value || other.value,
