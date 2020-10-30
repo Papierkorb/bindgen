@@ -211,6 +211,16 @@ module Bindgen
         end
       end
 
+      # Checks whether this type uses *name* in its base name or any of its
+      # template arguments.  Does not check for template names.
+      def uses_typename?(name : String)
+        if template = @template
+          template.arguments.any?(&.uses_typename?(name))
+        else
+          @base_name == name
+        end
+      end
+
       # Performs type substitution with the given *replacements*.
       #
       # Substitution is performed if this type's base name is exactly one of the
