@@ -222,7 +222,10 @@ module Bindgen
     end
 
     @types = Hash(String, TypeConfig).new
-    @aliases = Hash(String, String).new
+
+    # All defined aliases.  The underlying types never refer to other aliases,
+    # as their own aliases are resolved every time a new alias is added.
+    @aliases = Hash(String, Parser::Type).new
 
     getter cookbook : Cpp::Cookbook
 
@@ -261,13 +264,13 @@ module Bindgen
       end
     end
 
-    # Look up *type* in the database.  *type* is expected to be the base name of
-    # a C++ type.  If you actually have a full type-name instead, use
-    # `Parser::Type.parse` first, and pass that instead.
+    # Look up type in the database with the given *name*.  *name* is expected to
+    # be the base name of a C++ type.  If you actually have a full type-name
+    # instead, use `Parser::Type.parse` first, and pass that instead.
     #
     # **Prefer** passing a `Parser::Type` over passing a `String`.
-    def []?(type : String)
-      @types[resolve_aliases(type)]?
+    def []?(name : String)
+      @types[resolve_aliases(name).full_name]?
     end
 
     # Look up *type* in the database.  The best match will be found by gradually
@@ -276,8 +279,9 @@ module Bindgen
     def []?(type : Parser::Type)
       while type
         decayed_type = type.decayed
-        if found = @types[resolve_aliases(type.full_name)]?
-          if decayed_type && (parent = self[decayed_type]?)
+
+        if found = @types[resolve_aliases(type.full_name).full_name]?
+          if decayed_type && (parent = @types[decayed_type.full_name]?)
             found = parent.merge(found)
           end
 
@@ -285,6 +289,18 @@ module Bindgen
         end
 
         type = decayed_type
+      end
+    end
+
+    # Resolves type aliases referred to by *type* or the name of a *type*.
+    # Returns a type without aliases.
+    def resolve_aliases(type : Parser::Type | String)
+      return type.substitute(@aliases) if type.is_a?(Parser::Type)
+
+      if underlying_type = @aliases[type]?
+        underlying_type
+      else
+        Parser::Type.parse(type).substitute(@aliases)
       end
     end
 
@@ -305,14 +321,40 @@ module Bindgen
     end
 
     # Adds an alias *name* that refers to the *aliased* type.  *name* must not
-    # refer to an existing type or a different alias.
+    # refer to an existing type or a different alias.  Raises if adding the
+    # given alias would result in a recursive alias loop.
     def add_alias(name : String, alias_for aliased : String)
       raise "#{name} is already a type" if @types.has_key?(name)
 
       if old_alias = @aliases[name]?
-        raise "#{name} is already an alias" if old_alias == name
+        raise "#{name} is already an alias" unless old_alias.full_name == name
       else
-        @aliases[name] = aliased
+        # Resolves all internal aliases.  At this moment, the internal
+        # collection of underlying types do not contain any aliases, so any new
+        # aliases must come from this addition.
+
+        # Resolve any aliases already present in the given *aliased* type,
+        # against the existing aliases.  If the result contains *name*, then a
+        # recursive alias is found.
+        underlying_type = Parser::Type.parse(aliased).substitute(@aliases)
+        if underlying_type.uses_typename?(name)
+          raise "Recursive type alias found: " \
+            "#{name.inspect} refers to #{underlying_type.full_name.inspect}"
+        end
+
+        # If the existing collection of underlying types refer to our newly
+        # created alias, resolve them too.
+        @aliases = @aliases.to_h do |n, t|
+          replaced_t = t.substitute(name, underlying_type)
+          if replaced_t.uses_typename?(n)
+            raise "Recursive type alias found: " \
+              "#{n.inspect} refers to #{replaced_t.full_name.inspect}"
+          end
+          {n, replaced_t}
+        end
+
+        # Actually add our alias to the type database.
+        @aliases[name] = underlying_type
       end
     end
 
@@ -361,24 +403,6 @@ module Bindgen
       config.crystal_type ||= crystal_name if config.generate_wrapper?
 
       add(cpp_name, config)
-    end
-
-    # Resolves type aliases referred to by *name* recursively, until no aliases
-    # appear in the resulting type name.
-    private def resolve_aliases(name)
-      previous_rules = nil
-
-      while other_name = @aliases[name]?
-        rules = @types[name]?
-        if previous_rules == rules && !previous_rules.nil?
-          raise "Recursive type-alias found: #{other_name.inspect} is aliased to itself!"
-        end
-
-        name = other_name
-        previous_rules = rules
-      end
-
-      name
     end
   end
 end
