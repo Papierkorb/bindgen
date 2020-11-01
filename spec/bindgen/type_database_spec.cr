@@ -5,11 +5,11 @@ private def parse(*args)
 end
 
 describe Bindgen::TypeDatabase do
-  db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
+  db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp", with_builtins: false)
 
-  db.add("Recursive", alias_for: "Recursive")
-  db.add("Aliaserer", alias_for: "Aliaser")
-  db.add("Aliaser", alias_for: "Aliasee")
+  db.add_alias("Recursive", alias_for: "Recursive")
+  db.add_alias("Aliaserer", alias_for: "Aliaser")
+  db.add_alias("Aliaser", alias_for: "Aliasee")
   db.add("Aliasee", crystal_type: "aliased-thing")
   db.add("CppType", cpp_type: "TheCppType", generate_wrapper: false)
   db.add("foo", crystal_type: "value")

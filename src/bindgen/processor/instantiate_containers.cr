@@ -75,7 +75,7 @@ module Bindgen
 
         # Alias e.g. `QList_QObject_X` to `QList<QObject *>`
         if @db[type.base_name]?.nil?
-          @db.get_or_add(type.base_name).alias_for = klass.name
+          @db.add_alias(type.base_name, klass.name)
         end
 
         # On top for C++!
