@@ -56,9 +56,6 @@ module Bindgen
       # Semantics of the type (Kind overwrite)
       property kind = Bindgen::Parser::Type::Kind::Class
 
-      # Will copy the definition of the other rule into this one.
-      property alias_for : String?
-
       # The crystal name of this type.
       property crystal_type : String?
 
@@ -143,7 +140,7 @@ module Bindgen
         @builtin = false, @ignore_methods = [] of String,
         @superclass_ignore_methods = Util::FAIL_RX,
         @instance_variables = InstanceVariableConfig::Collection.new,
-        @graph_node = nil, @alias_for = nil
+        @graph_node = nil
       )
       end
 
@@ -203,19 +200,29 @@ module Bindgen
       end
     end
 
+    # Type alias, used in `Configuration#types` (The `types:` map in YAML).  All
+    # configuration fields other than `alias_for` are ignored for aliases.
+    class TypeAlias
+      include YAML::Serializable
+
+      # The underlying type this alias refers to.
+      property alias_for : String
+    end
+
     # Path to the built-in type configuration.  This file defines mappings for
     # most-ish built-in (and other common) types in C++.
     BUILTIN_CONFIG_PATH = "#{__DIR__}/../../builtin_types.yml"
 
     # Configuration, as used in `Bindgen::Configuration#types`
-    alias Configuration = Hash(String, TypeConfig)
+    alias Configuration = Hash(String, TypeAlias | TypeConfig)
 
     # Helper method to read the built-in type configuration.
     def self.load_builtins : Configuration
       ConfigReader.from_file(Configuration, BUILTIN_CONFIG_PATH)
     end
 
-    @types : Configuration
+    @types = Hash(String, TypeConfig).new
+    @aliases = Hash(String, String).new
 
     getter cookbook : Cpp::Cookbook
 
@@ -228,7 +235,13 @@ module Bindgen
       cookbook = Cpp::Cookbook.create_by_name(cookbook) if cookbook.is_a?(String)
 
       @cookbook = cookbook
-      @types = config.dup
+
+      config.each do |name, rules|
+        case rules
+        when TypeAlias  then add_alias(name, rules.alias_for)
+        when TypeConfig then add(name, rules)
+        end
+      end
     end
 
     delegate each, to: @types
@@ -253,17 +266,17 @@ module Bindgen
     # `Parser::Type.parse` first, and pass that instead.
     #
     # **Prefer** passing a `Parser::Type` over passing a `String`.
-    def []?(type : String, recursion_check = nil)
-      check_for_alias(@types[type]?, recursion_check)
+    def []?(type : String)
+      @types[resolve_aliases(type)]?
     end
 
     # Look up *type* in the database.  The best match will be found by gradually
     # decaying the *type* (See `Parser::Type#decayed`).  This enables the user
     # to write rules for `int *` and `int` without clashes.
-    def []?(type : Parser::Type, recursion_check = nil)
+    def []?(type : Parser::Type)
       while type
         decayed_type = type.decayed
-        if found = check_for_alias(@types[type.full_name]?, recursion_check)
+        if found = @types[resolve_aliases(type.full_name)]?
           if decayed_type && (parent = self[decayed_type]?)
             found = parent.merge(found)
           end
@@ -275,10 +288,12 @@ module Bindgen
       end
     end
 
-    # Adds a type *rules* as *name*.
+    # Adds a type *rules* as *name*.  Overwrites any old rules previously added
+    # to the same type name.  *name* must not refer to an existing alias.
     #
     # Also see `#get_or_add` to add rules from processors.
     def add(name : String, rules : TypeConfig)
+      raise "#{name} is already an alias" if @aliases.has_key?(name)
       @types[name] = rules
     end
 
@@ -286,7 +301,19 @@ module Bindgen
     #
     # Also see `#get_or_add` to add rules from processors.
     def add(name : String, **rules)
-      @types[name] = TypeConfig.new(**rules)
+      add(name, TypeConfig.new(**rules))
+    end
+
+    # Adds an alias *name* that refers to the *aliased* type.  *name* must not
+    # refer to an existing type or a different alias.
+    def add_alias(name : String, alias_for aliased : String)
+      raise "#{name} is already a type" if @types.has_key?(name)
+
+      if old_alias = @aliases[name]?
+        raise "#{name} is already an alias" if old_alias == name
+      else
+        @aliases[name] = aliased
+      end
     end
 
     # Helper, equivalent to calling `#[type]?.try(&.x) || default`
@@ -316,7 +343,7 @@ module Bindgen
         rules
       else
         rules = TypeConfig.new
-        @types[type] = rules
+        add(type, rules)
         rules
       end
     end
@@ -333,26 +360,25 @@ module Bindgen
       config.cpp_type ||= cpp_name
       config.crystal_type ||= crystal_name if config.generate_wrapper?
 
-      @types[cpp_name] = config
+      add(cpp_name, config)
     end
 
-    # Checks if *rules* has an `TypeConfig#alias_for` set.  If so, looks up the
-    # rules of that aliased name, and returns it.  Otherwise, returns the given
-    # *rules*.
-    #
-    # The *previous_rules* argument is passed through `#[]?` by
-    # `#check_for_alias` to support recursive type-aliasing, while at least
-    # detecting direct self-references.
-    private def check_for_alias(rules, previous_rules)
-      if other_name = rules.try(&.alias_for)
-        if previous_rules == rules
+    # Resolves type aliases referred to by *name* recursively, until no aliases
+    # appear in the resulting type name.
+    private def resolve_aliases(name)
+      previous_rules = nil
+
+      while other_name = @aliases[name]?
+        rules = @types[name]?
+        if previous_rules == rules && !previous_rules.nil?
           raise "Recursive type-alias found: #{other_name.inspect} is aliased to itself!"
         end
 
-        self[other_name, rules]?
-      else
-        rules
+        name = other_name
+        previous_rules = rules
       end
+
+      name
     end
   end
 end

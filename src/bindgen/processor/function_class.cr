@@ -163,8 +163,7 @@ module Bindgen
         rules.cpp_type ||= structure
         rules.graph_node = klass
 
-        struct_rules = @db.get_or_add(structure)
-        struct_rules.alias_for ||= klass.name
+        @db.add_alias(structure, klass.name)
       end
     end
   end
