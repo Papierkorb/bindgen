@@ -89,7 +89,6 @@ module Bindgen
       private def add_conversion_method(klass, base)
         converter = conversion_method(klass, base)
         graph = Graph::Method.new(origin: converter, name: converter.crystal_name, parent: klass)
-        pass = Cpp::Pass.new(@db)
 
         # The Crystal wrapper and bindings will be generated automatically for us later.
         call = CallBuilder::CppCall.new(@db)

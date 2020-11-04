@@ -74,7 +74,7 @@ module Bindgen
         values = {} of String => Int64
 
         macros.each do |define, match|
-          name = Util.pattern_rewrite(config.name, match).downcase.camelcase
+          enumerator = Util.pattern_rewrite(config.name, match).downcase.camelcase
           value = define.evaluated
 
           unless value.is_a? Int
@@ -82,7 +82,7 @@ module Bindgen
                   "Value for #define #{define.name} is non-Int: #{value.inspect}"
           end
 
-          values[name] = value.to_i64
+          values[enumerator] = value.to_i64
         end
 
         Parser::Enum.new(

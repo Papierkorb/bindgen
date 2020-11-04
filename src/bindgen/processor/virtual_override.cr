@@ -358,8 +358,6 @@ module Bindgen
 
       # Adds the jumptable type to the type database.
       private def register_table_type(crystal_struct, cpp_struct)
-        typer = Crystal::Typename.new(@db)
-
         rules = @db.get_or_add(cpp_struct.name)
         rules.graph_node = crystal_struct
         rules.crystal_type = crystal_struct.name

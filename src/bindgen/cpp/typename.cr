@@ -9,9 +9,6 @@ module Bindgen
 
       # ditto
       def full(base_name : String, const, pointer, is_reference) : String
-        stars = "*" * pointer
-        ref = "&" if is_reference
-
         String.build do |b|
           b << "const " if const
           b << base_name

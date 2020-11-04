@@ -26,7 +26,6 @@ module Bindgen
       end
 
       private def add_unwrap_variable(klass) : Call::Result
-        pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
 
         if structure = klass.structure

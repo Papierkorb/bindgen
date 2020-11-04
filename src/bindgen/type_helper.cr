@@ -38,7 +38,7 @@ module Bindgen
     #
     # Otherwise, `false` is returned.  If the *type* is not configured in the
     # type database, it defaults to `false`.
-    def is_type_copied?(type) : Bool
+    def type_copied?(type) : Bool
       if rules = @db[type]?
         rules.copy_structure? || rules.builtin? || rules.kind.enum?
       else

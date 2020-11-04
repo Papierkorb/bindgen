@@ -127,7 +127,7 @@ module Bindgen
           end
         end.group_by { |_, call| call.name }
 
-        methods_by_name.each do |name, overloads|
+        methods_by_name.each do |_name, overloads|
           overloads.each_combination(2, reuse: true) do |perm|
             method1, call1 = perm[0]
             method2, call2 = perm[1]
