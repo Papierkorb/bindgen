@@ -69,7 +69,6 @@ module Bindgen
       # Adds a `tyepedef Container<T...> Container_T...` for C++.  Also stores
       # the alias in the type-database.
       private def add_cpp_typedef(root, klass, container, instance)
-        pass = Cpp::Pass.new(@db)
         typer = Cpp::Typename.new
         type = Parser::Type.parse(typer.template_class(container.class, instance))
 

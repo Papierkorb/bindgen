@@ -42,9 +42,9 @@ module Bindgen
 
         typer = Crystal::Typename.new(@db)
 
-        methods_by_name.each do |name, overloads|
+        methods_by_name.each do |_name, overloads|
           next if overloads.size == 1
-          overloads.each do |method, call|
+          overloads.each do |_method, call|
             proc_type = call.arguments.last.as(Call::ProcArgument).type
             proc_args = proc_type.template.not_nil!.arguments.skip(1) # ignore return type
             arg_count = proc_args.size

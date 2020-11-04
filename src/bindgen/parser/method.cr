@@ -173,8 +173,8 @@ module Bindgen
 
           args = @arguments[0...idx]
           if without_until = args.rindex { |arg| !arg.has_exposed_default? }
-            args.map_with_index! do |arg, idx|
-              if idx <= without_until
+            args.map_with_index! do |arg, idx2|
+              if idx2 <= without_until
                 arg.without_default
               else
                 arg

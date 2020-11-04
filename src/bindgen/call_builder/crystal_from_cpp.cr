@@ -53,7 +53,6 @@ module Bindgen
         end
 
         def to_code(call : Call, platform : Graph::Platform) : String
-          formatter = Crystal::Format.new(@db)
           typer = Crystal::Typename.new(@db)
           func_result = typer.full(call.result)
 

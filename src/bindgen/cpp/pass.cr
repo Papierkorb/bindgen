@@ -61,7 +61,7 @@ module Bindgen
       # 2. The type is passed by-pointer
       #   a. Pass by-pointer
       def to_cpp(type : Parser::Type) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
@@ -117,11 +117,10 @@ module Bindgen
       # 4. In all other cases
       #   a. Pass by-reference or by-pointer as defined by *type*.
       def to_crystal(type : Parser::Type, is_constructor = false) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         ptr = type_pointer_depth(type)
         is_val = type.pointer < 1
-        generate_template = false
         pass_by = TypeDatabase::PassBy::Original
 
         type_name = type.base_name
@@ -136,8 +135,6 @@ module Bindgen
         elsif is_ref || (is_val && !is_copied)
           is_ref = false
           ptr = 1
-
-          generate_template = !is_copied
           pass_by = TypeDatabase::PassBy::Pointer
         end
 

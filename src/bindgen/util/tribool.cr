@@ -46,13 +46,13 @@ module Bindgen
       # Returns `true` only if this tri-bool is `true`, or if it is unset and
       # the *default_value* is.  This is semantically a alias for `#get`.
       def true?(default_value : Bool) : Bool
-        get(default_value) == true
+        get(default_value)
       end
 
       # Returns `true` only if this tri-bool is `false`, or if it is unset and
       # the *default_value* is.
       def false?(default_value : Bool) : Bool
-        get(default_value) == false
+        !get(default_value)
       end
 
       # Returns `true` if this tribool is unset.

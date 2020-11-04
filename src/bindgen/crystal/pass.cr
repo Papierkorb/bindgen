@@ -50,7 +50,7 @@ module Bindgen
       # be wrapped in a call to `to_unsafe` - Except if a user-defined
       # conversion is set.
       def to_binding(type : Parser::Type, to_unsafe = false, qualified = false) : Call::Result
-        to(type) do |is_ref, ptr, type_name, nilable|
+        to(type) do |is_ref, ptr, _nilable|
           typer = Typename.new(@db)
           type_name, in_lib = typer.binding(type)
           type_name = typer.qualified(type_name, in_lib) if qualified
@@ -92,7 +92,7 @@ module Bindgen
 
       # Computes a result for passing *type* to the wrapper.
       def to_wrapper(type : Parser::Type) : Call::Result
-        to(type) do |is_ref, ptr, type_name, nilable|
+        to(type) do |is_ref, ptr, nilable|
           typename = Typename.new(@db)
           type_name = typename.qualified(*typename.wrapper(type))
           type_name = proc_to_wrapper(type) if type.kind.function?
@@ -112,11 +112,10 @@ module Bindgen
       end
 
       def to(type : Parser::Type) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
-        type_name = type.base_name
         nilable = type.nilable?
 
         # If the method expects a value, but we don't copy its structure, we pass
@@ -127,7 +126,7 @@ module Bindgen
         end
 
         # Hand-off
-        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
+        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, nilable
 
         klass = type.kind.function? ? Call::ProcResult : Call::Result
         klass.new(
@@ -145,7 +144,7 @@ module Bindgen
       # If *qualified* is `true`, the type is assumed to be used outside the
       # `lib Binding`, and will be qualified if required.
       def from_binding(type : Parser::Type, qualified = false, is_constructor = false) : Call::Result
-        from(type) do |is_ref, ptr, type_name, nilable|
+        from(type) do |is_ref, ptr, _nilable|
           typer = Typename.new(@db)
 
           if qualified
@@ -170,7 +169,7 @@ module Bindgen
 
       # Computes a result for passing *type* from the wrapper to the user.
       def from_wrapper(type : Parser::Type, is_constructor = false) : Call::Result
-        from(type) do |is_ref, ptr, type_name, nilable|
+        from(type) do |is_ref, ptr, nilable|
           typer = Typename.new(@db)
           local_type_name, in_lib = typer.wrapper(type)
           type_name = typer.qualified(local_type_name, in_lib)
@@ -202,11 +201,10 @@ module Bindgen
       end
 
       def from(type : Parser::Type, is_constructor = false) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
-        type_name = type.base_name
         nilable = type.nilable?
 
         # TODO: Check for copy-constructor.
@@ -219,7 +217,7 @@ module Bindgen
         end
 
         # Hand-off
-        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, type_name, nilable
+        is_ref, ptr, type_name, template, nilable = yield is_ref, ptr, nilable
         ptr += 1 if is_ref # Translate reference to pointer
 
         Call::Result.new(

@@ -10,7 +10,10 @@ module Bindgen
 
       # *project_root* must be a path to the directory the configuration YAML
       # resides.
-      def initialize(@classes : Array(String), @enums : Array(String), @macros : Array(String), @functions : Array(String), @config : Configuration, @project_root : String)
+      def initialize(
+        @classes : Array(String), @enums : Array(String), @macros : Array(String),
+        @functions : Array(String), @config : Configuration, @project_root : String
+      )
         @binary_path = ENV["BINDGEN_BIN"]? || @config.binary || BINARY_PATH
       end
 

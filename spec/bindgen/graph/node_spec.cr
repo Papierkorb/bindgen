@@ -98,7 +98,7 @@ describe Bindgen::Graph::Node do
       # A platform specific after another
       specific_b = mod_b.platform_specific(Bindgen::Graph::Platform::Cpp)
       specific_c = specific_b.platform_specific(Bindgen::Graph::Platform::Crystal)
-      node = TestNode.new(mod_b)
+      node = TestNode.new(specific_c)
 
       node.full_path.should eq([mod_a, mod_b, node])
     end
