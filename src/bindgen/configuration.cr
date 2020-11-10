@@ -103,7 +103,7 @@ module Bindgen
       property type : Type
 
       # List of instantiations to create.
-      property instantiations : Array(Array(String)) = [] of Array(String)
+      property instantiations = Set(Array(String)).new
 
       # Method to access an element at an index.
       property access_method : String = "at"

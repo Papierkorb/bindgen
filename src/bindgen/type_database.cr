@@ -280,7 +280,7 @@ module Bindgen
       while type
         decayed_type = type.decayed
 
-        if found = @types[resolve_aliases(type.full_name).full_name]?
+        if found = @types[resolve_aliases(type).full_name]?
           if decayed_type && (parent = @types[decayed_type.full_name]?)
             found = parent.merge(found)
           end

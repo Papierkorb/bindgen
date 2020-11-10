@@ -154,7 +154,7 @@ spec_base_content = {
       output: "tmp/{SPEC_NAME}.cr",
     },
   },
-  library: "%/tmp/{SPEC_NAME}.o -lstdc++",
+  library: "%/tmp/{SPEC_NAME}.o -lstdc++ -lgccpp",
   parser:  {
     files:    ["{SPEC_NAME}.cpp"],
     includes: [

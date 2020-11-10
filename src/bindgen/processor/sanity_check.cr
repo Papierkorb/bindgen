@@ -30,6 +30,11 @@ module Bindgen
       # Regular expression describing a method name
       METHOD_NAME_RX = /^[a-z_][A-Za-z0-9_]*[?!=]?$/
 
+      # Regular expression for a Crystal `Enumerable` typename
+      # TODO: support other Crystal stdlib types (which might not correspond to
+      # any C++ type at all)
+      ENUMERABLE_RX = /^Enumerable(?:\([A-Za-z0-9_():*]*\))?$/
+
       # A binding error
       struct Error
         # The node this error occured at
@@ -189,6 +194,8 @@ module Bindgen
           true
         elsif @db.try_or(expr.type, false, &.builtin?)
           true # Crystal built-in
+        elsif expr.type_name.matches?(ENUMERABLE_RX)
+          true # Containers
         else   # Do a full look-up otherwise
           Graph::Path.from(expr.type_name).lookup(base) != nil
         end
