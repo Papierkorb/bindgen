@@ -552,6 +552,39 @@ class Point
 end
 ```
 
+### §2.6 Generic types
+
+Only sequential container types are instantiated on the Crystal side, as if each
+container implements the following interface:
+
+```crystal
+module Container(T)
+  include Indexable(T)
+
+  # All containers must be default-constructible
+  # abstract def initialize
+
+  abstract def unsafe_fetch(index : Int) : T
+  abstract def push(value : T) : Void
+  abstract def size : Int32
+
+  def <<(x : T)
+    push(x)
+    self
+  end
+
+  def concat(values : Enumerable(T))
+    values.each { |v| self << v }
+    self
+  end
+end
+```
+
+Bindgen automatically collects all instantiations of each container type that
+appear in method argument types or return types; explicit instantiations may be
+configured with the `containers` section.  Aliases to complete container types
+and container type arguments are both supported.
+
 ## §3. Crystal bindings
 
 ### §3.1 Naming scheme

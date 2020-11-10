@@ -2,6 +2,7 @@
 
 processors:
   - filter_methods
+  - auto_container_instantiation
   - instantiate_containers
   - default_constructor
   - cpp_wrapper
@@ -17,6 +18,8 @@ containers:
     type: Sequential
     instantiations:
       - [ "int" ]
-      - [ "double" ]
-      - [ "std::string" ]
       - [ "std::vector<int>" ]
+
+types:
+  rgb: { alias_for: "unsigned int" }
+  bytearray: { alias_for: std::vector<unsigned char> }
