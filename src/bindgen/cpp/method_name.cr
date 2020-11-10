@@ -58,10 +58,8 @@ module Bindgen
       # Finds *class_name* in the graph and checks if it's shadow sub-classed in
       # C++.  If so, returns the name of the shadow class.
       private def class_name_for_new(class_name)
-        if klass = @db.try_or(class_name, nil, &.graph_node.as(Graph::Class))
-          klass.cpp_sub_class || class_name
-        else
-          class_name
+        @db.try_or(class_name, class_name) do |rules|
+          rules.graph_node.as?(Graph::Class).try(&.cpp_sub_class)
         end
       end
     end

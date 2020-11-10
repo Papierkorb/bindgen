@@ -37,28 +37,45 @@ module Bindgen
 
       # Adds all instances of the sequential *container* into *root*.
       private def add_sequential_containers(container, root)
-        container.instantiations.each do |instance|
+        resolve_instantiations(container).each do |instance|
           check_sequential_instance! container, instance
           add_sequential_container(container, instance, root)
         end
       end
 
+      # Resolves aliases in the type arguments of *container*'s instantiations.
+      # This is required because aliases from the config files are not resolved
+      # prior to this point.
+      private def resolve_instantiations(container)
+        container.instantiations.map do |inst|
+          inst.map { |t| @db.resolve_aliases(t).full_name }
+        end.uniq
+      end
+
       # Instantiates a single *container* *instance* into *root*.
       private def add_sequential_container(container, instance, root)
         builder = Graph::Builder.new(@db)
-        var_type = Parser::Type.parse(instance.first)
-        klass = build_sequential_class(container, var_type)
 
-        add_cpp_typedef(root, klass, container, instance)
-        set_sequential_container_type_rules(klass.name, klass, var_type)
+        templ_type = Parser::Type.parse(cpp_container_name(container, instance))
+        templ_args = templ_type.template.not_nil!.arguments
+        klass = build_sequential_class(container, templ_type)
+
+        add_cpp_typedef(root, templ_type, klass.name)
+        set_sequential_container_type_rules(klass, templ_type)
 
         graph = builder.build_class(klass, klass.name, root)
         graph.set_tag(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
-        graph.included_modules << container_module(SEQUENTIAL_MODULE, var_type)
+        graph.included_modules << container_module(SEQUENTIAL_MODULE, templ_args)
+      end
+
+      # Generates the C++ template name of a container class.
+      private def cpp_container_name(container, instance)
+        typer = Cpp::Typename.new
+        typer.template_class(container.class, instance)
       end
 
       # Generates the Crystal module name of a container class.
-      private def container_module(kind, *types)
+      private def container_module(kind, types)
         pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
         args = types.map { |t| typer.full pass.to_wrapper(t) }.join(", ")
@@ -66,17 +83,8 @@ module Bindgen
         "#{kind}(#{args})"
       end
 
-      # Adds a `tyepedef Container<T...> Container_T...` for C++.  Also stores
-      # the alias in the type-database.
-      private def add_cpp_typedef(root, klass, container, instance)
-        typer = Cpp::Typename.new
-        type = Parser::Type.parse(typer.template_class(container.class, instance))
-
-        # Alias e.g. `QList_QObject_X` to `QList<QObject *>`
-        if @db[type.base_name]?.nil?
-          @db.add_alias(type.base_name, klass.name)
-        end
-
+      # Adds a `typedef Container<T...> Container_T...` for C++.
+      private def add_cpp_typedef(root, type, cpp_type_name)
         # On top for C++!
         host = Graph::PlatformSpecific.new(platform: Graph::Platform::Cpp)
         root.nodes.unshift host
@@ -91,25 +99,23 @@ module Bindgen
 
         Graph::Alias.new( # Build the `typedef`.
           origin: origin,
-          name: klass.name,
+          name: cpp_type_name,
           parent: host,
         )
       end
 
-      # Updates the *rules* of the container *klass*, carrying a *var_type*.
-      # The rules are changed to convert from and to the binding type.
-      private def set_sequential_container_type_rules(cpp_type_name, klass : Parser::Class, var_type)
-        pass = Crystal::Pass.new(@db)
+      # Updates the rules of the sequential container *klass*, whose
+      # instantiated type is *templ_type*.  The rules are changed to convert
+      # from and to the binding type.
+      private def set_sequential_container_type_rules(klass : Parser::Class, templ_type)
+        rules = @db.get_or_add(templ_type.full_name)
+        type_args = templ_type.template.not_nil!.arguments
 
-        rules = @db.get_or_add(cpp_type_name)
-        result = pass.to_wrapper(var_type)
-
-        rules.builtin = true # `Void` is built-in!
         rules.pass_by = TypeDatabase::PassBy::Pointer
         rules.wrapper_pass_by = TypeDatabase::PassBy::Value
-        rules.binding_type = "Void"
-        rules.crystal_type ||= "Enumerable(#{result.type_name})"
-        rules.cpp_type ||= cpp_type_name
+        rules.binding_type = klass.name
+        rules.crystal_type ||= container_module("Enumerable", type_args)
+        rules.cpp_type ||= klass.name
 
         if rules.to_crystal.no_op?
           rules.to_crystal = Template.from_string(
@@ -125,25 +131,26 @@ module Bindgen
         if rules.to_cpp.no_op?
           rules.to_cpp = Template.from_string(@db.cookbook.pointer_to_reference(klass.name))
         end
-      end
 
-      # Name of *container* with *instance* for diagnostic purposes.
-      private def diagnostics_name(container, instance)
-        typer = Cpp::Typename.new
-        typer.template_class(container.class, instance)
+        # We can no longer mark a template specialization as an alias of another
+        # type, so we cheat by making both types share the same binding type
+        # (this is normally not an issue since all binding types are `Void`).
+        rules = @db.get_or_add(klass.as_type)
+        rules.binding_type = klass.name
       end
 
       # Checks if *instance* of *container* is valid.  If not, raises.
       private def check_sequential_instance!(container, instance)
         if instance.size != 1
-          raise "Container #{diagnostics_name container, instance} was expected to have exactly one argument"
+          raise "Container #{container.class} was expected to have exactly one template argument"
         end
       end
 
       # Builds a full `Parser::Class` for the sequential *container* in the
       # specified *instantiation*.
-      private def build_sequential_class(container, var_type : Parser::Type) : Parser::Class
-        klass = container_class(container, {var_type})
+      private def build_sequential_class(container, templ_type : Parser::Type) : Parser::Class
+        var_type = templ_type.template.not_nil!.arguments.first
+        klass = container_class(container, templ_type)
 
         klass.methods << default_constructor_method(klass)
         klass.methods << access_method(container, klass.name, var_type)
@@ -158,11 +165,8 @@ module Bindgen
       #
       # Note: The returned class doesn't include any modules.  This is done on
       # the `Graph::Class` of the Crystal wrapper, see `#container_module`.
-      private def container_class(container, instantiation : Enumerable(Parser::Type)) : Parser::Class
-        suffix = instantiation.map(&.mangled_name).join("_")
-        klass_type = Parser::Type.parse(container.class)
-        name = "Container_#{klass_type.mangled_name}_#{suffix}"
-
+      private def container_class(container, templ_type : Parser::Type) : Parser::Class
+        name = "Container_#{templ_type.mangled_name}"
         Parser::Class.new(name: name, has_default_constructor: true)
       end
 
