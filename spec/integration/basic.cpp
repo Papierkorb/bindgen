@@ -81,6 +81,50 @@ struct Ops {
   int operator()(bool) const { return 20004; }
 };
 
+struct FreeOps { };
+
+int operator+  (FreeOps &, int x) { return x * 1; }
+int operator-  (FreeOps &, int x) { return x * 2; }
+int operator*  (FreeOps &, int x) { return x * 3; }
+int operator/  (FreeOps &, int x) { return x * 4; }
+int operator%  (FreeOps &, int x) { return x * 5; }
+int operator&  (FreeOps &, int x) { return x * 6; }
+int operator|  (FreeOps &, int x) { return x * 7; }
+int operator^  (FreeOps &, int x) { return x * 8; }
+int operator<< (FreeOps &, int x) { return x * 9; }
+int operator>> (FreeOps &, int x) { return x * 10; }
+int operator&& (FreeOps &, int x) { return x * 11; }
+int operator|| (FreeOps &, int x) { return x * 12; }
+int operator== (FreeOps &, int x) { return x * 13; }
+int operator!= (FreeOps &, int x) { return x * 14; }
+int operator<  (FreeOps &, int x) { return x * 15; }
+int operator>  (FreeOps &, int x) { return x * 16; }
+int operator<= (FreeOps &, int x) { return x * 17; }
+int operator>= (FreeOps &, int x) { return x * 18; }
+
+int operator+= (FreeOps &, int x) { return x * 101; }
+int operator-= (FreeOps &, int x) { return x * 102; }
+int operator*= (FreeOps &, int x) { return x * 103; }
+int operator/= (FreeOps &, int x) { return x * 104; }
+int operator%= (FreeOps &, int x) { return x * 105; }
+int operator&= (FreeOps &, int x) { return x * 106; }
+int operator|= (FreeOps &, int x) { return x * 107; }
+int operator^= (FreeOps &, int x) { return x * 108; }
+int operator<<=(FreeOps &, int x) { return x * 109; }
+int operator>>=(FreeOps &, int x) { return x * 110; }
+
+//  auto operator<=>(const FreeOps &, const FreeOps &) = default;
+
+int operator+(FreeOps &) { return 10001; }
+int operator-(FreeOps &) { return 10002; }
+int operator*(FreeOps &) { return 10003; }
+int operator~(FreeOps &) { return 10004; }
+int operator!(FreeOps &) { return 10005; }
+int operator++(FreeOps &) { return 10006; }
+int operator--(FreeOps &) { return 10007; }
+int operator++(FreeOps &, int) { return 10008; }
+int operator--(FreeOps &, int) { return 10009; }
+
 class TypeConversion {
 public:
 

@@ -112,6 +112,11 @@ public:
 		return m_map[key];
 	}
 
+	V *at(const K &key) {
+		auto it = m_map.find(key);
+		return it != m_map.end() ? &it->second : nullptr;
+	}
+
 	JsonStream &toJson(JsonStream &s) const {
 		bool first = true;
 		s << JsonStream::ObjectBegin;
