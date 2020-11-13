@@ -56,12 +56,9 @@ writer method is created: `setWindowTitle() -> #window_title=`
 
 An overloaded operator is a method which:
 
-1. Appears inside the class definition
-2. Is not a `friend` declaration
-3. Corresponds to a Crystal method in the table below
-
-Both `T` and the return type can be anything; const-ness of the method is not
-considered.
+1. Is either a method, or a non-member function taking a wrapped type by lvalue
+   reference in the first function parameter
+2. Corresponds to a Crystal method in the table below
 
 |C++ operator|Crystal method|
 |-|-|
@@ -87,7 +84,12 @@ considered.
 |`&&(T)`|`and(T)`|
 |`||(T)`|`or(T)`|
 |`[](T)`|`[](T)`|
-|`()(T...)`|`call(*T)`|
+|`()(*T)`|`call(*T)`|
+
+Both `T` and the return type in the table can be any type; const-ness of the
+operator is not considered.  Non-member operators are automatically converted
+into methods in the wrapper classes.  Bindgen always uses the operators
+directly, and never invokes them as regular method calls.
 
 The following C++ operators are ignored: `=(T)`, `<=>(T)`, `&()`, `->()`,
 `->*(T)`, `,(T)`, all conversion operators.

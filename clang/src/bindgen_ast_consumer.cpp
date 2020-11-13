@@ -2,9 +2,11 @@
 #include "bindgen_ast_consumer.hpp"
 
 #include "clang/Parse/ParseAST.h"
+#include "clang/ASTMatchers/ASTMatchersMacros.h"
 
 #include "function_match_handler.hpp"
 #include "record_match_handler.hpp"
+#include "operator_match_handler.hpp"
 #include "enum_match_handler.hpp"
 #include "macro_ast_consumer.hpp"
 
@@ -18,23 +20,42 @@
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
+// we don't support `operator,` and `operator->*`
+AST_MATCHER(clang::FunctionDecl, isOverloadedOperator) {
+	const auto oo = Node.getOverloadedOperator();
+	return oo != clang::OO_None && oo != clang::OO_Comma && oo != clang::OO_ArrowStar;
+}
+
 BindgenASTConsumer::BindgenASTConsumer(Document &doc, clang::CompilerInstance &compiler)
-	: m_compiler(compiler), m_functionHandler(nullptr), m_document(doc), m_matchFinder(m_matchFinderOpts)
+	: m_compiler(compiler), m_functionHandler(nullptr), m_document(doc)
 {
+	this->m_matchFinders.push_back(makeBasicMatchFinder());
+
+	// The operator methods rely on the document having been populated with
+	// the classes, so a separate AST pass is necessary.
+	this->m_matchFinders.push_back(makeDependentMatchFinder());
+}
+
+BindgenASTConsumer::~BindgenASTConsumer() {
+}
+
+clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 	using namespace clang::ast_matchers;
+
+	MatchFinder finder {this->m_matchFinderOpts};
 
 	for (const std::string &className : ClassList) {
 		DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
 		auto handler = make_unique<RecordMatchHandler>(m_document, className);
-		this->m_matchFinder.addMatcher(classMatcher, handler.get());
+		finder.addMatcher(classMatcher, handler.get());
 		this->m_classHandlers.push_back(std::move(handler));
 	}
 
 	if (FunctionMatchHandler::isActive()) {
 		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
 		auto handler = make_unique<FunctionMatchHandler>(m_document);
-		this->m_matchFinder.addMatcher(funcMatcher, handler.get());
+		finder.addMatcher(funcMatcher, handler.get());
 		this->m_functionHandler = std::move(handler);
 	}
 
@@ -43,18 +64,38 @@ BindgenASTConsumer::BindgenASTConsumer(Document &doc, clang::CompilerInstance &c
 		DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 
 		auto handler = make_unique<EnumMatchHandler>(m_document, enumName);
-		this->m_matchFinder.addMatcher(enumMatcher, handler.get());
-		this->m_matchFinder.addMatcher(typedefMatcher, handler.get());
+		finder.addMatcher(enumMatcher, handler.get());
+		finder.addMatcher(typedefMatcher, handler.get());
 		this->m_enumHandlers.push_back(std::move(handler));
 	}
+
+	return finder;
 }
 
-BindgenASTConsumer::~BindgenASTConsumer() {
+clang::ast_matchers::MatchFinder BindgenASTConsumer::makeDependentMatchFinder() {
+	using namespace clang::ast_matchers;
+
+	MatchFinder finder {this->m_matchFinderOpts};
+
+	for (const std::string &className : ClassList) {
+		DeclarationMatcher operatorMatcher = functionDecl(
+			isOverloadedOperator(),
+			unless(cxxMethodDecl()),
+			hasParameter(0, hasType(references(cxxRecordDecl(hasName(className)))))).bind("operatorDecl");
+
+		auto handler = make_unique<OperatorMatchHandler>(m_document, className);
+		finder.addMatcher(operatorMatcher, handler.get());
+		this->m_operatorHandlers.push_back(std::move(handler));
+	}
+
+	return finder;
 }
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
 	this->gatherTypeInfo(ctx);
-	this->m_matchFinder.matchAST(ctx);
+	for (auto &finder : this->m_matchFinders) {
+		finder.matchAST(ctx);
+	}
   // FIXME: clang segfaults in 6 or newer when calling ParseAST in destructor
 	this->evaluateMacros(ctx);
 	this->serializeAndOutput();
