@@ -3,6 +3,8 @@ require "./spec_helper"
 describe "container instantiation feature" do
   it "works" do
     build_and_run("containers") do
+      FloatMatrix = Test::Std::Vector.of(Test::Std::Vector(Float64))
+
       context "sequential container" do
         it "works with explicitly instantiated container" do
           Test::Containers.new.integers.to_a.should eq([1, 2, 3])
@@ -31,7 +33,13 @@ describe "container instantiation feature" do
         end
 
         it "works with nested containers" do
-          Test::Containers.new.grid.to_a.map(&.to_a).should eq([[1, 4], [9, 16]])
+          Test::Containers.new.grid.map(&.to_a).should eq([[1, 4], [9, 16]])
+
+          mat = FloatMatrix{
+            [1.2, 3.4],
+            [5.6, 7.8],
+          }
+          Test::Containers.new.transpose(mat).map(&.to_a).should eq([[1.2, 5.6], [3.4, 7.8]])
         end
       end
     end

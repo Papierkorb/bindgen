@@ -617,6 +617,22 @@ class Foo
   def matches_secret?(bits : Container(Bool))
     bits.to_a == SECRET.to_a
   end
+
+  # Module types can be nested
+  def transpose(ary : Container(Container(Float64)))
+    Container.of(Container(Float64)).new
+  end
+
+  # One level of nested `Enumerable`s can be automatically wrapped in an array
+  # literal initializer
+  FloatMatrix = Container.of(Container(Float32))
+  def skew(x : Float32, y : Float32, z : Float32)
+    FloatMatrix{
+      [0_f32,    -z,     y],
+      [    z, 0_f32,    -x],
+      [   -y,     x, 0_f32],
+    }
+  end
 end
 ```
 
