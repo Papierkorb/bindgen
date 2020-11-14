@@ -54,7 +54,7 @@ module Bindgen
 
             klass_name = "Container_#{templ_type.mangled_name}"
             arg_list = templ_args.join(", ") do |t|
-              typer.full(pass.to_wrapper(t), expects_type: false)
+              @db.try_or(t, typer.full(pass.to_wrapper(t), expects_type: false), &.container_type)
             end
 
             %[  {% #{i == 0 ? "if" : "elsif"} types == {#{arg_list}} %} {{ #{klass_name} }}\n]

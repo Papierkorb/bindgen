@@ -88,7 +88,7 @@ module Bindgen
         klass = build_sequential_class(container, templ_type)
 
         add_cpp_typedef(root, templ_type, klass.name)
-        set_sequential_container_type_rules(klass, templ_type)
+        set_sequential_container_type_rules(container, klass, templ_type)
 
         graph = builder.build_class(klass, klass.name, root)
         graph.set_tag(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
@@ -132,10 +132,10 @@ module Bindgen
         )
       end
 
-      # Updates the rules of the sequential container *klass*, whose
+      # Updates the rules of the sequential *container* *klass*, whose
       # instantiated type is *templ_type*.  The rules are changed to convert
       # from and to the binding type.
-      private def set_sequential_container_type_rules(klass : Parser::Class, templ_type)
+      private def set_sequential_container_type_rules(container, klass : Parser::Class, templ_type)
         rules = @db.get_or_add(templ_type.full_name)
         type_args = templ_type.template.not_nil!.arguments
 
@@ -143,6 +143,7 @@ module Bindgen
         rules.wrapper_pass_by = TypeDatabase::PassBy::Value
         rules.binding_type = klass.name
         rules.crystal_type ||= container_module("Enumerable", type_args)
+        rules.container_type ||= container_module(container.class, type_args)
         rules.cpp_type ||= klass.name
 
         if rules.to_crystal.no_op?
