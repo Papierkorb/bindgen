@@ -44,8 +44,15 @@ if dynamic.nil?
     end
   end
 end
-dynamic = dynamic.try &.==("1") || false
-log "Link against LLVM shared libraries: #{dynamic}. (Adjust with env BINDGEN_DYNAMIC=0/1 if needed)"
+dynamic = dynamic.try &.==("1")
+
+dynamic_s = case dynamic
+            when true then  "Dynamically"
+            when false then "Statically"
+            else            "Auto-Detect"
+            end
+
+log "Link against LLVM shared libraries: #{dynamic_s}. (Adjust with env BINDGEN_DYNAMIC=0/1 if needed)"
 
 # Determine which llvm-config we are using
 unless OPTIONS[:llvm_config] ||= find_llvm_config_binary min_version: "6.0.0"
@@ -344,19 +351,28 @@ def shell_split(line : String)
   end
 end
 
+def find_library_candidates(paths, prefix, suffix)
+  paths
+    .flat_map { |path| Dir["#{path}/lib#{prefix}*.#{suffix}"] }
+    .map { |path| File.basename(path)[/^lib(.+)\.#{suffix}$/, 1] }
+    .uniq
+end
+
 # Finds all LLVM and clang libraries, and links to them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
-def find_libraries(paths, prefix, dynamic=false)
-  if dynamic
-    paths
-      .flat_map { |path| Dir["#{path}/lib#{prefix}*.so"] }
-      .map { |path| File.basename(path)[/^lib(.+)\.so$/, 1] }
-      .uniq
-  else
-    paths
-      .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
-      .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] } # FIXME: this lead to crash for e.g. libclang_rt.msan_cxx-x86_64.a
-      .uniq
+def find_libraries(paths, prefix, dynamic : Bool? = nil)
+  # TODO: Windows support.
+
+  dynamics = find_library_candidates(paths, prefix, "so")
+  statics = find_library_candidates(paths, prefix, "a")
+  # FIXME: This also finds unwanted libraries like libclang_rt.msan_cxx-x86_64.a
+  #        which can cause a crash later on.
+
+  case {dynamic, statics.empty?}
+  when {true, _} then   dynamics
+  when {false, _} then  statics
+  when {nil, true} then dynamics
+  else                  statics
   end
 end
 
