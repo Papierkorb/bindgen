@@ -109,6 +109,7 @@ module Bindgen
 
         return if type.builtin? || type.void? # Built-ins don't need aliases
         return if @aliases.has_key? expr.type_name
+
         if rules = @db[type]?
           return if rules.builtin?
           return if rules.ignore?
@@ -117,8 +118,10 @@ module Bindgen
           return if rules.graph_node.is_a?(Graph::Enum)
         end
 
-        @aliases[expr.type_name] = Graph::Alias.new( # `alias EXPR_NAME = Void`
-origin: VOID_RESULT,
+
+        @aliases[expr.type_name] = Graph::Alias.new(
+          # `alias EXPR_NAME = Void`
+          origin: VOID_RESULT,
           name: expr.type_name,
           parent: nil,
         )

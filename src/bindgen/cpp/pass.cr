@@ -16,14 +16,14 @@ module Bindgen
         end
       end
 
-      # ditto
+      # :ditto:
       def arguments_from_cpp(list : Enumerable(Parser::Argument))
         list.map_with_index do |arg, idx|
           passthrough_to_crystal(arg).to_argument(Argument.name(arg, idx))
         end
       end
 
-      # ditto
+      # :ditto:
       def through_arguments(list : Enumerable(Parser::Argument))
         list.map_with_index do |arg, idx|
           through(arg).to_argument(Argument.name(arg, idx))

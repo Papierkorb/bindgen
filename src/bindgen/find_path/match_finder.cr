@@ -54,7 +54,7 @@ module Bindgen
         end
       end
 
-      # ditto
+      # :ditto:
       private def run_path_try(shell : ShellTry, search_paths) : Array(String)
         [run_shell_try(shell)].compact
       end

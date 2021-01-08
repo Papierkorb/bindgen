@@ -14,12 +14,12 @@ module Bindgen
         name
       end
 
-      # ditto
+      # :ditto:
       def name(argument : Parser::Argument, idx)
         name(argument.name, idx)
       end
 
-      # ditto
+      # :ditto:
       def name(argument : Call::Argument, idx)
         name(argument.name, idx)
       end
