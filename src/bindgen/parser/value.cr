@@ -25,7 +25,7 @@ module Bindgen
         when JSON::PullParser::Kind::String
           pull.read_string
         else
-          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind.to_s})"
+          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind})"
         end
       end
 

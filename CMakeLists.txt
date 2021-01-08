@@ -22,7 +22,7 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/bin)
   file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 endif()
 
-add_custom_target(bindgen_tool ALL
+add_custom_target(bindgen ALL
   COMMAND ${crystal_bin} build --release src/bindgen.cr -o ${PROJECT_SOURCE_DIR}/bin/bindgen
-  DEPENDS bindgen shards
+  DEPENDS parser shards
 )

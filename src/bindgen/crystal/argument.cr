@@ -38,6 +38,22 @@ module Bindgen
           pointer: 1, # It's always a pointer
         )
       end
+
+      # Returns a `@myself` argument, used in bindings inside superclass
+      # wrapper structs.
+      def myself(klass_type : Parser::Type) : Call::Argument
+        typename = Typename.new(@db)
+        type_name, _ = typename.wrapper(klass_type)
+
+        Call::Argument.new(
+          type: klass_type,
+          type_name: type_name,
+          name: "@myself",
+          call: "@myself",
+          reference: false,
+          pointer: 0,
+        )
+      end
     end
   end
 end

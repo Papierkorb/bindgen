@@ -21,7 +21,6 @@ module Bindgen
         type_name: type.base_name,
         reference: type.reference?,
         pointer: type_pointer_depth(type),
-        conversion: nil,
       )
     end
 
@@ -39,9 +38,9 @@ module Bindgen
     #
     # Otherwise, `false` is returned.  If the *type* is not configured in the
     # type database, it defaults to `false`.
-    def is_type_copied?(type) : Bool
+    def type_copied?(type) : Bool
       if rules = @db[type]?
-        rules.copy_structure || rules.builtin || rules.kind.enum?
+        rules.copy_structure? || rules.builtin? || rules.kind.enum?
       else
         false
       end

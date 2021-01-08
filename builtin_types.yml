@@ -4,29 +4,26 @@
 void: { binding_type: Void, kind: Struct, builtin: true }
 
 # Boolean type
-_Bool: { binding_type: Bool, crystal_type: Bool, cpp_type: bool, kind: Struct, builtin: true }
 bool: { binding_type: Bool, crystal_type: Bool, cpp_type: bool, kind: Struct, builtin: true }
+_Bool: { alias_for: bool }
 
 # Integer types
 char: { binding_type: UInt8, kind: Struct, builtin: true }
 "unsigned char": { binding_type: UInt8, kind: Struct, builtin: true }
+"signed char": { binding_type: Int8, kind: Struct, builtin: true }
 short: { binding_type: Int16, kind: Struct, builtin: true }
 "unsigned short": { binding_type: UInt16, kind: Struct, builtin: true }
 int: { binding_type: Int32, kind: Struct, builtin: true }
-unsigned: { binding_type: UInt32, kind: Struct, builtin: true }
 "unsigned int": { binding_type: UInt32, kind: Struct, builtin: true }
 _Int: { binding_type: Int, crystal_type: Int, cpp_type: int, kind: Struct, builtin: true }
 
 # Long types
-"long": { binding_type: "LibC::Long", kind: Struct, builtin: true }
 "long int": { binding_type: "LibC::Long", kind: Struct, builtin: true }
-"long long": { binding_type: "LibC::LongLong", kind: Struct, builtin: true }
 "long long int": { binding_type: "LibC::LongLong", kind: Struct, builtin: true }
-"unsigned long": { binding_type: "LibC::ULong", kind: Struct, builtin: true }
 "unsigned long int": { binding_type: "LibC::ULong", kind: Struct, builtin: true }
-"unsigned long long": { binding_type: "LibC::ULongLong", kind: Struct, builtin: true }
 "unsigned long long int": { binding_type: "LibC::ULongLong", kind: Struct, builtin: true }
 
+# Fixed-size integer types
 int8_t: { binding_type: Int8, kind: Struct, builtin: true }
 int16_t: { binding_type: Int16, kind: Struct, builtin: true }
 int32_t: { binding_type: Int32, kind: Struct, builtin: true }
@@ -36,12 +33,20 @@ uint16_t: { binding_type: UInt16, kind: Struct, builtin: true }
 uint32_t: { binding_type: UInt32, kind: Struct, builtin: true }
 uint64_t: { binding_type: UInt64, kind: Struct, builtin: true }
 
+# Size types
 size_t: { binding_type: "LibC::SizeT", kind: Struct, builtin: true }
 ssize_t: { binding_type: "LibC::SSizeT", kind: Struct, builtin: true }
 
 # Float types
 float: { binding_type: Float32, kind: Struct, builtin: true }
 double: { binding_type: Float64, kind: Struct, builtin: true }
+
+# Integer types without `int`
+unsigned: { alias_for: "unsigned int" }
+"long": { alias_for: "long int" }
+"long long": { alias_for: "long long int" }
+"unsigned long": { alias_for: "unsigned long int" }
+"unsigned long long": { alias_for: "unsigned long long int" }
 
 # C++ STL
 "std::string":
@@ -77,31 +82,21 @@ else:
   qintptr: { binding_type: Int64, kind: Struct, builtin: true }
   quintptr: { binding_type: UInt64, kind: Struct, builtin: true }
 
-quint8: { binding_type: UInt8, kind: Struct, builtin: true }
-quint16: { binding_type: UInt16, kind: Struct, builtin: true }
-quint32: { binding_type: UInt32, kind: Struct, builtin: true }
-quint64: { binding_type: UInt64, kind: Struct, builtin: true }
-qulonglong: { binding_type: UInt64, kind: Struct, builtin: true }
-qint8: { binding_type: Int8, kind: Struct, builtin: true }
-qint16: { binding_type: Int16, kind: Struct, builtin: true }
-qint32: { binding_type: Int32, kind: Struct, builtin: true }
-qint64: { binding_type: Int64, kind: Struct, builtin: true }
-qlonglong: { binding_type: Int64, kind: Struct, builtin: true }
-qsizetype: { binding_type: "LibC::SizeT", kind: Struct, builtin: true } # Since Qt5.10
+quint8: { alias_for: uint8_t }
+quint16: { alias_for: uint16_t }
+quint32: { alias_for: uint32_t }
+quint64: { alias_for: uint64_t }
+qulonglong: { alias_for: uint64_t }
+qint8: { alias_for: int8_t }
+qint16: { alias_for: int16_t }
+qint32: { alias_for: int32_t }
+qint64: { alias_for: int64_t }
+qlonglong: { alias_for: int64_t }
+qsizetype: { alias_for: size_t } # Since Qt5.10
 
 if_architecture_is_arm: # Only Float32 on ARM
-  qreal: { binding_type: Float32, kind: Struct, builtin: true }
+  qreal: { alias_for: float }
 elsif_architecture_is_armhf:
-  qreal: { binding_type: Float32, kind: Struct, builtin: true }
+  qreal: { alias_for: float }
 else: # Float64 on everything else
-  qreal: { binding_type: Float64, kind: Struct, builtin: true }
-
-# Bindgen specific
-CrystalProc:
-  wrapper_type: Proc
-  binding_type: CrystalProc
-  kind: Struct
-  builtin: true # We don't want a binding alias for this.
-  pass_by: Value
-  wrapper_pass_by: Value
-  from_crystal: "BindgenHelper.wrap_proc(%)"
+  qreal: { alias_for: double }

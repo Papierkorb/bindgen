@@ -4,73 +4,52 @@ module Bindgen
   module Parser
     # Describes a method argument.
     class Argument < Type
-      JSON.mapping(
-        # `Type` part
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
+      include JSON::Serializable
 
-        # `Argument` part
-        hasDefault: Bool,
-        isVariadic: Bool,
-        name: String,
-        value: {
-          type:      DefaultValueTypes,
-          nilable:   true,
-          converter: ValueConverter,
-        },
-      )
+      # Does this argument have a default value?
+      @[JSON::Field(key: "hasDefault")]
+      getter? has_default : Bool
+
+      # Is this the vararg (`...`) argument?
+      @[JSON::Field(key: "isVariadic")]
+      getter? variadic : Bool
+
+      # Name of this argument.
+      getter name : String
+
+      # Default value for this argument, if an initializer literal is found.
+      @[JSON::Field(converter: Bindgen::Parser::ValueConverter)]
+      getter value : DefaultValueTypes?
 
       def initialize(
-        @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,
-        @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false,
-        @value = nil, @nilable = false, @isVariadic = false
+        @name, @base_name, @full_name, @const, @reference, @move, @builtin,
+        @void, @pointer, @template, @kind = Type::Kind::Class,
+        @has_default = false, @value = nil, @nilable = false, @variadic = false
       )
       end
 
-      def initialize(@name, type : Type, @hasDefault = false, @value = nil)
-        @baseName = type.baseName
-        @fullName = type.fullName
-        @isConst = type.isConst
-        @isReference = type.isReference
-        @isMove = type.isMove
-        @isBuiltin = type.isBuiltin
-        @isVoid = type.isVoid
-        @isVariadic = false
+      def initialize(@name, type : Type, @has_default = false, @value = nil)
+        @base_name = type.base_name
+        @full_name = type.full_name
+        @const = type.const?
+        @reference = type.reference?
+        @move = type.move?
+        @builtin = type.builtin?
+        @void = type.void?
+        @variadic = false
         @pointer = type.pointer
         @kind = type.kind
         @template = type.template
-        @nilable = type.nilable
+        @nilable = type.nilable?
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @hasDefault, @name, @value, @nilable
-
-      # Does this argument have a default value?
-      def has_default?
-        @hasDefault
-      end
+      def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
+        @builtin, @void, @pointer, @has_default, @name, @value, @nilable,
+        @template
 
       # Does this argument have an exposed default value?
       def has_exposed_default?
-        @hasDefault && @value != nil
+        @has_default && @value != nil
       end
 
       # If this is a pointer-type, does it default to `nullptr` in C++?
@@ -83,25 +62,21 @@ module Bindgen
         defaults_to_nil? || super
       end
 
-      # Is this the vararg (`...`) argument?
-      def variadic? : Bool
-        @isVariadic
-      end
-
       # Returns a copy of this argument without a default value.
       def without_default : Argument
-        self.class.new(
+        Argument.new(
           name: @name,
-          baseName: @baseName,
-          fullName: @fullName,
-          isConst: @isConst,
-          isReference: @isReference,
-          isMove: @isMove,
-          isBuiltin: @isBuiltin,
-          isVoid: @isVoid,
+          base_name: @base_name,
+          full_name: @full_name,
+          const: @const,
+          reference: @reference,
+          move: @move,
+          builtin: @builtin,
+          void: @void,
           pointer: @pointer,
+          template: @template,
           kind: @kind,
-          hasDefault: false,
+          has_default: false,
           value: nil,
           nilable: nilable?,
         )
@@ -111,27 +86,50 @@ module Bindgen
       # and nil-ability.  For the value, this argument takes precedence over
       # *other*.
       def merge(other : Argument)
-        self.class.new(
+        Argument.new(
           name: @name,
-          baseName: @baseName,
-          fullName: @fullName,
-          isConst: @isConst,
-          isReference: @isReference,
-          isMove: @isMove,
-          isBuiltin: @isBuiltin,
-          isVoid: @isVoid,
+          base_name: @base_name,
+          full_name: @full_name,
+          const: @const,
+          reference: @reference,
+          move: @move,
+          builtin: @builtin,
+          void: @void,
           pointer: @pointer,
+          template: @template,
           kind: @kind,
-          hasDefault: @hasDefault || other.has_default?,
+          has_default: @has_default || other.has_default?,
           value: @value || other.value,
           nilable: nilable? || other.nilable?,
         )
       end
 
+      # Performs type substitution on the type part of this argument using the
+      # given *replacements*.
+      def substitute_type(replacements : Hash(String, Type)) : Argument
+        Argument.new(
+          name: @name,
+          type: substitute(replacements),
+          has_default: @has_default,
+          value: @value,
+        )
+      end
+
+      # Substitutes all uses of *name* on the type part of this argument with
+      # the given *type*.
+      def substitute_type(name : String, with type : Type) : Argument
+        Argument.new(
+          name: @name,
+          type: substitute(name, type),
+          has_default: @has_default,
+          value: @value,
+        )
+      end
+
       # Checks if the type-part of this equals the type-part of *other*.
       def type_equals?(other : Type)
-        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer template] %}
-          return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[base_name full_name const reference move builtin void pointer template] %}
+          return false if @{{ i.id }} != other.@{{ i.id }}
         {% end %}
 
         true

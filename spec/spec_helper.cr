@@ -9,12 +9,20 @@ def watchdog(deadline = 10.seconds)
     sleep deadline
     STDERR.puts "WATCHDOG: Deadline reached after #{deadline.seconds}s"
     STDERR.puts "Aborting."
-    Process.kill(Signal::ABRT, Process.ppid)
+    {% if compare_versions(::Crystal::VERSION, "0.34.0") > 0 %}
+      Process.signal(Signal::ABRT, Process.ppid)
+    {% else %}
+      Process.kill(Signal::ABRT, Process.ppid)
+    {% end %}
   end
 
   yield
 ensure
-  watcher.try(&.kill)
+  {% if compare_versions(::Crystal::VERSION, "0.34.0") > 0 %}
+    watcher.try(&.signal(Signal::KILL))
+  {% else %}
+    watcher.try(&.kill)
+  {% end %}
 end
 
 # Short-hand functions
@@ -34,7 +42,7 @@ module Parser
     Bindgen::Parser::Argument.new(
       name: name,
       type: type(cpp_type),
-      hasDefault: has_default,
+      has_default: has_default,
       value: default,
     )
   end
@@ -54,10 +62,10 @@ module Parser
       type: type,
       access: Bindgen::Parser::AccessSpecifier::Public,
       name: name,
-      className: class_name,
+      class_name: class_name,
       arguments: args,
-      returnType: ret,
-      firstDefaultArgument: args.index(&.has_default?),
+      return_type: ret,
+      first_default_argument: args.index(&.has_default?),
     )
   end
 

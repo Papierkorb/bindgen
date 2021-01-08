@@ -2,27 +2,26 @@ module Bindgen
   module Parser
     # Describes a class which is derived from another `Bindgen::Class`.
     class BaseClass
-      JSON.mapping(
-        isVirtual: Bool,
-        inheritedConstructor: Bool,
-        name: String,
-        access: AccessSpecifier,
-      )
+      include JSON::Serializable
 
-      def initialize(@name, @access = AccessSpecifier::Public, @isVirtual = false, @inheritedConstructor = false)
+      # Is this inheritance virtual?
+      @[JSON::Field(key: "isVirtual")]
+      getter? virtual : Bool
+
+      # Does the `Bindgen::Class` derive its constructors from this class?
+      @[JSON::Field(key: "inheritedConstructor")]
+      getter? inherited_constructor : Bool
+
+      # Fully qualified name of the base class.
+      getter name : String
+
+      # Visibility of the base class.
+      getter access = Bindgen::Parser::AccessSpecifier::Public
+
+      def initialize(@name, @access = AccessSpecifier::Public, @virtual = false, @inherited_constructor = false)
       end
 
       delegate public?, protected?, private?, to: @access
-
-      # If this inheritance is virtual
-      def virtual?
-        @isVirtual
-      end
-
-      # If the `Bindgen::Class` derives its constructors from this class.
-      def inherited_constructor?
-        @inheritedConstructor
-      end
     end
   end
 end

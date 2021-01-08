@@ -14,5 +14,13 @@ module Bindgen
       pointerof sizeof instance_sizeof as as? typeof
       super private protected asm uninitialized nil?
     ]
+
+    # All (overridable) Crystal operators
+    OPERATORS = %w[
+      + &+ - &- * &* / // % ** &**
+      == != < <= > >= <=> === =~ !~
+      ~ & | ^ << >>
+      [] []? []=
+    ]
   end
 end

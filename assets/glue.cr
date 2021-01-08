@@ -90,13 +90,13 @@ module BindgenHelper
   # Additionally, there's `#<<`.  Other than that, the container type is not
   # meant to be used for storage, but for data transmission between the C++
   # and the Crystal world.  Don't let that discourage you though.
-  abstract class SequentialContainer(T)
+  module SequentialContainer(T)
     include Indexable(T)
 
     # `#unsafe_fetch` and `#size` will be implemented by the wrapper class.
 
     # Adds an element at the end.  Implemented by the wrapper.
-    abstract def push(value)
+    abstract def push(value : T)
 
     # Adds *element* at the end of the container.
     def <<(value : T) : self

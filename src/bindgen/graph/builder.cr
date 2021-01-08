@@ -11,7 +11,19 @@ module Bindgen
       # Copies *document* into the *ns*.
       def build_document(document : Parser::Document, ns : Namespace) : Namespace
         document.classes.each do |_, klass|
-          target_name = @db[klass.name].crystal_type || klass.name.camelcase
+          target_name = @db[klass.name]?.try(&.crystal_type) || klass.name.camelcase
+
+          if @db[klass.name]?.nil? && klass.anonymous?
+            enclosing_type = klass.name.gsub(/::[^:]+$/, "")
+
+            @db.add(klass.name,
+              binding_type: klass.name,
+              copy_structure: @db.try_or(enclosing_type, false, &.copy_structure?),
+              generate_binding: false,
+              generate_wrapper: false,
+            )
+          end
+
           build_class(klass, target_name, ns)
         end
 
@@ -90,11 +102,11 @@ module Bindgen
       # Iterates over the *path*, descending from *root* onwards.  If a part of
       # the path does not exist yet, it'll be created as `Namespace`.
       def get_or_create_path(root : Graph::Container, path : Path) : Graph::Node
-        if path.global?
+        if path.global? || path.self_path?
           return root
         end
 
-        path.nodes.not_nil!.reduce(root) do |ctr, name|
+        path.parts.reduce(root) do |ctr, name|
           unless ctr.is_a?(Graph::Container)
             raise "Path #{path.inspect} is illegal, as #{name.inspect} is not a container"
           end

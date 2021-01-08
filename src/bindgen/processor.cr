@@ -24,6 +24,8 @@ module Bindgen
       "copy_structs",
       "macros",
       "functions",
+      "instance_properties",
+      "operators",
       "filter_methods",
       # "auto_container_instantiation", # Not stable yet
       "extern_c",

@@ -13,6 +13,10 @@ module Bindgen
       # function point to it.  The Crystal wrapper is not affected.
       EXPLICIT_BIND_TAG = "EXPLICIT_BIND_TAG"
 
+      # If this tag is set, this method is expected to call a base class method
+      # without dynamic lookup.  The value is left empty.
+      SUPERCLASS_BIND_TAG = "SUPERCLASS_BIND_TAG"
+
       # If this tag is set, this methods CrystalBinding and Cpp calls can be
       # removed by a later processor.  The value is left empty.
       REMOVABLE_BINDING_TAG = "REMOVABLE_BINDING_TAG"
@@ -35,7 +39,7 @@ module Bindgen
       # Returns a dot (`.`) if the origin method is static.  Returns a number
       # sign (`#`) otherwise.
       def crystal_prefix : String
-        if @origin.static_method?
+        if @origin.static?
           "."
         else
           "#"

@@ -1,60 +1,69 @@
 module Bindgen
   module Parser
-    # Describes a C++ `class` or `struct`.
+    # Describes a C++ `class`, `struct`, or `union`.
     class Class
+      include JSON::Serializable
+
       # Collection of classes.
       alias Collection = Hash(String, Class)
 
-      JSON.mapping(
-        isClass: Bool,
-        hasDefaultConstructor: Bool,
-        hasCopyConstructor: Bool,
-        isAbstract: Bool,
-        isDestructible: Bool,
-        name: String,
-        byteSize: Int32,
-        bases: Array(BaseClass),
-        fields: Array(Field),
-        methods: Array(Method),
-      )
+      # Visibility of the class.  Default is public, but some generated Crystal
+      # classes may be private.
+      getter access = Bindgen::Parser::AccessSpecifier::Public
 
-      def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field, @methods = [] of Method)
-      end
-
-      # Is this a `class`?  Opposite of `#struct?`.
-      def class?
-        @isClass
-      end
-
-      # Is this a `struct`?  Opposite of `#class?`.
-      def struct?
-        !@isClass
-      end
+      # The keyword used to declare this type (`class`, `struct`, or `union`).
+      @[JSON::Field(key: "typeKind")]
+      getter type_kind : TypeKind
 
       # Does the type have a default, argument-less constructor?
-      def has_default_constructor?
-        @hasDefaultConstructor
-      end
+      @[JSON::Field(key: "hasDefaultConstructor")]
+      getter? has_default_constructor : Bool
 
-      # Is the type copy-constructable?
-      def has_copy_constructor?
-        @hasCopyConstructor
-      end
-
-      # Size of an instance of the class in memory.
-      def byte_size : Int32
-        @byteSize
-      end
-
-      # Is this class publicly destructible?
-      def destructible?
-        @isDestructible
-      end
+      # Is the type copy-constructible?
+      @[JSON::Field(key: "hasCopyConstructor")]
+      getter? has_copy_constructor : Bool
 
       # Is this class abstract?
-      def abstract?
-        @isAbstract
+      @[JSON::Field(key: "isAbstract")]
+      getter? abstract : Bool
+
+      # Is this class anonymous?
+      @[JSON::Field(key: "isAnonymous")]
+      getter? anonymous : Bool
+
+      # Is this class publicly destructible?
+      @[JSON::Field(key: "isDestructible")]
+      getter? destructible : Bool
+
+      # Fully qualified name of the class.
+      getter name : String
+
+      # Size of an instance of the class in memory.
+      @[JSON::Field(key: "byteSize")]
+      getter byte_size : Int32
+
+      # Direct bases of the class.
+      getter bases : Array(BaseClass)
+
+      # Data members defined in the class, both static and non-static.
+      getter fields : Array(Field)
+
+      # Methods defined in the class.
+      getter methods : Array(Method)
+
+      def initialize(
+        @name, @byte_size = 0, @has_default_constructor = false,
+        @has_copy_constructor = false, @type_kind = TypeKind::Class,
+        @abstract = false, @anonymous = false, @destructible = true,
+        @bases = [] of BaseClass, @fields = [] of Field,
+        @methods = [] of Method, @access = AccessSpecifier::Public
+      )
       end
+
+      delegate public?, protected?, private?, to: @access
+
+      # Is this a `class`, `struct`, or C `union`?
+      delegate class?, struct?, cpp_union?, to: @type_kind
 
       # Does this class have any virtual methods?
       def has_virtual_methods?
@@ -77,13 +86,13 @@ module Bindgen
           type: Method::Type::Destructor,
           name: "DESTROY",
           access: AccessSpecifier::Public,
-          isConst: false,
-          isVirtual: true, # Hopefully.
-          isPure: false,
-          className: @name,
+          const: false,
+          virtual: true, # Hopefully.
+          pure: false,
+          class_name: @name,
           arguments: [] of Argument,
-          firstDefaultArgument: nil,
-          returnType: Type::VOID,
+          first_default_argument: nil,
+          return_type: Type::VOID,
         )
       end
 
@@ -113,12 +122,13 @@ module Bindgen
       def each_wrappable_method
         @methods.each do |method|
           next if method.private?
-          next if method.operator?           # TODO: Support Operators!
-          next if method.copy_constructor?   # TODO: Support copy constructors!
-          next if method.has_move_semantics? # Move semantics are hard to wrap.
+          next if method.name == "operator="  # TODO: Support assignments!
+          next if method.conversion_operator? # TODO: Support conversions!
+          next if method.copy_constructor?    # TODO: Support copy constructors!
+          next if method.has_move_semantics?  # Move semantics are hard to wrap.
 
           # Don't try to wrap copy-constructors in an abstract class.
-          next if @isAbstract && method.copy_constructor?
+          next if abstract? && method.copy_constructor?
 
           yield method
         end
@@ -152,21 +162,24 @@ module Bindgen
 
       # Returns a `Type` referencing this class.
       def as_type(pointer = 1, reference = false, const = false) : Type
-        full_name = name
-        full_name = "const #{name}" if const
-        full_name += "*" * pointer if pointer > 0
-        full_name += "&" if reference
-        pointer += 1 if reference
+        typer = Cpp::Typename.new
+
+        kind = case type_kind
+        when .struct? then Type::Kind::Struct
+        when .enum? then Type::Kind::Enum
+        else Type::Kind::Class
+        end
 
         Type.new(
-          isConst: const,
-          isReference: reference,
-          isMove: false,
-          isVoid: false,
-          isBuiltin: false,
-          baseName: name,
-          fullName: full_name,
-          pointer: pointer,
+          kind: kind,
+          const: const,
+          reference: reference,
+          move: false,
+          void: false,
+          builtin: false,
+          base_name: name,
+          full_name: typer.full(name, const, pointer, reference),
+          pointer: pointer + (reference ? 1 : 0),
         )
       end
     end

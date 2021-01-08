@@ -12,7 +12,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
 
         # The parent class already has the `@unwrap`
         if klass.base_class.nil? || klass.tag?(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
@@ -26,12 +26,11 @@ module Bindgen
       end
 
       private def add_unwrap_variable(klass) : Call::Result
-        pass = Crystal::Pass.new(@db)
         typer = Crystal::Typename.new(@db)
 
         if structure = klass.structure
           type = klass.origin.as_type(pointer: 0)
-          type_name = Graph::Path.local(klass, structure).to_s
+          type_name = Graph::Path.local(from: klass, to: structure).to_s
         else
           type = klass.origin.as_type(pointer: 1)
           type_name = typer.qualified(*typer.binding(type))
@@ -42,7 +41,6 @@ module Bindgen
           type_name: type_name,
           pointer: type.pointer,
           reference: false,
-          conversion: nil,
         )
       end
 

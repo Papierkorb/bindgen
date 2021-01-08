@@ -17,8 +17,7 @@
   #include "clang_type_name.hpp"
 # endif
 
-static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record,
-	const clang::ClassTemplateSpecializationDecl *decl);
+static CopyPtr<Template> handleTemplate(const clang::TemplateSpecializationType *tmpl, clang::ASTContext &ctx);
 static bool tryReadStringConstructor(LiteralData &literal, const clang::CXXConstructExpr *expr);
 
 Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ctx) {
@@ -28,6 +27,9 @@ Type TypeHelper::qualTypeToType(const clang::QualType &qt, clang::ASTContext &ct
 }
 
 void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::ASTContext &ctx) {
+	const auto *elab = llvm::dyn_cast<clang::ElaboratedType>(qt.getTypePtr());
+	clang::QualType ut = elab ? elab->getNamedType() : qt;
+
 	if (target.fullName.empty()) {
 		target.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
 	}
@@ -39,33 +41,31 @@ void TypeHelper::qualTypeToType(Type &target, const clang::QualType &qt, clang::
 		return qualTypeToType(target, qt->getPointeeType(), ctx); // Recurse
 	}
 
-	if (const auto *record = qt->getAsCXXRecordDecl()) {
-		if (const auto *tmpl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record)) {
-			target.templ = handleTemplate(record, tmpl);
-		}
-	}
-
 	// Not a reference or pointer.
 	target.isConst = qt.isConstQualified();
 	target.isVoid = qt->isVoidType();
 	target.isBuiltin = qt->isBuiltinType();
 	target.baseName = ClangTypeName::getFullyQualifiedName(qt.getUnqualifiedType(), ctx);
+
+	if (const auto *tmpl = llvm::dyn_cast<clang::TemplateSpecializationType>(ut.getTypePtr())) {
+		target.templ = handleTemplate(tmpl, ctx);
+		if (target.templ) {
+			target.templ->fullName = target.baseName;
+		}
+	}
 }
 
-static CopyPtr<Template> handleTemplate(const clang::CXXRecordDecl *record, const clang::ClassTemplateSpecializationDecl *decl) {
+static CopyPtr<Template> handleTemplate(const clang::TemplateSpecializationType *tmpl, clang::ASTContext &ctx) {
 	Template t;
-	clang::ASTContext &ctx = decl->getASTContext();
 
-	if (!record) return CopyPtr<Template>();
+	if (!tmpl) return CopyPtr<Template>();
 
-	const clang::Type *typePtr = record->getTypeForDecl();
-	clang::QualType qt(typePtr, 0);
-	t.baseName = record->getQualifiedNameAsString();
-	t.fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
+	if (const clang::TemplateDecl *decl = tmpl->getTemplateName().getAsTemplateDecl()) {
+		t.baseName = decl->getQualifiedNameAsString();
+	}
 
-	for (const clang::TemplateArgument &argument : decl->getTemplateInstantiationArgs().asArray()) {
-
-		// Sanity check, ignore whole template otherwise.
+	for (const clang::TemplateArgument &argument : tmpl->template_arguments()) {
+		// Don't allow non-type template arguments yet.
 		if (argument.getKind() != clang::TemplateArgument::Type)
 			return CopyPtr<Template>();
 
@@ -85,7 +85,7 @@ Argument TypeHelper::processFunctionParameter(const clang::ParmVarDecl *decl) {
 	arg.name = decl->getQualifiedNameAsString();
 	arg.isVariadic = false;
 	arg.hasDefault = decl->hasDefaultArg();
-	arg.value = JsonStream::Null;
+	arg.value.clear();
 
 	// If the parameter has a default value, try to figure out this value.  Can
 	// fail if e.g. the call has side-effects (Like calling another method).  Will
@@ -113,6 +113,8 @@ static bool stringLiteralFromExpression(LiteralData &literal, const clang::Expr 
 #else
 		return stringLiteralFromExpression(literal, argExpr->GetTemporaryExpr());
 #endif
+	} else if (const clang::ExprWithCleanups *cleanupExpr = llvm::dyn_cast<clang::ExprWithCleanups>(expr)) {
+		return stringLiteralFromExpression(literal, cleanupExpr->getSubExpr());
 	} else if (const clang::CXXBindTemporaryExpr *bindExpr = llvm::dyn_cast<clang::CXXBindTemporaryExpr>(expr)) {
 		return stringLiteralFromExpression(literal, bindExpr->getSubExpr());
 	} else if (const clang::CastExpr *castExpr = llvm::dyn_cast<clang::CastExpr>(expr)) {
@@ -157,13 +159,20 @@ bool TypeHelper::valueFromApValue(LiteralData &value, const clang::APValue &apVa
 		if (qt->isSignedIntegerType())
 			value = v.getExtValue();
 		else {
-      value = v.getZExtValue();
-      // FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
-      // Then translate it on the other end?
-      // value = std::to_string(v.getZExtValue());
-    }
+			value = v.getZExtValue();
+			// FIXME: Perhaps we need to convert it to string because JSON does not support uint64?
+			// Then translate it on the other end?
+			// value = std::to_string(v.getZExtValue());
+		}
 	} else if (qt->isFloatingType()) {
-		value = apValue.getFloat().convertToDouble();
+		const llvm::APFloat &f = apValue.getFloat();
+		if (&f.getSemantics() == &llvm::APFloat::IEEEsingle()) {
+			value = static_cast<double>(f.convertToFloat());
+		} else if (&f.getSemantics() == &llvm::APFloat::IEEEdouble()) {
+			value = f.convertToDouble();
+		} else {
+			return false;
+		}
 	} else {
 		return false;
 	}

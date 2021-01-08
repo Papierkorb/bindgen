@@ -7,13 +7,10 @@ module Bindgen
     # The user can also use an empty value in the configuration to explicitly
     # use the default.
     #
-    # Use this type in a `YAML.mapping` like this:
+    # Use this type in a serializable field like this:
     #
     # ```crystal
-    # my_option: {
-    #   type: Util::Tribool,
-    #   default: Util::Tribool.unset,
-    # }
+    # getter my_option = Util::Tribool.unset
     # ```
     struct Tribool
       @value : Bool | Nil
@@ -49,13 +46,13 @@ module Bindgen
       # Returns `true` only if this tri-bool is `true`, or if it is unset and
       # the *default_value* is.  This is semantically a alias for `#get`.
       def true?(default_value : Bool) : Bool
-        get(default_value) == true
+        get(default_value)
       end
 
       # Returns `true` only if this tri-bool is `false`, or if it is unset and
       # the *default_value* is.
       def false?(default_value : Bool) : Bool
-        get(default_value) == false
+        !get(default_value)
       end
 
       # Returns `true` if this tribool is unset.

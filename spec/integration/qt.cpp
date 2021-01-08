@@ -12,13 +12,28 @@ struct QMetaObject {
 };
 
 struct QObject {
-  template< typename T, typename F >
-  static QMetaObject::Connection connect(void *ptr, T func, F delegate) {
-    delegate(); // Call back to Crystal
+  template< typename R, typename T, typename... Args, typename F >
+  static QMetaObject::Connection connect(void *ptr, R (T::*func)(Args...), F delegate) {
+    delegate(Args { }...); // Call back to Crystal
 
     return QMetaObject::Connection();
   }
 };
+
+// Test object conversion at Proc boundaries
+struct Conv {
+};
+
+struct ConvCpp {
+};
+
+ConvCpp conv_from_cpp(const Conv &) {
+  return { };
+}
+
+Conv conv_to_cpp(const ConvCpp &) {
+  return { };
+}
 
 // On to the actual test classes:
 
@@ -27,13 +42,30 @@ class SomeObject {
   Q_OBJECT
 public:
   int normalMethod() { return 1; }
+  Conv convMethod() { return { }; }
 
 signals:
   void stuffHappened() {
     // Empty.
   }
 
+  void overloaded(int x) {
+    // Empty.
+  }
+
+  void overloaded(bool y) {
+    // Empty.
+  }
+
+  void overloaded(int x, bool y) {
+    // Empty.
+  }
+
   void privateSignal(QPrivateSignal) {
+    // Empty.
+  }
+
+  void convSignal(const Conv &) {
     // Empty.
   }
 };

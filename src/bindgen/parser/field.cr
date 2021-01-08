@@ -2,47 +2,31 @@ module Bindgen
   module Parser
     # A C++ struct/class field.
     class Field < Type
-      JSON.mapping(
-        # Type part
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
+      include JSON::Serializable
 
-        # Field part
-        access: AccessSpecifier,
-        name: String,
-        bitField: Int32?,
-      )
+      # Visibility of the field.
+      getter access : AccessSpecifier
+
+      # Name of the field.
+      getter name : String
+
+      # Is this field a static data member?
+      @[JSON::Field(key: "isStatic")]
+      getter? static : Bool
+
+      # The size of this field, if it is a bitfield.
+      @[JSON::Field(key: "bitField")]
+      getter! bit_field : Int32
+
+      # Does this field have a default value?
+      @[JSON::Field(key: "hasDefault")]
+      getter? has_default : Bool
+
+      # Default value for this field, if an initializer literal is found.
+      @[JSON::Field(converter: Bindgen::Parser::ValueConverter)]
+      getter value : DefaultValueTypes?
 
       delegate public?, private?, protected?, to: @access
-
-      # Returns the bit-size of this bitfield.
-      def bit_field : Int32
-        @bitField.not_nil!
-      end
-
-      # Returns the size of this bitfield, if it is a bitfield.
-      def bit_field? : Int32?
-        @bitField
-      end
 
       # Suitable name for Crystal code
       def crystal_name : String

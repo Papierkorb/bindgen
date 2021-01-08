@@ -28,7 +28,7 @@ module Bindgen
 
         unless wrapped.empty?
           # We inherit the first wrapped base-class in Crystal.
-          klass.base_class = Graph::Path.local(klass, wrapped.first).to_s
+          klass.base_class = Graph::Path.local(from: klass, to: wrapped.first).to_s
 
           # For all other base-classes, we provide `#as_X` methods.
           if wrapped.size > 1
@@ -89,7 +89,6 @@ module Bindgen
       private def add_conversion_method(klass, base)
         converter = conversion_method(klass, base)
         graph = Graph::Method.new(origin: converter, name: converter.crystal_name, parent: klass)
-        pass = Cpp::Pass.new(@db)
 
         # The Crystal wrapper and bindings will be generated automatically for us later.
         call = CallBuilder::CppCall.new(@db)
@@ -173,35 +172,35 @@ module Bindgen
           type: method.type,
           name: method.name,
           access: method.access,
-          isConst: method.const?,
-          isVirtual: method.virtual?,
-          isPure: false,
-          className: method.className, # Keep original class!
+          const: method.const?,
+          virtual: method.virtual?,
+          pure: false,
+          class_name: method.class_name, # Keep original class!
           arguments: method.arguments,
-          firstDefaultArgument: method.first_default_argument,
-          returnType: method.return_type,
+          first_default_argument: method.first_default_argument,
+          return_type: method.return_type,
         )
       end
 
       # Returns a non-abstract copy of *klass*.
       private def unabstract_class(klass)
         base = Parser::BaseClass.new(
-          isVirtual: false,
-          inheritedConstructor: true,
+          virtual: false,
+          inherited_constructor: true,
           name: klass.name,
           access: Parser::AccessSpecifier::Public,
         )
 
         Parser::Class.new(
-          isClass: klass.class?,
-          hasDefaultConstructor: klass.has_default_constructor?,
-          hasCopyConstructor: klass.has_copy_constructor?,
-          isAbstract: false,
-          isDestructible: klass.destructible?,
+          type_kind: klass.type_kind,
+          has_default_constructor: klass.has_default_constructor?,
+          has_copy_constructor: klass.has_copy_constructor?,
+          abstract: false,
+          destructible: klass.destructible?,
           name: "#{klass.name}Impl",
-          byteSize: klass.byteSize,
+          byte_size: klass.byte_size,
           bases: [base],
-          fields: klass.fields.dup,
+          fields: klass.fields.select { |f| !f.static? },
           methods: klass.methods.map { |m| unabstract_method(m) },
         )
       end
