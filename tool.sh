@@ -10,13 +10,13 @@ SOURCE_FILE="$BASE/src/bindgen.cr"
 function print_clang_error {
   echo "  Bindgen requires a full installation of Clang, its libraries and development"
   echo "  headers.  Please install these first, and restart this script."
-  echo "  You can also manually run 'cmake .; make -j' in clang/ for debugging this issue."
+  echo "  You can also manually run 'cmake . && make -j' in clang/ for debugging this issue."
   echo "  Full path to clang/: $CLANG_DIR"
 
   exit 1
 }
 
-if [ ! -f "$CLANG_DIR/bindgen" ]; then
+if [ ! -f "$CLANG_DIR/parser" ]; then
   echo "** clang/parser not found.  Building now."
   cd "$CLANG_DIR"
   ( cmake . && make -j ) || print_clang_error
