@@ -29,7 +29,7 @@ add_definitions(-D__LLVM_VERSION_${LLVM_VER})
 # Find the LLVM clang++ path
 message(STATUS "LLVM Tools Dir: ${LLVM_TOOLS_BINARY_DIR}")
 
-find_program(llvm_clang_bin NAMES "clang++" PATHS ${LLVM_TOOLS_BINARY_DIR} REQUIRED)
+find_program(llvm_clang_bin NAMES "clang++" PATHS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH REQUIRED)
 # message(STATUS "Found clang bin: ${llvm_clang_bin}")
 set(CMAKE_CXX_COMPILER ${llvm_clang_bin})
 message(STATUS "Using clang++ exec: ${CMAKE_CXX_COMPILER}")

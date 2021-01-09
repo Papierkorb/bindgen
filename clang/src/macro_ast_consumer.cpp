@@ -1,10 +1,8 @@
 #include "macro_ast_consumer.hpp"
 #include "type_helper.hpp"
+#include "clang/AST/ASTContext.h"
 
-MacroAstConsumer::MacroAstConsumer(std::vector<Macro> &macros)
-	: m_macros(macros)
-{
-
+MacroAstConsumer::MacroAstConsumer(std::vector<Macro> &macros) : m_macros(macros) {
 }
 
 void MacroAstConsumer::checkVarDecl(clang::VarDecl *var, clang::ASTContext &ctx) {
