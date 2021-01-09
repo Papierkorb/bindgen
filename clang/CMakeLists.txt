@@ -29,13 +29,14 @@ add_definitions(-D__LLVM_VERSION_${LLVM_VER})
 # Find the LLVM clang++ path
 message(STATUS "LLVM Tools Dir: ${LLVM_TOOLS_BINARY_DIR}")
 
-find_program(clang_bin "clang++" PATHS: ${LLVM_TOOLS_BINARY_DIR})
-# message(STATUS "Found clang bin: ${clang_bin}")
-set(CMAKE_CXX_COMPILER ${clang_bin})
+find_program(llvm_clang_bin NAMES "clang++" PATHS ${LLVM_TOOLS_BINARY_DIR} REQUIRED)
+# message(STATUS "Found clang bin: ${llvm_clang_bin}")
+set(CMAKE_CXX_COMPILER ${llvm_clang_bin})
 message(STATUS "Using clang++ exec: ${CMAKE_CXX_COMPILER}")
 
 # Find llvm-config bin
-find_program(llvm_config_bin "llvm-config" PATHS: ${LLVM_TOOLS_BINARY_DIR})
+find_program(llvm_config_bin NAMES "llvm-config" PATHS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH REQUIRED)
+message(STATUS "Found llvm-config bin: ${llvm_config_bin}")
 set(LLVM_CONFIG ${llvm_config_bin})
 message(STATUS "Using llvm-config exec: ${LLVM_CONFIG}")
 
