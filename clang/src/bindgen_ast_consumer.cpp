@@ -47,14 +47,25 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 	for (const std::string &className : ClassList) {
 		DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
+#if __clang_major__ >= 11
 		auto handler = std::make_unique<RecordMatchHandler>(m_document, className);
+#else
+		auto handler = make_unique<RecordMatchHandler>(m_document, className);
+#endif
+
 		finder.addMatcher(classMatcher, handler.get());
 		this->m_classHandlers.push_back(std::move(handler));
 	}
 
 	if (FunctionMatchHandler::isActive()) {
 		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
+
+#if __clang_major__ >= 11
 		auto handler = std::make_unique<FunctionMatchHandler>(m_document);
+#else
+		auto handler = make_unique<FunctionMatchHandler>(m_document);
+#endif
+
 		finder.addMatcher(funcMatcher, handler.get());
 		this->m_functionHandler = std::move(handler);
 	}
@@ -63,7 +74,12 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 		DeclarationMatcher enumMatcher = enumDecl(hasName(enumName)).bind("enumDecl");
 		DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 
+#if __clang_major__ >= 11
 		auto handler = std::make_unique<EnumMatchHandler>(m_document, enumName);
+#else
+		auto handler = make_unique<EnumMatchHandler>(m_document, enumName);
+#endif
+
 		finder.addMatcher(enumMatcher, handler.get());
 		finder.addMatcher(typedefMatcher, handler.get());
 		this->m_enumHandlers.push_back(std::move(handler));
@@ -83,7 +99,12 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeDependentMatchFinder() 
 			unless(cxxMethodDecl()),
 			hasParameter(0, hasType(references(cxxRecordDecl(hasName(className)))))).bind("operatorDecl");
 
+#if __clang_major__ >= 11
 		auto handler = std::make_unique<OperatorMatchHandler>(m_document, className);
+#else
+		auto handler = make_unique<OperatorMatchHandler>(m_document, className);
+#endif
+
 		finder.addMatcher(operatorMatcher, handler.get());
 		this->m_operatorHandlers.push_back(std::move(handler));
 	}

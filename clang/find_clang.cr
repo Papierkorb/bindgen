@@ -163,9 +163,7 @@ spec_base_content = {
 }.to_yaml
 write_if_changed(spec_base, spec_base_content)
 
-log "All done."
 
-exit 0
 
 #################################################
 # Helper functions found below.
@@ -493,3 +491,7 @@ def makefile_variables() OPTIONS[:makefile_variables].as String end
 def spec_base() OPTIONS[:spec_base].as String end
 def llvm_cxx_flags() OPTIONS[:llvm_cxx_flags].as String end
 def llvm_ld_flags() OPTIONS[:llvm_ld_flags].as String end
+
+
+log "All done."
+exit 0
