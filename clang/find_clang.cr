@@ -85,7 +85,6 @@ parse_clang_output output
 # Now extract clang and llvm-specific libs:
 OPTIONS[:clang_libs] = find_libraries(system_lib_dirs, "clang", dynamic)
 OPTIONS[:llvm_libs] = find_libraries(system_lib_dirs, "LLVM", dynamic)
-
 # See if only partial info was requested:
 
 if OPTIONS[:debug]
@@ -164,9 +163,7 @@ spec_base_content = {
 }.to_yaml
 write_if_changed(spec_base, spec_base_content)
 
-log "All done."
 
-exit 0
 
 #################################################
 # Helper functions found below.
@@ -174,7 +171,6 @@ exit 0
 # Parses command line in an ad hoc way. Could be replaced
 # with OptionParser.
 def parse_cli_args
-
   if ARGV.includes?("--clang")
     index = ARGV.index("--clang")
     OPTIONS[:clang] = ARGV[index + 1] unless index.nil?
@@ -355,7 +351,7 @@ def find_libraries(paths, prefix, dynamic=false)
   else
     paths
       .flat_map { |path| Dir["#{path}/lib#{prefix}*.a"] }
-      .map { |path| File.basename(path)[/^lib([^.]+)\.a$/, 1] } # FIXME: this lead to crash for e.g. libclang_rt.msan_cxx-x86_64.a
+      .map { |path| File.basename(path)[/^lib(.+)\.a$/, 1] }
       .uniq
   end
 end
@@ -495,3 +491,7 @@ def makefile_variables() OPTIONS[:makefile_variables].as String end
 def spec_base() OPTIONS[:spec_base].as String end
 def llvm_cxx_flags() OPTIONS[:llvm_cxx_flags].as String end
 def llvm_ld_flags() OPTIONS[:llvm_ld_flags].as String end
+
+
+log "All done."
+exit 0
