@@ -47,7 +47,6 @@ include_directories(${LLVM_INCLUDE_DIRS})
 message(STATUS "Add LLVM definitions: ${LLVM_DEFINITIONS}")
 add_definitions(${LLVM_DEFINITIONS})
 
-
 ######################
 # Gather info
 ######################

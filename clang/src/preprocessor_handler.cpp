@@ -21,7 +21,7 @@ void PreprocessorHandler::MacroDefined(const clang::Token &token, const clang::M
 	if (md->getMacroInfo()->isBuiltinMacro())
 		return;
 
-  std::string name = token.getIdentifierInfo()->getName();
+  std::string name = std::string(token.getIdentifierInfo()->getName());
   if (!isMacroInteresting(name)) {
     return; // Skip!
   }
@@ -46,14 +46,14 @@ static void tryCopyArguments(Macro &m, const clang::MacroInfo *info) {
 
   auto iter = info->param_begin();
   for (auto end = info->param_end(); iter + 1 != end; ++iter) {
-    m.arguments.push_back((*iter)->getName());
+    m.arguments.push_back(std::string((*iter)->getName()));
   }
 
   // Last argument may be a var-arg identifier.
   if ((*iter)->getName() == "__VA_ARGS__") {
     m.isVarArg = true;
   } else {
-    m.arguments.push_back((*iter)->getName());
+    m.arguments.push_back(std::string((*iter)->getName()));
   }
 
 	#if __clang_major__ < 5
