@@ -5,14 +5,14 @@ describe "C++ virtual overriding from Crystal feature" do
     build_and_run("virtual_override") do
       # Test inheriting from abstract class
       class NameThing < Test::AbstractThing
-        def name
+        def name : Pointer(UInt8)
           "NameThing".to_unsafe
         end
       end
 
       # Test inheriting from non-abstract, multiple-inheritance class
       class Thing < Test::Subclass
-        def name
+        def name : Pointer(UInt8)
           "Thing".to_unsafe
         end
 

@@ -90,8 +90,9 @@ module Bindgen
           conversion: nil,
         )
 
-        Graph::Alias.new( # Build the `typedef`.
-origin: origin,
+        Graph::Alias.new(
+          # Build the `typedef`.
+          origin: origin,
           name: klass.name,
           parent: host,
         )

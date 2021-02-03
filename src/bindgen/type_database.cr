@@ -112,14 +112,14 @@ module Bindgen
       property graph_node : Graph::Node?
 
       def initialize(
-        @crystal_type = nil, @cpp_type = nil, @binding_type = nil,
-        @from_cpp = nil, @to_cpp = nil, @converter = nil,
-        @from_crystal = nil, @to_crystal = nil,
+        @crystal_type : String? = nil, @cpp_type : String? = nil, @binding_type : String? = nil,
+        @from_cpp : String? = nil, @to_cpp : String? = nil, @converter : String? = nil,
+        @from_crystal : String? = nil, @to_crystal : String? = nil,
         @kind = Parser::Type::Kind::Class, @ignore = false,
-        @pass_by = PassBy::Original, @wrapper_pass_by = nil,
+        @pass_by = PassBy::Original, @wrapper_pass_by : PassBy? = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
         @generate_binding = true, @builtin = false, @ignore_methods = [] of String,
-        @graph_node = nil, @alias_for = nil
+        @graph_node : Graph::Node? = nil, @alias_for : String? = nil
       )
       end
 

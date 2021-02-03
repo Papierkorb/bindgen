@@ -1,3 +1,5 @@
+require "yaml_mapping"
+
 module Bindgen
   module Parser
     # Parser YML configuration.  See `Bindgen::Configuration#parser`.

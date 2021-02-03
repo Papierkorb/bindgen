@@ -42,11 +42,11 @@ module Bindgen
       def initialize(
         @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,
         @isVoid, @pointer, @kind = Type::Kind::Class, @hasDefault = false,
-        @value = nil, @nilable = false, @isVariadic = false
+        @value : DefaultValueTypes? = nil, @nilable = false, @isVariadic = false
       )
       end
 
-      def initialize(@name, type : Type, @hasDefault = false, @value = nil)
+      def initialize(@name, type : Type, @hasDefault = false, @value : DefaultValueTypes? = nil)
         @baseName = type.baseName
         @fullName = type.fullName
         @isConst = type.isConst

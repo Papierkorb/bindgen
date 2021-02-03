@@ -40,7 +40,8 @@ module Bindgen
       getter origin : Method?
 
       def initialize(
-        @name, @className, @returnType, @arguments, @firstDefaultArgument = nil,
+        @name, @className, @returnType, @arguments,
+        @firstDefaultArgument : Int32? = nil,
         @access = AccessSpecifier::Public, @type = Type::MemberMethod,
         @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false,
         @origin = nil, @crystal_name = nil

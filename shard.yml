@@ -1,6 +1,6 @@
 name: bindgen
 version: 0.7.0
-crystal: 0.35.0
+crystal: 0.36.1
 
 description: C/C++/Qt binding and wrapper generator
 
@@ -11,6 +11,10 @@ dependencies:
   toka:
     github: Papierkorb/toka
     version: ">= 0.1.2"
+  json_mapping:
+    github: crystal-lang/json_mapping.cr
+  yaml_mapping:
+    github: crystal-lang/yaml_mapping.cr
 targets:
   bindgen:
     main: src/bindgen.cr

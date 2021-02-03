@@ -1,3 +1,5 @@
+require "json_mapping"
+
 module Bindgen
   module Parser
     # Stores information about a specific C++ type.
@@ -110,8 +112,9 @@ module Bindgen
           name = name[0..-2] # Remove star
         end
 
-        new( # Build the `Type`
-isConst: const,
+        # Build the `Type`
+        new(
+          isConst: const,
           isMove: false,
           isReference: reference,
           isBuiltin: false, # Oh well
@@ -138,8 +141,9 @@ isConst: const,
           arguments: template_args,
         )
 
-        new( # Build the `Type`
-kind: Kind::Function,
+        # Build the `Type``
+        new(
+          kind: Kind::Function,
           isConst: false,
           isMove: false,
           isReference: false,
@@ -197,7 +201,8 @@ kind: Kind::Function,
 
       def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
 
-      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false, @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template = nil, @nilable = false)
+      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false,
+                     @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template : Template? = nil, @nilable = false)
       end
 
       # Is this type nilable?  For compatibility with `Argument`.
