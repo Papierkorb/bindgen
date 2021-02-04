@@ -44,7 +44,7 @@ module Bindgen
         @firstDefaultArgument : Int32? = nil,
         @access = AccessSpecifier::Public, @type = Type::MemberMethod,
         @isConst = false, @isVirtual = false, @isPure = false, @isExternC = false,
-        @origin = nil, @crystal_name = nil
+        @origin : Method? = nil, @crystal_name = nil
       )
       end
 
