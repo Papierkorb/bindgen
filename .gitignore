@@ -3,7 +3,7 @@
 /bin/
 /.shards/
 shard.lock
-
+/build/
 .vscode
 .idea
 

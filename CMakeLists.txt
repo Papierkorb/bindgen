@@ -3,8 +3,8 @@ project(bindgen)
 
 # To define a specific LLVM install set the path here:
 # set(LLVM_DIR /usr/local/opt/llvm/lib/cmake/llvm)
-#set(LLVM_DIR /usr/local/opt/llvm@7/lib/cmake/llvm)
-#set(LLVM_DIR /usr/local/opt/llvm@9/lib/cmake/llvm)
+# set(LLVM_DIR /usr/local/opt/llvm@7/lib/cmake/llvm)
+# set(LLVM_DIR /usr/local/opt/llvm@9/lib/cmake/llvm)
 
 add_subdirectory(clang)
 
