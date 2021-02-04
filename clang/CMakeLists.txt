@@ -4,7 +4,6 @@ project(parser-clang)
 ######################
 # LLVM Setup
 ######################
-
 set(LLVM_ENABLE_LIBCXX ON)
 
 # Search for LLVM
@@ -103,7 +102,7 @@ if("${llvm_libs}" STREQUAL "")
   # NOTE: This execute_process will use `llvm-config --libs all` to gather the libs
   message(STATUS "Run: ${llvm_config_bin} --libs all")
   execute_process(
-          COMMAND bash -c "${llvm_config_bin} --libs all | sed -E 's/\-l/;/g' | sed -E 's/ //g'"
+          COMMAND bash -c "${llvm_config_bin} --libs all | sed -E 's/\\-l/;/g' | sed -E 's/ //g'"
           # COMMAND_ECHO STDOUT
           # ERROR_VARIABLE find_clang_error
           OUTPUT_VARIABLE llvm_libs

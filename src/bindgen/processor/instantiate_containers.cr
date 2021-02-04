@@ -97,7 +97,8 @@ module Bindgen
           pointer: 0,
         )
 
-        Graph::Alias.new( # Build the `typedef`.
+        Graph::Alias.new(
+          # Build the `typedef`.
           origin: origin,
           name: cpp_type_name,
           parent: host,
