@@ -148,14 +148,14 @@ module Bindgen
 
       # Checks if *node* has a valid camel-case name.  If not, adds an error.
       private def check_valid_camel_case_name!(node)
-        unless CAMEL_CASE_RX.matches?(node.name)
+        unless CAMEL_CASE_RX.match(node.name)
           add_error(node, "Invalid #{node.kind_name.downcase} camel case name #{node.name.inspect}")
         end
       end
 
       # Checks if *node* has a valid constant name.  If not, adds an error.
       private def check_valid_constant_name!(node)
-        unless CONSTANT_RX.matches?(node.name)
+        unless CONSTANT_RX.match(node.name)
           add_error(node, "Invalid #{node.kind_name.downcase} constant name #{node.name.inspect}")
         end
       end
@@ -164,10 +164,8 @@ module Bindgen
       private def check_method_name!(node)
         return if node.name.empty? # Accept initializers
 
-        unless METHOD_NAME_RX.matches?(node.origin.crystal_name)
-          unless Crystal::OPERATORS.includes?(node.origin.crystal_name)
-            add_error(node, "Invalid #{node.kind_name.downcase} method name #{node.name.inspect}")
-          end
+        unless METHOD_NAME_RX.match(node.origin.crystal_name)
+          add_error(node, "Invalid #{node.kind_name.downcase} method name #{node.name.inspect}")
         end
       end
     end
