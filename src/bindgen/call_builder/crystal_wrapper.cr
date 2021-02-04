@@ -73,9 +73,11 @@ module Bindgen
             name: call.name,
             arguments: arguments,
             result: result,
-            static: call.origin.static_method?,
+            static: call.origin.static?,
             abstract: call.origin.pure?,
             protected: call.origin.protected?,
+            private: call.origin.private?,
+            named_args: call.origin.aggregate_constructor?,
           )
 
           %[#{head_line}\n] \
@@ -86,11 +88,7 @@ module Bindgen
 
       class MethodBody < Body
         def encapsulate(call, code)
-          if templ = call.result.conversion
-            Util.template(templ, code)
-          else
-            code
-          end
+          call.result.apply_conversion(code)
         end
       end
 

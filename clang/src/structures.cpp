@@ -51,11 +51,11 @@ bool LiteralData::hasValue() const {
 	return (this->kind != None);
 }
 
+void LiteralData::clear() { this->kind = None; }
 void LiteralData::set(bool v) { this->kind = BoolKind; this->container.bool_value = v; }
 void LiteralData::set(int64_t v) { this->kind = IntKind; this->container.int_value = v; }
 void LiteralData::set(uint64_t v) { this->kind = UIntKind; this->container.uint_value = v; }
 void LiteralData::set(double v) { this->kind = DoubleKind; this->container.double_value = v; }
-void LiteralData::set(JsonStream::Terminal v) { this->kind = TerminalKind; this->container.terminal_value = v; }
 void LiteralData::set(const std::string &v) {
 	this->kind = StringKind;
 	this->container.string_value = new std::string(v);
@@ -75,9 +75,6 @@ JsonStream &operator<<(JsonStream &s, const LiteralData &value) {
 		break;
 	case LiteralData::DoubleKind:
 		s << value.container.double_value;
-		break;
-	case LiteralData::TerminalKind:
-		s << value.container.terminal_value;
 		break;
 	case LiteralData::StringKind:
 		s << *value.container.string_value;
@@ -111,6 +108,7 @@ JsonStream &operator<<(JsonStream &s, Method::MethodType value) {
 		case Method::MemberMethod: return s << "MemberMethod";
 		case Method::StaticMethod: return s << "StaticMethod";
 		case Method::Operator: return s << "Operator";
+		case Method::ConversionOperator: return s << "ConversionOperator";
 		case Method::Signal: return s << "Signal";
 		default: return s << "BUG IN BINDGEN";
 	}
@@ -122,6 +120,7 @@ JsonStream &operator<<(JsonStream &s, const Method &value) {
 		<< std::make_pair("type", value.type) << c
 		<< std::make_pair("access", value.access) << c
 		<< std::make_pair("name", value.name) << c
+		<< std::make_pair("isBuiltin", value.isBuiltin) << c
 		<< std::make_pair("isConst", value.isConst) << c
 		<< std::make_pair("isVirtual", value.isVirtual) << c
 		<< std::make_pair("isPure", value.isPure) << c
@@ -166,7 +165,13 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 	s << JsonStream::ObjectBegin;
 	writeTypeJson(s, value) << c;
 	s << std::make_pair("name", value.name) << c
-		<< std::make_pair("access", value.access) << c;
+		<< std::make_pair("access", value.access) << c
+		<< std::make_pair("isStatic", value.isStatic) << c
+		<< std::make_pair("hasDefault", value.hasDefault) << c;
+
+	if (value.hasDefault && value.value.hasValue()) {
+		s << std::make_pair("value", value.value) << c;
+	}
 
 	if (value.bitField > 0)
 		s << std::make_pair("bitField", value.name);
@@ -176,14 +181,26 @@ JsonStream &operator<<(JsonStream &s, const Field &value) {
 	return s << JsonStream::ObjectEnd;
 }
 
+JsonStream &operator<<(JsonStream &s, clang::TagTypeKind value) {
+	switch (value) {
+		case clang::TTK_Class: return s << "Class";
+		case clang::TTK_Struct: return s << "Struct";
+		case clang::TTK_Union: return s << "CppUnion"; // avoid confusion with Crystal union
+		case clang::TTK_Interface: return s << "Interface";
+		case clang::TTK_Enum: return s << "Enum";
+		default: return s << "BUG IN Bindgen";
+	}
+}
+
 JsonStream &operator<<(JsonStream &s, const Class &value) {
 	auto c = JsonStream::Comma;
 	return s
 		<< JsonStream::ObjectBegin
 		<< std::make_pair("name", value.name) << c
 		<< std::make_pair("byteSize", value.byteSize) << c
-		<< std::make_pair("isClass", value.isClass) << c
+		<< std::make_pair("typeKind", value.typeKind) << c
 		<< std::make_pair("isAbstract", value.isAbstract) << c
+		<< std::make_pair("isAnonymous", value.isAnonymous) << c
 		<< std::make_pair("isDestructible", value.isDestructible) << c
 		<< std::make_pair("hasDefaultConstructor", value.hasDefaultConstructor) << c
 		<< std::make_pair("hasCopyConstructor", value.hasCopyConstructor) << c
@@ -195,21 +212,14 @@ JsonStream &operator<<(JsonStream &s, const Class &value) {
 
 JsonStream &operator<<(JsonStream &s, const Enum &value) {
 	auto c = JsonStream::Comma;
-	s << JsonStream::ObjectBegin
+	return s
+		<< JsonStream::ObjectBegin
 		<< std::make_pair("name", value.name) << c
 		<< std::make_pair("type", value.type) << c
 		<< std::make_pair("isFlags", value.isFlags) << c
-		<< "values" << JsonStream::Separator << JsonStream::ObjectBegin;
-
-	bool first = true;
-	for (const std::pair<std::string, int64_t> &elem : value.values) {
-		if (!first) s << c;
-		s << std::make_pair(elem.first, elem.second);
-		first = false;
-	}
-
-	s << JsonStream::ObjectEnd << JsonStream::ObjectEnd;
-	return s;
+		<< std::make_pair("isAnonymous", value.isAnonymous) << c
+		<< std::make_pair("values", value.values)
+		<< JsonStream::ObjectEnd;
 }
 
 JsonStream &operator<<(JsonStream &s, const Macro &value) {
@@ -229,4 +239,15 @@ JsonStream &operator<<(JsonStream &s, const Macro &value) {
 
 	s << JsonStream::ObjectEnd;
 	return s;
+}
+
+JsonStream &operator<<(JsonStream &s, const Document &value) {
+	auto c = JsonStream::Comma;
+	return s
+		<< JsonStream::ObjectBegin
+		<< std::make_pair("enums", value.enums) << c
+		<< std::make_pair("classes", value.classes) << c
+		<< std::make_pair("functions", value.functions) << c
+		<< std::make_pair("macros", value.macros)
+		<< JsonStream::ObjectEnd;
 }

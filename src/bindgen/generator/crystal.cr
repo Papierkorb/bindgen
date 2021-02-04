@@ -26,12 +26,14 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
 
+        scope = "private" if klass.origin.private?
         prefix = "abstract" if klass.abstract?
         suffix = "< #{klass.base_class}" if klass.base_class
 
-        code_block prefix, "class", klass.name, suffix do
+        code_block scope, prefix, "class", klass.name, suffix do
+          write_included_modules(klass.included_modules)
           write_instance_variables(klass.instance_variables)
           super
         end
@@ -43,8 +45,17 @@ module Bindgen
         puts "#{constant.name} = #{value}"
       end
 
+      # Includes the *modules* in the current open scope.
+      private def write_included_modules(modules)
+        modules.each do |mod|
+          puts "include #{mod}"
+        end
+
+        puts "" unless modules.empty?
+      end
+
       # Writes the instance *variables* into the current open scope.
-      def write_instance_variables(variables)
+      private def write_instance_variables(variables)
         typer = Bindgen::Crystal::Typename.new(@db)
 
         variables.each do |name, result|

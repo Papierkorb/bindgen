@@ -13,16 +13,16 @@ describe Bindgen::Processor::ExternC do
 
   doc = Bindgen::Parser::Document.new
   db = Bindgen::TypeDatabase.new(Bindgen::TypeDatabase::Configuration.new, "boehmgc-cpp")
-  db.add("HasToCpp", to_cpp: "TO_CPP", copy_structure: true)
-  db.add("HasFromCpp", from_cpp: "FROM_CPP", copy_structure: true)
+  db.add("HasToCpp", to_cpp: Bindgen::Template.from_string("TO_CPP"), copy_structure: true)
+  db.add("HasFromCpp", from_cpp: Bindgen::Template.from_string("FROM_CPP"), copy_structure: true)
   db.add("PassByValue", pass_by: Bindgen::TypeDatabase::PassBy::Reference)
 
   extern_c_void_func = Bindgen::Parser::Method.new(
     name: "foo",
-    className: "",
+    class_name: "",
     arguments: [] of Bindgen::Parser::Argument,
-    returnType: Bindgen::Parser::Type::VOID,
-    isExternC: true,
+    return_type: Bindgen::Parser::Type::VOID,
+    extern_c: true,
   )
 
   void_result = Bindgen::Cpp::Pass.new(db).to_cpp(Bindgen::Parser::Type::VOID)
@@ -44,10 +44,10 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "foo",
-        className: "",
+        class_name: "",
         arguments: [] of Bindgen::Parser::Argument,
-        returnType: Bindgen::Parser::Type::VOID,
-        isExternC: false,
+        return_type: Bindgen::Parser::Type::VOID,
+        extern_c: false,
       )
     )
 
@@ -63,14 +63,14 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "foo",
-        className: "",
+        class_name: "",
         arguments: [
           argument("a", "int"),
           argument("b", "const char *"),
           argument("c", "HasToCpp"),
         ],
-        returnType: Bindgen::Parser::Type::VOID,
-        isExternC: true,
+        return_type: Bindgen::Parser::Type::VOID,
+        extern_c: true,
       )
     )
 
@@ -85,14 +85,14 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "foo",
-        className: "",
+        class_name: "",
         arguments: [
           argument("a", "int"),
           argument("b", "const char *"),
           argument("c", "PassByValue *"),
         ],
-        returnType: Bindgen::Parser::Type::VOID,
-        isExternC: true,
+        return_type: Bindgen::Parser::Type::VOID,
+        extern_c: true,
       )
     )
 
@@ -107,13 +107,13 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "foo",
-        className: "",
+        class_name: "",
         arguments: [
           argument("a", "int"),
           argument("b", "const char *"),
         ],
-        returnType: Bindgen::Parser::Type.parse("HasFromCpp"),
-        isExternC: true,
+        return_type: Bindgen::Parser::Type.parse("HasFromCpp"),
+        extern_c: true,
       )
     )
 
@@ -128,13 +128,13 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "foo",
-        className: "",
+        class_name: "",
         arguments: [
           argument("a", "int"),
           argument("b", "const char *"),
         ],
-        returnType: Bindgen::Parser::Type.parse("PassByValue *"),
-        isExternC: true,
+        return_type: Bindgen::Parser::Type.parse("PassByValue *"),
+        extern_c: true,
       )
     )
 
@@ -190,14 +190,14 @@ describe Bindgen::Processor::ExternC do
       parent: graph,
       origin: Bindgen::Parser::Method.new(
         name: "libfoo_bar",
-        className: "",
+        class_name: "",
         arguments: [
           argument("a", "int"),
           argument("b", "const char *"),
           argument("c", "HasFromCpp"),
         ],
-        returnType: Bindgen::Parser::Type.parse("HasToCpp"),
-        isExternC: true,
+        return_type: Bindgen::Parser::Type.parse("HasToCpp"),
+        extern_c: true,
       )
     )
 

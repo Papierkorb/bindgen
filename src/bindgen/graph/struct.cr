@@ -2,13 +2,13 @@ module Bindgen
   module Graph
     # A `struct` in Crystal (`lib` or not), or a plain `struct` in C++.
     #
-    # A structure can host both raw variable fields (C-style) and other methods
-    # at once.
+    # A structure can host both raw non-static variable fields (C-style) and
+    # other methods at once.
     class Struct < Container
       # Used to signal the `Generator::Cpp` to generate a `using BASE::BASE;`.
       INHERIT_CONSTRUCTORS_TAG = "INHERIT_CONSTRUCTORS_TAG"
 
-      # Fields in this struct.
+      # Non-static fields in this structure.
       getter fields : Hash(String, Call::Result)
 
       # Name of the base-class, if any.  This is mainly useful for C++ to

@@ -44,7 +44,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
         begin_section klass.name
         super
       end
@@ -65,8 +65,9 @@ module Bindgen
         puts "#{prototype} {"
         indented do
           if structure.tag?(Graph::Struct::INHERIT_CONSTRUCTORS_TAG)
-            base = structure.base_class
-            puts "using #{base}::#{base};" # C++11
+            base = structure.base_class.not_nil!
+            ctor = Graph::Path.from(base).last_part
+            puts "using #{base}::#{ctor};" # C++11
           end
 
           structure.fields.each do |name, type|

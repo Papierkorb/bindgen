@@ -4,7 +4,12 @@
 
 classes:
   Adder: AdderWrap
+  Ops: Ops
+  FreeOps: FreeOps
   ImplicitConstructor: ImplicitConstructor
+  Aggregate: Aggregate
+  PrivateConstructor: PrivateConstructor
+  DeletedConstructor: DeletedConstructor
   TypeConversion: TypeConversion
 
 types:

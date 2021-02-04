@@ -23,7 +23,7 @@ module Bindgen
         return {type.base_name, true} if rules.nil?
 
         # Only copied `struct`s reside in `Binding`!
-        is_copied = rules.copy_structure
+        is_copied = rules.copy_structure?
 
         if name = rules.crystal_type
           {name, false}
@@ -50,8 +50,11 @@ module Bindgen
         rules = @db[type]?
         return {type.base_name, !type.builtin?} if rules.nil?
 
-        in_lib = rules.copy_structure # Copied structures end up in Binding
-        in_lib ||= !rules.kind.enum? && !rules.builtin && !type.builtin?
+        # Copied structures end up in Binding
+        in_lib = rules.copy_structure?
+        # The `Void` check is required for `InstantiateContainers`, which marks
+        # their binding types as built-in
+        in_lib ||= !rules.kind.enum? && rules.binding_type != "Void" && !type.builtin?
 
         if name = rules.lib_type
           {name, in_lib}

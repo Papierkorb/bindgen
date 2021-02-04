@@ -33,6 +33,28 @@ module Bindgen
       end
     end
 
+    # Reads the table of instance variable configurations.  Additionally accepts
+    # `true` (use default settings) and `false` (ignore all members).
+    module InstanceVariablesConverter
+      private alias ValueType = TypeDatabase::InstanceVariableConfig::Collection
+
+      def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : ValueType
+        if node.is_a?(YAML::Nodes::Scalar)
+          case node.value
+          when "true"
+            ValueType.new
+          when "false"
+            { /.*/ => TypeDatabase::InstanceVariableConfig.new ignore: true }
+          else
+            node.raise "Expected Bool or Hash for instance_variables"
+          end
+        else
+          str_table = Hash(String, TypeDatabase::InstanceVariableConfig).new(ctx, node)
+          str_table.transform_keys(&->Regex.new(String))
+        end
+      end
+    end
+
     # Configuration of a generator, as given as value in `generators:`
     class Generator
       include YAML::Serializable
@@ -81,7 +103,7 @@ module Bindgen
       property type : Type
 
       # List of instantiations to create.
-      property instantiations : Array(Array(String)) = [] of Array(String)
+      property instantiations = Set(Array(String)).new
 
       # Method to access an element at an index.
       property access_method : String = "at"

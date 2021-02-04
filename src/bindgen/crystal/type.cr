@@ -32,7 +32,7 @@ module Bindgen
           return value.to_s # Special case for `(const) char *`
         end
 
-        target_type = @db.try_or(type, type.base_name, &.binding_type)
+        target_type = @db.try_or(type, type.base_name, &.wrapper_type)
         case resolve_long(target_type)
         when "UInt8"   then as_number(value, &.to_u8)
         when "UInt16"  then as_number(value, &.to_u16)

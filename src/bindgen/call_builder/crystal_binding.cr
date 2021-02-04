@@ -7,15 +7,26 @@ module Bindgen
       end
 
       # *explicit_binding* only affects the `FunBody`.
-      def build(method : Parser::Method, klass_type : Parser::Type?, body = FunBody, explicit_binding : String? = nil) : Call
+      #
+      # *myself_type* is used by superclass wrapper structs to pass the wrapped
+      # instance to a lib fun.  If it is non-nil, *klass_type* should be the
+      # wrapper struct for *myself_type*.
+      def build(
+        method : Parser::Method, klass_type : Parser::Type?, body = FunBody,
+        explicit_binding : String? = nil, myself_type : Parser::Type? = nil
+      ) : Call
         pass = Crystal::Pass.new(@db)
         argument = Crystal::Argument.new(@db)
 
         arguments = pass.arguments_to_binding(method.arguments)
 
-        # Add `_self_` argument if required
-        if klass_type && method.needs_instance?
-          arguments.unshift argument.self(klass_type)
+        # Add self argument if required
+        if method.needs_instance?
+          if myself_type
+            arguments.unshift argument.myself(myself_type)
+          elsif klass_type
+            arguments.unshift argument.self(klass_type)
+          end
         end
 
         result = pass.from_binding(method.return_type, is_constructor: method.any_constructor?)
@@ -53,11 +64,7 @@ module Bindgen
           post = @post_hook
 
           pass_args = call.arguments.map(&.call).join(", ")
-          code = %[Binding.#{call.name}(#{pass_args})]
-
-          if templ = call.result.conversion
-            code = Util.template(templ, code)
-          end
+          code = call.result.apply_conversion %[Binding.#{call.name}(#{pass_args})]
 
           # Support for pre- and post hooks.
           String.build do |b|

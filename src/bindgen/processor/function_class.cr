@@ -49,10 +49,10 @@ module Bindgen
         function = Parser::Method.new(
           type: type,
           name: method.name,
-          className: method.class_name,
-          returnType: method.return_type,
+          class_name: method.class_name,
+          return_type: method.return_type,
           arguments: arguments,
-          isExternC: method.extern_c?,
+          extern_c: method.extern_c?,
         )
 
         if !type.constructor? && !type.destructor?
@@ -96,8 +96,8 @@ module Bindgen
       private def build_baseclass(name : String)
         Parser::BaseClass.new(
           name: name,
-          inheritedConstructor: false,
-          isVirtual: false,
+          inherited_constructor: false,
+          virtual: false,
           access: Parser::AccessSpecifier::Public,
         )
       end
@@ -111,9 +111,8 @@ module Bindgen
 
         Parser::Class.new(
           name: Graph::Path.from(name).last_part,
-          hasDefaultConstructor: has_default_constructor?(wrapper.constructors, list),
-          hasCopyConstructor: false,
-          isClass: true,
+          has_default_constructor: has_default_constructor?(wrapper.constructors, list),
+          has_copy_constructor: false,
           methods: classify_methods(wrapper, config, list),
           bases: bases,
         )
@@ -164,8 +163,7 @@ module Bindgen
         rules.cpp_type ||= structure
         rules.graph_node = klass
 
-        struct_rules = @db.get_or_add(structure)
-        struct_rules.alias_for ||= klass.name
+        @db.add_alias(structure, klass.name)
       end
     end
   end

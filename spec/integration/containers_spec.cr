@@ -16,6 +16,18 @@ describe "container instantiation feature" do
           list = [1.5, 2.5]
           Test::Containers.new.sum(list).should eq(4.0)
         end
+
+        it "works with auto instantiated container (aliased container)" do
+          Test::Containers.new.chars.to_a.should eq([1u8, 4u8, 9u8])
+        end
+
+        it "works with auto instantiated container (aliased element)" do
+          Test::Containers.new.palette.to_a.should eq([0xFF0000u32, 0x00FF00u32, 0x0000FFu32])
+        end
+
+        it "works with nested containers" do
+          Test::Containers.new.grid.to_a.map(&.to_a).should eq([[1, 4], [9, 16]])
+        end
       end
     end
   end

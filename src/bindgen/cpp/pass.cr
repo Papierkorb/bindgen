@@ -16,14 +16,14 @@ module Bindgen
         end
       end
 
-      # ditto
+      # :ditto:
       def arguments_from_cpp(list : Enumerable(Parser::Argument))
         list.map_with_index do |arg, idx|
           passthrough_to_crystal(arg).to_argument(Argument.name(arg, idx))
         end
       end
 
-      # ditto
+      # :ditto:
       def through_arguments(list : Enumerable(Parser::Argument))
         list.map_with_index do |arg, idx|
           through(arg).to_argument(Argument.name(arg, idx))
@@ -39,8 +39,8 @@ module Bindgen
         proc_types = inner_args[1..-1].map { |t| to_crystal(t).as(Call::Result) }
         proc_types.unshift to_cpp(inner_args.first)
 
-        proc_args = typer.full(proc_types).join(", ")
-        "CrystalProc<#{proc_args}>"
+        proc_args = typer.full(proc_types)
+        typer.template_class(Parser::Type::CRYSTAL_PROC, proc_args)
       end
 
       # Computes a result for passing *type* from Crystal to C++.
@@ -61,21 +61,27 @@ module Bindgen
       # 2. The type is passed by-pointer
       #   a. Pass by-pointer
       def to_cpp(type : Parser::Type) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         is_val = type.pointer < 1
         ptr = type_pointer_depth(type)
         pass_by = TypeDatabase::PassBy::Original
 
         type_name = type.base_name
-        type_name = crystal_proc_name(type) if type.kind.function?
 
-        # If the method expects a value, but we don't copy its structure, we pass
-        # a reference to it instead.
-        if is_val && !is_copied
+        if type.kind.function?
+          type_name = crystal_proc_name(type)
+          pass_by = TypeDatabase::PassBy::Value
+          is_ref = false
+          ptr = 0
+        elsif is_val && !is_copied
+          # If the method expects a value, but we don't copy its structure, we
+          # pass a reference to it instead.
           is_ref = true
           ptr = 0
         end
+
+        template = Template::None.new
 
         if rules = @db[type]?
           template = rules.to_cpp
@@ -84,7 +90,7 @@ module Bindgen
           is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
-        if template.nil?
+        if template.no_op?
           pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
           template = conversion_template(pass_by, type, type_name)
         end
@@ -115,11 +121,10 @@ module Bindgen
       # 4. In all other cases
       #   a. Pass by-reference or by-pointer as defined by *type*.
       def to_crystal(type : Parser::Type, is_constructor = false) : Call::Result
-        is_copied = is_type_copied?(type)
+        is_copied = type_copied?(type)
         is_ref = type.reference?
         ptr = type_pointer_depth(type)
         is_val = type.pointer < 1
-        generate_template = false
         pass_by = TypeDatabase::PassBy::Original
 
         type_name = type.base_name
@@ -134,10 +139,10 @@ module Bindgen
         elsif is_ref || (is_val && !is_copied)
           is_ref = false
           ptr = 1
-
-          generate_template = !is_copied
           pass_by = TypeDatabase::PassBy::Pointer
         end
+
+        template = Template::None.new
 
         if rules = @db[type]?
           template = rules.from_cpp
@@ -146,7 +151,7 @@ module Bindgen
           is_ref, ptr = reconfigure_pass_type(pass_by, is_ref, ptr)
         end
 
-        if template.nil?
+        if template.no_op?
           pass_by = type_config_to_pass_by(is_ref, ptr) if pass_by.original?
           template = conversion_template(pass_by, type, type_name)
         end
@@ -196,7 +201,7 @@ module Bindgen
 
       # Finds the conversion template to go from *type* to the desired target
       # type configuration.
-      private def conversion_template(pass_by, type, type_name) : String?
+      private def conversion_template(pass_by, type, type_name) : Template::Base
         original_ref = type.reference?
         original_ptr = type_pointer_depth(type) > 0
 
@@ -213,7 +218,6 @@ module Bindgen
           type_name: type_name,
           reference: type.reference?,
           pointer: type_pointer_depth(type),
-          conversion: nil,
         )
       end
     end

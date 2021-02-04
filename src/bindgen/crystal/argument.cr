@@ -14,12 +14,12 @@ module Bindgen
         name
       end
 
-      # ditto
+      # :ditto:
       def name(argument : Parser::Argument, idx)
         name(argument.name, idx)
       end
 
-      # ditto
+      # :ditto:
       def name(argument : Call::Argument, idx)
         name(argument.name, idx)
       end
@@ -36,6 +36,22 @@ module Bindgen
           call: "self",
           reference: false,
           pointer: 1, # It's always a pointer
+        )
+      end
+
+      # Returns a `@myself` argument, used in bindings inside superclass
+      # wrapper structs.
+      def myself(klass_type : Parser::Type) : Call::Argument
+        typename = Typename.new(@db)
+        type_name, _ = typename.wrapper(klass_type)
+
+        Call::Argument.new(
+          type: klass_type,
+          type_name: type_name,
+          name: "@myself",
+          call: "@myself",
+          reference: false,
+          pointer: 0,
         )
       end
     end

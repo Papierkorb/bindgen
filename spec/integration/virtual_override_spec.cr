@@ -5,19 +5,50 @@ describe "C++ virtual overriding from Crystal feature" do
     build_and_run("virtual_override") do
       # Test inheriting from abstract class
       class NameThing < Test::AbstractThing
-        def name : Pointer(UInt8)
+        def name : UInt8*
           "NameThing".to_unsafe
         end
       end
 
       # Test inheriting from non-abstract, multiple-inheritance class
       class Thing < Test::Subclass
-        def name : Pointer(UInt8)
+        def name : UInt8*
           "Thing".to_unsafe
         end
 
         def calc(a, b)
           a - b
+        end
+      end
+
+      class ImplicitThing < Test::Implicit
+        # overrides Test::Base#calc (absent in Test::Implicit)
+        def calc(a, b)
+          a * b
+        end
+      end
+
+      # Test calling superclass method from overridden method
+      class OverrideThing < Test::Base
+        def calc(a, b)
+          superclass.calc(a, b) ** 2
+        end
+      end
+
+      class SubOverrideThing < Test::Subclass
+        def calc(a, b)
+          superclass.calc(a, b) ** 2
+        end
+
+        def has_random_number?
+          superclass.has_random_number?
+        end
+      end
+
+      # Must be reopened because this type is private
+      class Test::Subclass::Superclass
+        def has_random_number?
+          {{ @type.methods.map &.name.stringify }}.includes?("random_number")
         end
       end
 
@@ -40,6 +71,15 @@ describe "C++ virtual overriding from Crystal feature" do
 
         it "allows calling Crystal overrides from C++" do
           Thing.new.call_virtual(7, 6).should eq(1)
+        end
+
+        it "can call superclass method from overridden method" do
+          OverrideThing.new.calc(10, 4).should eq(196)
+          SubOverrideThing.new.calc(10, 4).should eq(1600)
+        end
+
+        it "can override implicitly inherited method" do
+          ImplicitThing.new.call_virtual(7, 6).should eq(42)
         end
 
         # TODO: This fails!
@@ -69,6 +109,23 @@ describe "C++ virtual overriding from Crystal feature" do
           abstract_base = thing.itself
           abstract_base.should be_a(Test::AbstractThing)
           String.new(abstract_base.name).should eq("NameThing")
+        end
+      end
+
+      context "superclass opt-out" do
+        it "can opt out generation of superclass wrappers" do
+          {{ Test::Skip.has_constant?("Superclass") }}.should be_false
+          {{ Test::Skip.methods.map(&.name.stringify) }}.includes?("superclass").should be_false
+        end
+
+        it "can opt out generation of methods in superclass wrappers" do
+          SubOverrideThing.new.has_random_number?.should be_false
+        end
+      end
+
+      context "namespaced classes" do
+        it "compiles" do
+          Test::Module::SuperV.new.f
         end
       end
     end

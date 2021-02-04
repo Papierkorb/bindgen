@@ -176,7 +176,7 @@ module Bindgen
       property search_paths : Array(String)? = nil
 
       # Checks to do
-      property checks : Array(Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck | Bindgen::FindPath::AnyOfCheck) = Array(Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck | Bindgen::FindPath::AnyOfCheck).new
+      property checks = Array(Bindgen::FindPath::PathCheck | Bindgen::FindPath::ShellCheck | Bindgen::FindPath::AnyOfCheck).new
 
       # Version check to do
       property version : VersionCheck? = nil
