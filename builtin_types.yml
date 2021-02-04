@@ -2,6 +2,7 @@
 # Describes sane defaults to map built-in C/C++ types to Crystal.
 
 void: { binding_type: Void, kind: Struct, builtin: true }
+"void *": { crystal_type: "Void*", builtin: true }
 
 # Boolean type
 bool: { binding_type: Bool, crystal_type: Bool, cpp_type: bool, kind: Struct, builtin: true }
