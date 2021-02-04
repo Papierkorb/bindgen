@@ -20,6 +20,7 @@ module Bindgen
 
       def initialize(_config, db)
         super
+
         @builder = CallBuilder::CrystalBinding.new(db)
         @aliases = {} of String => Graph::Node
       end
@@ -118,11 +119,42 @@ module Bindgen
           return if rules.graph_node.is_a?(Graph::Enum)
         end
 
-        @aliases[expr.type_name] = Graph::Alias.new( # `alias EXPR_NAME = Void`
-origin: VOID_RESULT,
+        @binding.not_nil!.parent.not_nil!.nodes.each do |n|
+          if n.is_a?(Bindgen::Graph::Container)
+            s = check_sub_nodes(expr.type_name, n)
+            unless s.nil?
+              @aliases[expr.type_name] = s
+              return
+            end
+          end
+        end
+
+        if expr.type_name =~ /::/
+          # puts expr.pretty_inspect
+          # exit
+        end
+
+        @aliases[expr.type_name] = Graph::Alias.new(
+          # `alias EXPR_NAME = Void`
+          origin: VOID_RESULT,
           name: expr.type_name,
           parent: nil,
         )
+      end
+
+      # Method to recursivly search for existing aliases
+      private def check_sub_nodes(type_name : String, node : Bindgen::Graph::Container)
+        node.nodes.each do |sub_node|
+          if sub_node.is_a?(Bindgen::Graph::Alias) && type_name == sub_node.origin.type_name
+            puts "found existing alias for #{type_name} in #{sub_node}"
+            return sub_node
+          elsif sub_node.is_a?(Bindgen::Graph::Container)
+            s = check_sub_nodes(type_name, sub_node)
+            return s unless s.nil?
+          end
+        end
+
+        nil
       end
     end
   end
