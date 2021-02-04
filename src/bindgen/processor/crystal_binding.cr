@@ -119,19 +119,10 @@ module Bindgen
           return if rules.graph_node.is_a?(Graph::Enum)
         end
 
-        @binding.not_nil!.parent.not_nil!.nodes.each do |n|
-          if n.is_a?(Bindgen::Graph::Container)
-            s = check_sub_nodes(expr.type_name, n)
-            unless s.nil?
-              @aliases[expr.type_name] = s
-              return
-            end
-          end
-        end
-
-        if expr.type_name =~ /::/
-          # puts expr.pretty_inspect
-          # exit
+        alias_node = check_sub_nodes(expr.type_name, @binding.not_nil!.parent.not_nil!)
+        if alias_node
+          @aliases[expr.type_name] = alias_node
+          return
         end
 
         @aliases[expr.type_name] = Graph::Alias.new(
@@ -145,12 +136,14 @@ module Bindgen
       # Method to recursivly search for existing aliases
       private def check_sub_nodes(type_name : String, node : Bindgen::Graph::Container)
         node.nodes.each do |sub_node|
-          if sub_node.is_a?(Bindgen::Graph::Alias) && type_name == sub_node.origin.type_name
-            puts "found existing alias for #{type_name} in #{sub_node}"
-            return sub_node
+          if sub_node.is_a?(Bindgen::Graph::Alias)
+            if type_name == sub_node.origin.type_name
+              # puts "found existing alias for #{type_name} in #{sub_node}"
+              return sub_node
+            end
           elsif sub_node.is_a?(Bindgen::Graph::Container)
-            s = check_sub_nodes(type_name, sub_node)
-            return s unless s.nil?
+            subn = check_sub_nodes(type_name, sub_node)
+            return subn unless subn.nil?
           end
         end
 

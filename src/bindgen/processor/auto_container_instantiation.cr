@@ -12,6 +12,7 @@ module Bindgen
 
         try_add_container_type m.return_type
         try_add_container_type @db.resolve_aliases m.return_type
+
         m.arguments.each do |argument|
           try_add_container_type argument
           try_add_container_type @db.resolve_aliases argument

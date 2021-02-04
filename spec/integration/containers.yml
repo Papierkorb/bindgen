@@ -19,6 +19,8 @@ containers:
     instantiations:
       - [ "int" ]
       - [ "std::vector<int>" ]
+  - class: std::__1::vector
+    type: Sequential
 
 types:
   rgb: { alias_for: "unsigned int" }
