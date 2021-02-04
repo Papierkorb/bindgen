@@ -17,6 +17,8 @@ containers:
     type: Sequential
     instantiations:
       - [ "int" ]
+      - [ "double" ]
+      - [ "std::string" ]
       - [ "std::vector<int>" ]
   - class: std::__1::vector
     type: Sequential
