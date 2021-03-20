@@ -1,6 +1,10 @@
 module Bindgen
+  spoved_logger
+
   # Front-end tool class
   class Tool
+    spoved_logger
+
     # Dummy error that can be thrown by a class to exit out of the tool.
     class ExitError < Exception
       # The exit code to signal.
@@ -18,6 +22,8 @@ module Bindgen
     getter root_path : String
 
     def initialize(@root_path : String, @config : Configuration, @show_stats = false)
+      logger.info &.emit "new bindgen tool", root_path: @root_path, show_stats: @show_stats
+
       @database = TypeDatabase.new(@config.types, @config.cookbook)
 
       # Add enum types to the db
@@ -39,10 +45,11 @@ module Bindgen
     def run! : Int32
       stats = run_steps
       print_stats(stats) if @show_stats
+      logger.info { "success!" }
       0 # Success!
 
-
     rescue err : ExitError
+      logger.error(exception: err) { err.message }
       err.code # Failure
     end
 
@@ -58,14 +65,21 @@ module Bindgen
     private def run_steps : Statistics
       stats = Statistics.new
 
+      logger.info {"find paths"}
       if path_config = @config.find_paths
         stats.measure("Find paths") { find_paths(path_config) }
       end
 
+      logger.info {"Parse C++"}
       document = stats.measure("Parse C++") { parse_cpp_sources }
+
+      logger.info {"Build graph"}
       graph = stats.measure("Build graph") { build_graph(document) }
 
+      logger.info {"Processors"}
       stats.measure("Processors") { @processors.process(graph, document) }
+
+      logger.info {"Generators"}
       stats.measure("Generators") { @generators.process(graph) }
 
       stats.finish!

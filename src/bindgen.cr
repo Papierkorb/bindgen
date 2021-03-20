@@ -11,13 +11,21 @@ class CliOptions
       default:     false,
       description: "Show runtime statistics",
     },
-
+    debug: { # --debug, -d
+      type:        Bool,
+      default:     false,
+      description: "Print debug logging",
+    },
+    trace: { # --trace, -t
+      type:        Bool,
+      default:     false,
+      description: "Print trace logging",
+    },
     var: { # --var, -v
       type:        Hash(String, String),
       value_name:  "NAME=VALUE",
       description: "Add variable.  Overrides builtins.",
     },
-
     chdir: { # Hack to make Crystal find paths by itself.
       type:        String?,
       description: "Change into the directory before proceeding",
@@ -37,6 +45,14 @@ if opts.positional_options.size < 1
 elsif opts.positional_options.size > 1
   puts "Exactly one configuration file must be supplied.  See --help."
   exit 1
+end
+
+if opts.trace
+  spoved_logger :trace, bind: true, clear: true, dispatcher: :sync
+elsif opts.debug
+  spoved_logger :debug, bind: true, clear: true, dispatcher: :sync
+else
+  spoved_logger :error, bind: true, clear: true, dispatcher: :sync
 end
 
 # Merge additional --var's

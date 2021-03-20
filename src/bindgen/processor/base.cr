@@ -12,6 +12,10 @@ module Bindgen
     # simply override the corresponding `#visit_X` method.  See `FilterMethods`
     # for an example of this.
     abstract class Base
+      macro inherited
+        spoved_logger
+      end
+
       include Graph::Visitor
 
       def initialize(@config : Configuration, @db : TypeDatabase)

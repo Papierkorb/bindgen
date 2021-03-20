@@ -26,6 +26,8 @@ module Bindgen
       def visit_method(method)
         return unless method.origin.extern_c? # Rule 1
 
+        logger.trace { "visiting method #{method.diagnostics_path}" }
+
         return if method.tag?(Graph::Method::EXPLICIT_BIND_TAG)  # Rule 5
         unless method.tag?(Graph::Method::REMOVABLE_BINDING_TAG) # Rule 4
           return if method.calls[Graph::Platform::CrystalBinding]?

@@ -13,6 +13,8 @@ module Bindgen
 
       def visit_class(klass)
         return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
+        
+        logger.trace { "visiting class #{klass.diagnostics_path}" }
 
         # The parent class already has the `@unwrap`
         if klass.base_class.nil? || klass.tag?(Graph::Class::FORCE_UNWRAP_VARIABLE_TAG)
@@ -51,7 +53,11 @@ module Bindgen
         call = to_unsafe.build(klass.origin, unwrap.pointer < 1)
 
         host = klass.platform_specific(PLATFORM)
+
         graph = Graph::Method.new(origin: call.origin, name: call.name, parent: host)
+
+        logger.trace &.emit "add to unsafe method", diagnostics_path: graph.diagnostics_path, origin: call.origin.name, name: call.name
+
         graph.calls[PLATFORM] = call
       end
 
@@ -74,6 +80,8 @@ module Bindgen
           arguments: [unwrap_arg],
         )
 
+        logger.trace &.emit "add unwrap_initialize", class_name: klass.name, crystal_name: method.crystal_name
+
         host = klass.platform_specific(PLATFORM)
         graph = Graph::Method.new(origin: method, name: method.name, parent: host)
         graph.set_tag(Graph::Method::UNWRAP_INITIALIZE_TAG)
@@ -82,6 +90,8 @@ module Bindgen
 
       def visit_method(method)
         return if method.calls[PLATFORM]?
+
+        logger.trace { "visiting method #{method.diagnostics_path}" }
 
         if method.origin.pure?
           call = build_abstract_call(method)
@@ -93,6 +103,8 @@ module Bindgen
       end
 
       def build_method_call(method)
+        logger.trace { "build method call for #{method.diagnostics_path}" }
+
         klass_type = nil
         if (klass = method.parent).is_a?(Graph::Class)
           klass_type = klass.origin.as_type
@@ -101,10 +113,13 @@ module Bindgen
         call = CallBuilder::CrystalBinding.new(@db)
         wrapper = CallBuilder::CrystalWrapper.new(@db)
         target = call.build(method.origin, klass_type, CallBuilder::CrystalBinding::InvokeBody)
+        
         wrapper.build(method.origin, target)
       end
 
       def build_abstract_call(method)
+        logger.trace { "build abstract call for #{method.diagnostics_path}" }
+
         builder = CallBuilder::CrystalAbstractDef.new(@db)
         builder.build(method.origin)
       end

@@ -52,13 +52,15 @@ module Bindgen
         super
 
         return if @errors.empty?
-        at = "at".colorize.mode(:bold)
 
-        @errors.each do |error|
-          STDERR.puts "#{error.message} #{at} #{error.node.diagnostics_path}"
-        end
+        # at = "at".colorize.mode(:bold)
+        # @errors.each do |error|
+        #   STDERR.puts "#{error.message} #{at} #{error.node.diagnostics_path}"
+        # end
+        # STDERR.puts "Found #{@errors.size} errors.  Aborting.".colorize.mode(:bold)
 
-        STDERR.puts "Found #{@errors.size} errors.  Aborting.".colorize.mode(:bold)
+        logger.error { "Found #{@errors.size} errors.  Aborting." }
+
         raise Tool::ExitError.new
       end
 
@@ -91,14 +93,18 @@ module Bindgen
 
         # 1. Check for existence of any constant
         if e.values.empty?
-          add_error(enumeration, "Enum doesn't have any constants")
+          err = "Enum doesn't have any constants"
+          logger.error { err }
+          add_error(enumeration, err)
         end
 
         # 2. Check flags-enum
         if e.flags?
           ILLEGAL_FLAG_ENUM.each do |name|
             if e.values.has_key?(name)
-              add_error(enumeration, "@[Flags] enum can't have a #{name} constant")
+              err = "@[Flags] enum can't have a #{name} constant"
+              logger.error { err }
+              add_error(enumeration, err)
             end
           end
         end
@@ -111,16 +117,22 @@ module Bindgen
 
         call.arguments.each_with_index do |arg, idx|
           unless type_reachable?(arg, method)
-            add_error(method, "Argument #{idx + 1} has unreachable type #{arg.type_name}")
+            err = "Argument #{idx + 1} has unreachable type #{arg.type_name}"
+            logger.error { err }
+            add_error(method, err)
           end
         end
 
         unless type_reachable?(call.result, method)
-          add_error(method, "Result type #{call.result.type_name} is unreachable")
+          err = "Result type #{call.result.type_name} is unreachable"
+          logger.error { err }
+          add_error(method, err)
         end
 
         if method.origin.variadic? && method.tag?(Graph::Method::EXPLICIT_BIND_TAG).nil?
-          add_error(method, "Variadic function must be directly bound")
+          err = "Variadic function must be directly bound"
+          logger.error { err }
+          add_error(method, err)
         end
       end
 
@@ -149,14 +161,18 @@ module Bindgen
       # Checks if *node* has a valid camel-case name.  If not, adds an error.
       private def check_valid_camel_case_name!(node)
         unless CAMEL_CASE_RX.match(node.name)
-          add_error(node, "Invalid #{node.kind_name.downcase} camel case name #{node.name.inspect}")
+          err = "Invalid #{node.kind_name.downcase} camel case name #{node.name.inspect}"
+          logger.error { err }
+          add_error(node, err)
         end
       end
 
       # Checks if *node* has a valid constant name.  If not, adds an error.
       private def check_valid_constant_name!(node)
         unless CONSTANT_RX.match(node.name)
-          add_error(node, "Invalid #{node.kind_name.downcase} constant name #{node.name.inspect}")
+          err = "Invalid #{node.kind_name.downcase} constant name #{node.name.inspect}"
+          logger.error { err }
+          add_error(node, err)
         end
       end
 
@@ -165,7 +181,9 @@ module Bindgen
         return if node.name.empty? # Accept initializers
 
         unless METHOD_NAME_RX.match(node.origin.crystal_name)
-          add_error(node, "Invalid #{node.kind_name.downcase} method name #{node.name.inspect}")
+          err = "Invalid #{node.kind_name.downcase} method name #{node.name.inspect}"
+          logger.error { err }
+          add_error(node, err)
         end
       end
     end
