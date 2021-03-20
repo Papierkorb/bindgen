@@ -1,43 +1,18 @@
 require "./type"
+require "./value"
 
 module Bindgen
   module Parser
     # Describes a method argument.
     class Argument < Type
-      JSON.mapping(
-        # `Type` part
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
+      include JSON::Serializable
 
-        # `Argument` part
-        hasDefault: Bool,
-        isVariadic: Bool,
-        name: String,
-        value: {
-          type:      DefaultValueTypes,
-          nilable:   true,
-          converter: ValueConverter,
-        },
-      )
+      # `Argument` part
+      property hasDefault : Bool
+      property isVariadic : Bool
+      property name : String
+      @[JSON::Field(converter: Bindgen::Parser::ValueConverter)]
+      property value : DefaultValueTypes?
 
       def initialize(
         @name, @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin,

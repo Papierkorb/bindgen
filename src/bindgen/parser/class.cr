@@ -2,21 +2,21 @@ module Bindgen
   module Parser
     # Describes a C++ `class` or `struct`.
     class Class
+      include JSON::Serializable
+
       # Collection of classes.
       alias Collection = Hash(String, Class)
 
-      JSON.mapping(
-        isClass: Bool,
-        hasDefaultConstructor: Bool,
-        hasCopyConstructor: Bool,
-        isAbstract: Bool,
-        isDestructible: Bool,
-        name: String,
-        byteSize: Int32,
-        bases: Array(BaseClass),
-        fields: Array(Field),
-        methods: Array(Method),
-      )
+      property isClass : Bool
+      property hasDefaultConstructor : Bool
+      property hasCopyConstructor : Bool
+      property isAbstract : Bool
+      property isDestructible : Bool
+      property name : String
+      property byteSize : Int32
+      property bases : Array(BaseClass)
+      property fields : Array(Field)
+      property methods : Array(Method)
 
       def initialize(@name, @byteSize = 0, @hasDefaultConstructor = false, @hasCopyConstructor = false, @isClass = true, @isAbstract = false, @isDestructible = true, @bases = [] of BaseClass, @fields = [] of Field, @methods = [] of Method)
       end

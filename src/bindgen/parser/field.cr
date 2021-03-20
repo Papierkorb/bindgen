@@ -2,35 +2,15 @@ module Bindgen
   module Parser
     # A C++ struct/class field.
     class Field < Type
-      JSON.mapping(
-        # Type part
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
+      include JSON::Serializable
 
-        # Field part
-        access: AccessSpecifier,
-        name: String,
-        bitField: Int32?,
-      )
+      property access : AccessSpecifier
+      property name : String
+      property bitField : Int32?
+
+      def initialize(@kind, @isConst, @isMove, @isReference, @isBuiltin, @isVoid, @pointer,
+                     @baseName, @fullName, @nilable, @template, @access, @name, @bitField)
+      end
 
       delegate public?, private?, protected?, to: @access
 

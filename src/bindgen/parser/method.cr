@@ -2,6 +2,8 @@ module Bindgen
   module Parser
     # Describes a method as found by the clang tool.
     class Method
+      include JSON::Serializable
+
       # Collection of methods
       alias Collection = Array(Method)
 
@@ -18,19 +20,17 @@ module Bindgen
         Signal
       end
 
-      JSON.mapping(
-        type: Method::Type,
-        name: String,
-        access: AccessSpecifier,
-        isConst: Bool,
-        isVirtual: Bool,
-        isPure: Bool,
-        isExternC: Bool,
-        className: String,
-        arguments: Array(Argument),
-        firstDefaultArgument: Int32?,
-        returnType: Parser::Type,
-      )
+      property type : Method::Type
+      property name : String
+      property access : AccessSpecifier
+      property isConst : Bool
+      property isVirtual : Bool
+      property isPure : Bool
+      property isExternC : Bool
+      property className : String
+      property arguments : Array(Argument)
+      property firstDefaultArgument : Int32?
+      property returnType : Parser::Type
 
       # For hard-wiring a methods final wrapper name.
       @crystal_name : String? = nil

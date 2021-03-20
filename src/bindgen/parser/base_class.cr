@@ -2,12 +2,12 @@ module Bindgen
   module Parser
     # Describes a class which is derived from another `Bindgen::Class`.
     class BaseClass
-      JSON.mapping(
-        isVirtual: Bool,
-        inheritedConstructor: Bool,
-        name: String,
-        access: AccessSpecifier,
-      )
+      include JSON::Serializable
+
+      property isVirtual : Bool
+      property inheritedConstructor : Bool
+      property name : String
+      property access : AccessSpecifier
 
       def initialize(@name, @access = AccessSpecifier::Public, @isVirtual = false, @inheritedConstructor = false)
       end

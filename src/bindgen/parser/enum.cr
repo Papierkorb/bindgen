@@ -2,15 +2,19 @@ module Bindgen
   module Parser
     # Enumeration type as found by the clang tool.
     class Enum
+      include JSON::Serializable
+
       # Map of enumerations.
       alias Collection = Hash(String, Enum)
 
-      JSON.mapping(
-        name: String,                # Name of the enumeration type.
-        type: String,                # C++ type name, to be mapped later.
-        isFlags: Bool,               # Is this enumeration a flag type?
-        values: Hash(String, Int64), # Enum fields
-      )
+      # Name of the enumeration type.
+      property name : String
+      # C++ type name, to be mapped later.
+      property type : String
+      # Is this enumeration a flag type?
+      property isFlags : Bool
+      # Enum fields
+      property values : Hash(String, Int64)
 
       def initialize(@name, @values, @type = "unsigned int", @isFlags = false)
       end

@@ -1,9 +1,9 @@
-require "json_mapping"
-
 module Bindgen
   module Parser
     # Stores information about a specific C++ type.
     class Type
+      include JSON::Serializable
+
       # Name of the `CrystalProc` C++ and Crystal type.  This type is a template
       # type in C++, and a `struct` in Crystal.
       CRYSTAL_PROC = "CrystalProc"
@@ -18,29 +18,22 @@ module Bindgen
 
       # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`s mapping!!
       # Also make sure to update other methods in here and in `Argument` as required!
-      JSON.mapping(
-        kind: {
-          type:    Kind,
-          default: Kind::Class,
-        },
-        isConst: Bool,
-        isMove: Bool,
-        isReference: Bool,
-        isBuiltin: Bool,
-        isVoid: Bool,
-        pointer: Int32,
-        baseName: String,
-        fullName: String,
-        nilable: {
-          type:    Bool,
-          key:     "acceptsNull",
-          default: false,
-        },
-        template: {
-          type:    Template,
-          nilable: true,
-        },
-      )
+      property kind : Kind = Kind::Class
+      property isConst : Bool
+      property isMove : Bool
+      property isReference : Bool
+      property isBuiltin : Bool
+      property isVoid : Bool
+      property pointer : Int32
+      property baseName : String
+      property fullName : String
+      @[JSON::Field(key: "acceptsNull")]
+      property nilable : Bool = false
+      property template : Template?
+
+      def initialize(@kind, @isConst, @isMove, @isReference, @isBuiltin, @isVoid, @pointer,
+         @baseName, @fullName, @nilable, @template)
+      end
 
       # `Void` type
       VOID = new(
