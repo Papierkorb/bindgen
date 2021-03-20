@@ -143,6 +143,7 @@ message(STATUS "CMake System Name: ${CMAKE_SYSTEM_NAME}")
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
   include_directories(/usr/local/include)
+  include_directories(/usr/local/opt/libevent/include)
 
   # for MacOS X or iOS, watchOS, tvOS (since 3.10.3)
   if (${LLVM_PACKAGE_VERSION} VERSION_GREATER "4")
