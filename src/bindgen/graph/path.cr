@@ -116,7 +116,7 @@ module Bindgen
         end
       end
 
-      # ditto
+      # :ditto:
       def self.from(path : Enumerable(String)) : Path
         new path.to_a
       end

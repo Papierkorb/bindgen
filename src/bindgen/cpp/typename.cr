@@ -7,7 +7,7 @@ module Bindgen
         full(result.type_name, result.type.const?, result.pointer, result.reference)
       end
 
-      # ditto
+      # :ditto:
       def full(base_name : String, const, pointer, is_reference) : String
         stars = "*" * pointer
         ref = "&" if is_reference
