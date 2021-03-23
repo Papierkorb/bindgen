@@ -15,7 +15,7 @@ dependencies:
     branch: patch-1
   spoved:
     github: spoved/spoved.cr
-    version: ">= 0.5.1"
+    version: ">= 0.5.3"
 targets:
   bindgen:
     main: src/bindgen.cr
