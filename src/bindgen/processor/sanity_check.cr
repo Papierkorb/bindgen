@@ -93,7 +93,7 @@ module Bindgen
 
         # 1. Check for existence of any constant
         if e.values.empty?
-          err = "Enum doesn't have any constants"
+          err = "Enum #{e.name} doesn't have any constants"
           logger.error { err }
           add_error(enumeration, err)
         end
