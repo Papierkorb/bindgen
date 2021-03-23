@@ -5,28 +5,20 @@ module Bindgen
       include JSON::Serializable
 
       # Full name, like `std::vector<_Tp, _Alloc>`
-      property fullName : String
+      @[JSON::Field(key: "fullName")]
+      getter full_name : String
 
       # Base name of the type, like `std::vector`
-      property baseName : String
+      @[JSON::Field(key: "baseName")]
+      getter base_name : String
 
       # Template arguments
-      property arguments : Array(Type)
+      getter arguments : Array(Type)
 
-      def initialize(@fullName, @baseName, @arguments)
+      def initialize(@full_name, @base_name, @arguments)
       end
 
-      def_equals_and_hash @fullName, @baseName, @arguments
-
-      # Full name, like `std::vector<_Tp, _Alloc>`
-      def full_name : String
-        @fullName
-      end
-
-      # Base name of the type, like `std::vector`
-      def base_name : String
-        @baseName
-      end
+      def_equals_and_hash @full_name, @base_name, @arguments
 
       # Returns the mangled name of the template arguments.
       def mangled_name : String

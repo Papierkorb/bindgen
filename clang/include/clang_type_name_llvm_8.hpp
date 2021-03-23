@@ -63,6 +63,9 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
+#ifndef CLANG_TYPE_NAME_HPP
+#define CLANG_TYPE_NAME_HPP
+
  #include "clang/AST/QualTypeNames.h"
  #include "clang/AST/DeclTemplate.h"
  #include "clang/AST/DeclarationName.h"
@@ -516,9 +519,9 @@ namespace ClangTypeName {
    return QT;
  }
 
- std::string getFullyQualifiedName(QualType QT,
-                                   const ASTContext &Ctx,
-                                   bool WithGlobalNsPrefix = false) {
+ static std::string getFullyQualifiedName(QualType QT,
+                                          const ASTContext &Ctx,
+                                          bool WithGlobalNsPrefix = false) {
    PrintingPolicy Policy(Ctx.getPrintingPolicy());
    Policy.SuppressScope = false;
    Policy.AnonymousTagLocations = false;
@@ -530,3 +533,5 @@ namespace ClangTypeName {
  }
 
 }  // end namespace ClangTypeName
+
+#endif // CLANG_TYPE_NAME_HPP

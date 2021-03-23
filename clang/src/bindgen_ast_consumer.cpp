@@ -2,57 +2,149 @@
 #include "bindgen_ast_consumer.hpp"
 
 #include "clang/Parse/ParseAST.h"
+#include "clang/ASTMatchers/ASTMatchersMacros.h"
 
 #include "function_match_handler.hpp"
 #include "record_match_handler.hpp"
+#include "operator_match_handler.hpp"
 #include "enum_match_handler.hpp"
 #include "macro_ast_consumer.hpp"
+
+#include "type_helper.hpp"
+# if defined(__LLVM_VERSION_8)
+  #include "clang_type_name_llvm_8.hpp"
+# else
+  #include "clang_type_name.hpp"
+# endif
 
 static llvm::cl::list<std::string> ClassList("c", llvm::cl::desc("Classes to inspect"), llvm::cl::value_desc("class"));
 static llvm::cl::list<std::string> EnumList("e", llvm::cl::desc("Enums to inspect"), llvm::cl::value_desc("enum"));
 
-BindgenASTConsumer::BindgenASTConsumer(std::vector<Macro> &macros, clang::CompilerInstance &compiler)
-	: m_compiler(compiler), m_functionHandler(nullptr), m_macros(macros), m_matchFinder(m_matchFinderOpts)
+// we don't support `operator,` and `operator->*`
+AST_MATCHER(clang::FunctionDecl, isOverloadedOperator) {
+	const auto oo = Node.getOverloadedOperator();
+	return oo != clang::OO_None && oo != clang::OO_Comma && oo != clang::OO_ArrowStar;
+}
+
+BindgenASTConsumer::BindgenASTConsumer(Document &doc, clang::CompilerInstance &compiler)
+	: m_compiler(compiler), m_functionHandler(nullptr), m_document(doc)
 {
+	this->m_matchFinders.push_back(makeBasicMatchFinder());
+
+	// The operator methods rely on the document having been populated with
+	// the classes, so a separate AST pass is necessary.
+	this->m_matchFinders.push_back(makeDependentMatchFinder());
+}
+
+BindgenASTConsumer::~BindgenASTConsumer() {
+}
+
+clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 	using namespace clang::ast_matchers;
+
+	MatchFinder finder {this->m_matchFinderOpts};
 
 	for (const std::string &className : ClassList) {
 		DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
-		RecordMatchHandler *handler = new RecordMatchHandler(className);
-		this->m_matchFinder.addMatcher(classMatcher, handler);
-		this->m_classHandlers.push_back(handler);
+#if __clang_major__ >= 11
+		auto handler = std::make_unique<RecordMatchHandler>(m_document, className);
+#else
+		auto handler = make_unique<RecordMatchHandler>(m_document, className);
+#endif
+
+		finder.addMatcher(classMatcher, handler.get());
+		this->m_classHandlers.push_back(std::move(handler));
 	}
 
 	if (FunctionMatchHandler::isActive()) {
 		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
-		FunctionMatchHandler *handler = new FunctionMatchHandler();
-		this->m_matchFinder.addMatcher(funcMatcher, handler);
-		this->m_functionHandler = handler;
+
+#if __clang_major__ >= 11
+		auto handler = std::make_unique<FunctionMatchHandler>(m_document);
+#else
+		auto handler = make_unique<FunctionMatchHandler>(m_document);
+#endif
+
+		finder.addMatcher(funcMatcher, handler.get());
+		this->m_functionHandler = std::move(handler);
 	}
 
 	for (const std::string &enumName : EnumList) {
 		DeclarationMatcher enumMatcher = enumDecl(hasName(enumName)).bind("enumDecl");
 		DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 
-		EnumMatchHandler *handler = new EnumMatchHandler(enumName);
-		this->m_matchFinder.addMatcher(enumMatcher, handler);
-		this->m_matchFinder.addMatcher(typedefMatcher, handler);
-		this->m_enumHandlers.push_back(handler);
+#if __clang_major__ >= 11
+		auto handler = std::make_unique<EnumMatchHandler>(m_document, enumName);
+#else
+		auto handler = make_unique<EnumMatchHandler>(m_document, enumName);
+#endif
+
+		finder.addMatcher(enumMatcher, handler.get());
+		finder.addMatcher(typedefMatcher, handler.get());
+		this->m_enumHandlers.push_back(std::move(handler));
 	}
+
+	return finder;
 }
 
-BindgenASTConsumer::~BindgenASTConsumer() {
-	for (RecordMatchHandler *handler : this->m_classHandlers) {
-		delete handler;
+clang::ast_matchers::MatchFinder BindgenASTConsumer::makeDependentMatchFinder() {
+	using namespace clang::ast_matchers;
+
+	MatchFinder finder {this->m_matchFinderOpts};
+
+	for (const std::string &className : ClassList) {
+		DeclarationMatcher operatorMatcher = functionDecl(
+			isOverloadedOperator(),
+			unless(cxxMethodDecl()),
+			hasParameter(0, hasType(references(cxxRecordDecl(hasName(className)))))).bind("operatorDecl");
+
+#if __clang_major__ >= 11
+		auto handler = std::make_unique<OperatorMatchHandler>(m_document, className);
+#else
+		auto handler = make_unique<OperatorMatchHandler>(m_document, className);
+#endif
+
+		finder.addMatcher(operatorMatcher, handler.get());
+		this->m_operatorHandlers.push_back(std::move(handler));
 	}
+
+	return finder;
 }
 
 void BindgenASTConsumer::HandleTranslationUnit(clang::ASTContext &ctx) {
-	this->m_matchFinder.matchAST(ctx);
+	this->gatherTypeInfo(ctx);
+	for (auto &finder : this->m_matchFinders) {
+		finder.matchAST(ctx);
+	}
   // FIXME: clang segfaults in 6 or newer when calling ParseAST in destructor
 	this->evaluateMacros(ctx);
-  this->serializeAndOutput();
+	this->serializeAndOutput();
+}
+
+static void runTypeInfoResult(TypeInfoResult &info, const clang::ClassTemplateSpecializationDecl *spec, clang::ASTContext &ctx) {
+	for (clang::Decl *decl : spec->decls()) {
+		if (auto var_decl = llvm::dyn_cast<clang::VarDecl>(decl)) {
+			if (var_decl->getName() == "isDefaultConstructible") {
+				LiteralData data;
+				TypeHelper::readValue(data, var_decl->getType(), ctx, var_decl->getInit());
+				info.isDefaultConstructible = data.container.bool_value;
+			}
+		}
+	}
+}
+
+void BindgenASTConsumer::gatherTypeInfo(clang::ASTContext &ctx) {
+	for (auto decl : ctx.getTranslationUnitDecl()->decls()) {
+		if (auto spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
+			if (spec->getQualifiedNameAsString() == "BindgenTypeInfo") {
+				clang::QualType qt = spec->getTemplateArgs()[0].getAsType();
+				std::string fullName = ClangTypeName::getFullyQualifiedName(qt, ctx);
+				TypeInfoResult &info = m_document.type_infos[fullName];
+				runTypeInfoResult(info, spec, ctx);
+			}
+		}
+	}
 }
 
 static std::string buildMacroEvaluationFile(const std::vector<Macro> &macros) {
@@ -70,8 +162,8 @@ static std::string buildMacroEvaluationFile(const std::vector<Macro> &macros) {
 
 void BindgenASTConsumer::evaluateMacros(clang::ASTContext &ctx) {
 	clang::SourceManager &sourceMgr = this->m_compiler.getSourceManager();
-	MacroAstConsumer *consumer = new MacroAstConsumer(this->m_macros);
-	std::string evalFile = buildMacroEvaluationFile(this->m_macros);
+	MacroAstConsumer *consumer = new MacroAstConsumer(this->m_document.macros);
+	std::string evalFile = buildMacroEvaluationFile(this->m_document.macros);
 
 	clang::FileID macroFile = sourceMgr.createFileID(llvm::MemoryBuffer::getMemBuffer(evalFile));
 	sourceMgr.setMainFileID(macroFile);
@@ -82,57 +174,9 @@ void BindgenASTConsumer::evaluateMacros(clang::ASTContext &ctx) {
 
 void BindgenASTConsumer::serializeAndOutput() {
 	JsonStream stream(std::cout);
-
-	stream << JsonStream::ObjectBegin; // {
-	stream << "enums" << JsonStream::Separator; // "enums":
-	serializeEnumerations(stream); // { ... }
-	stream << JsonStream::Comma; // ,
-	stream << "classes" << JsonStream::Separator; // "classes":
-	serializeClasses(stream); // { ... }
-	stream << JsonStream::Comma; // ,
-
-	if (this->m_functionHandler) { // "functions": [ ... ],
-		stream
-			<< "functions" << JsonStream::Separator
-			<< this->m_functionHandler->functions()
-			<< JsonStream::Comma;
-	}
-
-	stream << "macros" << JsonStream::Separator << this->m_macros;  // "macros": [ ... ]
-	stream << JsonStream::ObjectEnd; // }
+	stream << this->m_document;
+	std::cout << std::endl;
 
 	// FIXME: Currently the process crashes during clang's Parser destructor. This is a workaround.
 	exit(0);
-}
-
-void BindgenASTConsumer::serializeEnumerations(JsonStream &stream) {
-	stream << JsonStream::ObjectBegin;
-
-	bool first = true;
-	for (EnumMatchHandler *handler : this->m_enumHandlers) {
-		Enum enumeration = handler->enumeration();
-
-		if (!first) stream << JsonStream::Comma;
-		stream << std::make_pair(enumeration.name, enumeration);
-
-		first = false;
-	}
-
-	stream << JsonStream::ObjectEnd;
-}
-
-void BindgenASTConsumer::serializeClasses(JsonStream &stream) {
-	stream << JsonStream::ObjectBegin;
-
-	bool first = true;
-	for (RecordMatchHandler *handler : this->m_classHandlers) {
-		Class klass = handler->klass();
-
-		if (!first) stream << JsonStream::Comma;
-		stream << std::make_pair(klass.name, klass);
-
-		first = false;
-	}
-
-	stream << JsonStream::ObjectEnd;
 }

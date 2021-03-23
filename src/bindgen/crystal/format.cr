@@ -35,17 +35,31 @@ module Bindgen
           prefix = "&"
         end
 
-        "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{default}"
+        if arg.is_a?(Call::TypeArgument)
+          meta = ".class"
+        end
+
+        "#{prefix}#{argument.name(arg, idx)} : #{typer.full arg}#{meta}#{default}"
       end
 
-      # Formats *arguments* as `type name, ...`.  If *binding* is `true`, treat
-      # this as argument for a `fun` declaration.
+      # Formats *arguments* as `name : type, ...`.  If *binding* is `true`,
+      # treats this as argument for a `fun` declaration.
       def argument_list(arguments : Enumerable(Call::Argument), binding = false) : String
         first_optional = arguments.rindex(&.default_value.nil?) || -1
 
         arguments.map_with_index do |arg, idx|
           argument(arg, idx, expose_default: idx > first_optional, binding: binding)
         end.join(", ")
+      end
+
+      # Formats *arguments* as `*, name : type, ...`.
+      def named_argument_list(arguments : Enumerable(Call::Argument), binding = false) : String
+        String.build do |b|
+          b << '*'
+          arguments.each_with_index do |arg, idx|
+            b << ", " << argument(arg, idx)
+          end
+        end
       end
 
       # Generates a literal value suitable for Crystal code, using the *value*
@@ -72,8 +86,10 @@ module Bindgen
       # valid a Crystal literal, and can be directly written.
       def number_literal(type_name, value) : String?
         if suffix = number_literal_suffix(type_name)
-          if floating_type?(type_name)
-            value = value.to_f
+          if type_name == "Float32"
+            value = value.to_f32
+          elsif type_name == "Float64"
+            value = value.to_f64
           elsif !value.is_a?(Int)
             value = value.to_i
           end
@@ -127,11 +143,6 @@ module Bindgen
         else # All names found: Build a nice `.flags` list
           ".flags(#{names.join(", ")})"
         end
-      end
-
-      # Returns `true` if *type_name* is a Crystal floating-type.
-      def floating_type?(type_name) : Bool
-        {"Float32", "Float64"}.includes?(type_name)
       end
 
       # Returns the literal-suffix for Crystal code, to signify a literal

@@ -14,7 +14,10 @@ module Bindgen
 
       # *project_root* must be a path to the directory the configuration YAML
       # resides.
-      def initialize(@classes : Array(String), @enums : Array(String), @macros : Array(String), @functions : Array(String), @config : Configuration, @project_root : String)
+      def initialize(
+        @classes : Array(String), @enums : Array(String), @macros : Array(String),
+        @functions : Array(String), @config : Configuration, @project_root : String
+      )
         @binary_path = ENV["BINDGEN_BIN"]? || @config.binary || BINARY_PATH
 
         logger.info &.emit "new runner", binary_path: @binary_path
@@ -61,6 +64,11 @@ module Bindgen
           @config.files.each do |path|
             path = Util.template(path, replacement: nil)
             file.puts %{#include #{path.inspect}}
+          end
+
+          file.puts %{#include "#{File.expand_path "#{__DIR__}/../../../assets/parser_helper.hpp"}"}
+          @classes.each do |klass|
+            file.puts %[template class BindgenTypeInfo<#{klass}>;]
           end
 
           file.flush

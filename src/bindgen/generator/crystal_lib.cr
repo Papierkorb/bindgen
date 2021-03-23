@@ -20,7 +20,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding?)
         super
       end
 
@@ -31,15 +31,24 @@ module Bindgen
       end
 
       def visit_struct(structure)
-        puts "struct #{structure.name}"
+        write_structure(structure, false)
+      end
+
+      def visit_union(structure)
+        write_structure(structure, true)
+      end
+
+      private def write_structure(structure, cpp_union : Bool)
+        puts "#{cpp_union ? "union" : "struct"} #{structure.name}"
         indented do
-          structure.fields.each do |name, type|
-            # can't use Void as a struct field type
-            if type.type_name == "Void"
-              puts "#{name} : #{type.type_name}*"
-            else
-              puts "#{name} : #{type.type_name}"
-            end
+          structure.fields.each do |name, result|
+            # can't use Void as a struct field type directly
+            ptr = result.pointer
+            ptr = {ptr, 1}.max if result.type_name == "Void"
+
+            stars = "*" * ptr if ptr > 0
+
+            puts "#{name} : #{result.type_name}#{stars}"
           end
         end
         puts "end"

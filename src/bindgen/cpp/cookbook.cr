@@ -8,8 +8,8 @@ module Bindgen
     # setting.  See `Configuration#platform` for the code, and `TEMPLATE.yml`
     # for user-facing documentation.
     #
-    # The functions all return a templating string, to be used with
-    # `Util.template`.  If no conversion is necessary, they return `nil`.
+    # The functions all return a `Template::Basic` when conversion is
+    # necessary, and `Template::None` otherwise.
     abstract class Cookbook
       # Finds and creates a `Cookbook` by name.
       def self.create_by_name(name) : Cookbook
@@ -27,10 +27,10 @@ module Bindgen
         end
       end
 
-      # Finds the template (if any) to pass *type* as-is as *pass_by*.  The
-      # returned template takes an expression returning something of *type* and
-      # turns it into something that can be *pass_by*'d on.
-      def find(type : Parser::Type, pass_by : TypeDatabase::PassBy) : String?
+      # Finds the template to pass *type* as-is as *pass_by*.  The returned
+      # template takes an expression returning something of *type* and turns it
+      # into something that can be *pass_by*'d on.
+      def find(type : Parser::Type, pass_by : TypeDatabase::PassBy) : Template::Base
         is_ref = type.reference?
         is_ptr = !is_ref && type.pointer > 0
 
@@ -39,35 +39,37 @@ module Bindgen
 
       # Same, but provides an override of *type*s reference and pointer
       # qualification.
-      def find(base_name : String, is_reference, is_pointer, pass_by : TypeDatabase::PassBy) : String?
-        case pass_by
-        when .original?
-          nil # No conversion required.
-        when .reference?
-          if is_reference # Reference -> Referene
-            nil
-          elsif is_pointer # Pointer -> Reference
-            pointer_to_reference(base_name)
-          else # Value -> Reference
-            value_to_reference(base_name)
-          end
-        when .pointer?
-          if is_reference # Reference -> Pointer
-            reference_to_pointer(base_name)
-          elsif is_pointer # Pointer -> Pointer
-            nil
-          else # Value -> Pointer
-            value_to_pointer(base_name)
-          end
-        when .value?
-          if is_reference # Reference -> Value
-            reference_to_value(base_name)
-          elsif is_pointer # Pointer -> Value
-            pointer_to_value(base_name)
-          else # Value -> Value
-            nil
-          end
-        end
+      def find(base_name : String, is_reference, is_pointer, pass_by : TypeDatabase::PassBy) : Template::Base
+        template_string = case pass_by
+                          when .original?
+                            nil # No conversion required.
+                          when .reference?
+                            if is_reference # Reference -> Referene
+                              nil
+                            elsif is_pointer # Pointer -> Reference
+                              pointer_to_reference(base_name)
+                            else # Value -> Reference
+                              value_to_reference(base_name)
+                            end
+                          when .pointer?
+                            if is_reference # Reference -> Pointer
+                              reference_to_pointer(base_name)
+                            elsif is_pointer # Pointer -> Pointer
+                              nil
+                            else # Value -> Pointer
+                              value_to_pointer(base_name)
+                            end
+                          when .value?
+                            if is_reference # Reference -> Value
+                              reference_to_value(base_name)
+                            elsif is_pointer # Pointer -> Value
+                              pointer_to_value(base_name)
+                            else # Value -> Value
+                              nil
+                            end
+                          end
+
+        Template.from_string(template_string, simple: true)
       end
 
       # Provides a template to convert a value to a pointer.

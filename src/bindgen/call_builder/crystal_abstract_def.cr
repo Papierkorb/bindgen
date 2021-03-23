@@ -28,7 +28,7 @@ module Bindgen
             name: call.name,
             arguments: call.arguments,
             result: call.result,
-            static: call.origin.static_method?,
+            static: call.origin.static?,
             abstract: true,
             protected: call.origin.protected?,
           )

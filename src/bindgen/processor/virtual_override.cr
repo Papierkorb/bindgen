@@ -4,23 +4,41 @@ module Bindgen
     class VirtualOverride < Base
       include TypeHelper
 
+      # Name of the superclass wrapper structs.
+      SUPERCLASS_NAME = "Superclass"
+
       # Late-initialized in `#process`
       @binding : Graph::Library?
+      @all_classes : Parser::Class::Collection?
 
       # Returns `lib Binding`
       private def binding
         @binding.not_nil!
       end
 
-      def process(graph : Graph::Container, _doc : Parser::Document)
+      # Looks up a class by its name.  Used to identify base classes.
+      private def class_by_name?(name : String) : Parser::Class?
+        @all_classes.try(&.[]?(name))
+      end
+
+      def process(graph : Graph::Container, doc : Parser::Document)
+        logger.trace { "process #{graph.diagnostics_path}" }
+
         @binding = graph.by_name(Graph::LIB_BINDING).as(Graph::Library)
+        @all_classes = doc.classes
         super
       end
 
       def visit_class(klass : Graph::Class)
         return if klass.wrapped_class # Don't change `Impl` classes.
-        if subclass?(klass.origin)
-          create_subclass(klass)
+
+        logger.trace { "visting class #{klass.diagnostics_path}" }
+
+        if subclass?(klass.origin) && @db.try_or(klass.origin.name, true, &.sub_class?)
+          superclass = create_superclass(klass)
+          add_superclass_init(superclass, klass)
+          add_superclass_method(superclass, klass)
+          create_subclass(klass, superclass)
         end
 
         super
@@ -32,8 +50,9 @@ module Bindgen
         nil # Do nothing.
       end
 
-      # Modifies *klass* to allow overriding C++ virtuals.
-      private def create_subclass(klass)
+      # Modifies *klass* to allow overriding C++ virtuals.  Also injects methods
+      # into the `Superclass` wrapper.
+      private def create_subclass(klass, superclass)
         host = Graph::PlatformSpecific.new(platform: Graph::Platform::Cpp)
         klass.nodes.unshift host # We want our structures at the top.
         host.parent = klass
@@ -45,7 +64,7 @@ module Bindgen
         register_table_type(crystal_struct, cpp_struct)
 
         cpp_subclass = add_cpp_subclass(klass, host)
-        add_virtual_forwarders(klass, cpp_subclass)
+        add_virtual_forwarders(klass, cpp_subclass, superclass)
 
         cpp_method = add_jumptable_method(klass, cpp_subclass, cpp_struct.name)
         cpp_method.calls[Graph::Platform::Cpp] = build_cpp_jumptable_call(cpp_method.origin)
@@ -56,8 +75,75 @@ module Bindgen
 
       # If *klass* shall be sub-classed, or not.
       private def subclass?(klass) : Bool
-        return false unless klass.has_virtual_methods?
-        @db.try_or(klass.name, true, &.sub_class)
+        # Indestructible types are never sub-classed.
+        return false unless klass.destructible?
+        # Types defining at least one virtual method are sub-classed.
+        return true if klass.has_virtual_methods?
+
+        # Types inheriting from another sub-classed type must themselves also be
+        # sub-classed, to support implicitly inherited methods.
+        klass.bases.any? do |base|
+          if base_klass = class_by_name?(base.name)
+            subclass?(base_klass)
+          end
+        end
+      end
+
+      # Creates the `Superclass` Crystal struct for the given *klass*.
+      private def create_superclass(klass) : Graph::Class?
+        return nil unless @db.try_or(klass.origin.name, true, &.generate_superclass?)
+
+        node = Parser::Class.new(
+          name: SUPERCLASS_NAME,
+          access: Parser::AccessSpecifier::Private,
+          type_kind: Parser::TypeKind::Struct,
+          methods: [] of Parser::Method,
+        )
+        # TODO: return a Crystal struct instead
+        Graph::Class.new(
+          origin: node,
+          name: node.name,
+          parent: klass.platform_specific(Graph::Platform::Crystal),
+        )
+      end
+
+      # Adds the `#initialize` method to the given *superclass*.
+      private def add_superclass_init(superclass, klass)
+        return if superclass.nil?
+
+        node = Parser::Method.build(
+          class_name: superclass.origin.name,
+          name: "",
+          return_type: superclass.origin.as_type,
+          arguments: [Parser::Argument.new("@myself", klass.origin.as_type)],
+          type: Parser::Method::Type::Constructor,
+        )
+        method = Graph::Method.new(
+          origin: node,
+          name: node.name,
+          parent: superclass,
+        )
+        method.calls[Graph::Platform::Crystal] =
+          CallBuilder::CrystalSuperclassInit.new(@db).build(node, klass.origin)
+      end
+
+      # Adds the `#superclass` private method to *klass*.
+      private def add_superclass_method(superclass, klass)
+        return if superclass.nil?
+
+        node = Parser::Method.build(
+          class_name: klass.name,
+          name: "superclass",
+          return_type: superclass.origin.as_type,
+          arguments: [] of Parser::Argument,
+        )
+        method = Graph::Method.new(
+          origin: node,
+          name: node.name,
+          parent: klass.platform_specific(Graph::Platform::Crystal),
+        )
+        method.calls[Graph::Platform::Crystal] =
+          CallBuilder::CrystalSuperclass.new(@db).build(superclass.origin)
       end
 
       # Adds the `BgJumptable` struct for C++ to *klass*.
@@ -83,7 +169,10 @@ module Bindgen
         structure
       end
 
-      private def add_virtual_forwarders(klass, subclass)
+      private def add_virtual_forwarders(klass, subclass, superclass)
+        ignored_methods = @db.try_or(
+          klass.origin.name, Util::FAIL_RX, &.superclass_ignore_methods)
+
         klass.nodes.each do |node|
           next unless node.is_a?(Graph::Method)
           next unless node.origin.virtual?
@@ -99,7 +188,34 @@ module Bindgen
             parent: subclass,
           )
 
-          method.calls[Graph::Platform::Cpp] = build_cpp_forwarder(node.origin, subclass.name, klass.origin.name)
+          method.calls[Graph::Platform::Cpp] =
+            build_cpp_forwarder(node.origin, subclass.name, klass.origin.name, false)
+
+          # Generates a C++ wrapper function that always calls the base class
+          # method, but only for concrete methods that are accessible.  The
+          # function definition will be filled in by `Processor::CppWrapper`.
+          next if node.origin.pure? || node.origin.private? || superclass.nil?
+          next if ignored_methods.matches?(node.origin.name)
+          method_clone = node.origin.superclass_copy
+
+          cpp_wrapper = Graph::Method.new(
+            name: method_clone.name,
+            origin: method_clone,
+            parent: klass,
+          )
+          cpp_wrapper.set_tag(Graph::Method::SUPERCLASS_BIND_TAG)
+
+          # Generates a method in the superclass wrapper, whose signature is
+          # identical to the original method, except that it invokes the "SUPER"
+          # wrapper function defined above.
+          superclass_method = Graph::Method.new(
+            name: node.origin.name,
+            origin: node.origin,
+            parent: superclass,
+          )
+
+          superclass_method.calls[Graph::Platform::Crystal] =
+            build_superclass_forwarder(node.origin, method_clone, klass.origin, superclass.origin)
         end
       end
 
@@ -113,23 +229,38 @@ module Bindgen
         end
       end
 
-      def build_cpp_forwarder(method : Parser::Method, class_name, parent_class) : Call
+      private def build_cpp_forwarder(
+        method : Parser::Method, class_name, parent_class, in_superclass : Bool
+      ) : Call
         original = CallBuilder::CppMethodCall.new(@db)
         wrapper = CallBuilder::CppMethod.new(@db)
         to_crystal = CallBuilder::CppToCrystalProc.new(@db)
         proc_name = "_self_->bgJump.#{method.mangled_name}"
-        parent_target = "#{parent_class}::#{method.name}"
-        target = original.build(method, name: parent_target) unless method.pure? || method.private?
+        parent_method_name = in_superclass ? method.name.chomp("_SUPER") : method.name
+        parent_target = "#{parent_class}::#{parent_method_name}"
+        target = original.build(method, name: parent_target) if in_superclass || !(method.pure? || method.private?)
 
         wrapper.build(
           method: method,
           class_name: class_name,
           target: target,
-          virtual_target: to_crystal.build(method, proc_name),
+          virtual_target: to_crystal.build(method, proc_name: proc_name),
+          in_superclass: in_superclass,
         )
       end
 
-      # Adds the `BgInherit` struct for Crystal to *klass*.
+      private def build_superclass_forwarder(
+        orig_method : Parser::Method, target_method : Parser::Method,
+        klass : Parser::Class, superclass : Parser::Class
+      ) : Call
+        call = CallBuilder::CrystalBinding.new(@db)
+        wrapper = CallBuilder::CrystalWrapper.new(@db)
+        target = call.build(target_method, superclass.as_type,
+          CallBuilder::CrystalBinding::InvokeBody, myself_type: klass.as_type)
+        wrapper.build(orig_method, target)
+      end
+
+      # Adds the `BgJumptable` struct for Crystal to *klass*.
       private def add_crystal_jumptable_struct(klass)
         build_jumptable_struct(klass, binding) do |method|
           crystal_jumptable_field method
@@ -166,15 +297,9 @@ module Bindgen
       private def cpp_jumptable_field(method) : Call::Result
         m = method.origin
         proc_type = Parser::Type.proc(m.return_type, m.arguments)
-        pass = Cpp::Pass.new(@db)
 
-        Call::Result.new(
-          type: proc_type,
-          type_name: pass.crystal_proc_name(proc_type),
-          reference: false,
-          pointer: 0,
-          conversion: nil,
-        )
+        pass = Cpp::Pass.new(@db)
+        pass.to_cpp(proc_type)
       end
 
       # Returns the Crystal type to a `CrystalProc`
@@ -182,13 +307,8 @@ module Bindgen
         m = method.origin
         proc_type = Parser::Type.proc(m.return_type, m.arguments)
 
-        Call::Result.new(
-          type: proc_type,
-          type_name: proc_type.base_name,
-          reference: false,
-          pointer: 0,
-          conversion: nil,
-        )
+        pass = Crystal::Pass.new(@db)
+        pass.to_binding(proc_type)
       end
 
       # Adds the `JUMPTABLE` method to *klass*, which will be used to pass the
@@ -197,10 +317,10 @@ module Bindgen
         typer = Cpp::Typename.new
         # Pass by reference.
         table_type = Parser::Type.new(
-          baseName: table_name,
-          fullName: typer.full(table_name, const: false, pointer: 0, is_reference: true),
-          isConst: true,
-          isReference: true,
+          base_name: table_name,
+          full_name: typer.full(table_name, const: false, pointer: 0, is_reference: true),
+          const: true,
+          reference: true,
           pointer: 1,
         )
 
@@ -233,11 +353,10 @@ module Bindgen
 
       # Adds the jumptable type to the type database.
       private def register_table_type(crystal_struct, cpp_struct)
-        typer = Crystal::Typename.new(@db)
-
         rules = @db.get_or_add(cpp_struct.name)
         rules.graph_node = crystal_struct
-        rules.crystal_type = typer.qualified(crystal_struct.name, in_lib: true)
+        rules.crystal_type = crystal_struct.name
+        rules.binding_type = crystal_struct.name.gsub("_", "::")
         rules.cpp_type = cpp_struct.name
         rules.pass_by = TypeDatabase::PassBy::Reference
         rules.copy_structure = true
@@ -270,12 +389,12 @@ module Bindgen
 
       # Name of the jumptable structure for both C++ and Crystal.
       private def jumptable_name(klass)
-        "BgJumptable_#{klass.mangled_name}"
+        "BgJumptable_#{klass.origin.binding_name}"
       end
 
       # The name of the shadow sub-class in C++.
       private def subclass_name(klass)
-        "BgInherit_#{klass.mangled_name}"
+        "BgInherit_#{klass.origin.binding_name}"
       end
 
       # Body for `CallBuilder::CppCall`, setting the `bgJump` member in C++.

@@ -7,7 +7,6 @@ module Bindgen
     # Reads a `DefaultValueTypes`, while trying to retain as much original
     # information as possible.
     module ValueConverter
-
       def self.from_json(pull)
         case pull.kind
         when JSON::PullParser::Kind::Null
@@ -26,7 +25,7 @@ module Bindgen
         when JSON::PullParser::Kind::String
           pull.read_string
         else
-          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind.to_s})"
+          raise "Unexpected JSON kind #{pull.kind.inspect} (#{pull.kind})"
         end
       end
 

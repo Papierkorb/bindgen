@@ -63,6 +63,9 @@ SOFTWARE.
  //
  //===----------------------------------------------------------------------===//
 
+#ifndef CLANG_TYPE_NAME_HPP
+#define CLANG_TYPE_NAME_HPP
+
 # if __clang_major__ < 6
  #include "clang/Tooling/Core/QualTypeNames.h"
 # else
@@ -521,9 +524,9 @@ namespace ClangTypeName {
    return QT;
  }
 
- std::string getFullyQualifiedName(QualType QT,
-                                   const ASTContext &Ctx,
-                                   bool WithGlobalNsPrefix = false) {
+ static std::string getFullyQualifiedName(QualType QT,
+                                          const ASTContext &Ctx,
+                                          bool WithGlobalNsPrefix = false) {
    PrintingPolicy Policy(Ctx.getPrintingPolicy());
    Policy.SuppressScope = false;
    Policy.AnonymousTagLocations = false;
@@ -535,3 +538,5 @@ namespace ClangTypeName {
  }
 
 }  // end namespace ClangTypeName
+
+#endif // CLANG_TYPE_NAME_HPP

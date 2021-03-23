@@ -29,7 +29,15 @@ module Bindgen
 
         call = CallBuilder::CppCall.new(@db)
         wrapper = CallBuilder::CppWrapper.new(@db)
-        target = call.build(method.origin)
+
+        if method.tag?(Graph::Method::SUPERCLASS_BIND_TAG)
+          namer = Cpp::MethodName.new(@db)
+          original_method = method.origin.origin.not_nil!
+          method_name = namer.generate(original_method, "_self_", exact_member: true)
+        end
+
+        braces = method.origin.aggregate_constructor?
+        target = call.build(method.origin, name: method_name, braces: braces)
 
         method.calls[PLATFORM] = wrapper.build(
           method: method.origin,

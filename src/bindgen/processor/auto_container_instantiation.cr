@@ -11,8 +11,11 @@ module Bindgen
         m = method.origin
 
         try_add_container_type m.return_type
+        try_add_container_type @db.resolve_aliases m.return_type
+
         m.arguments.each do |argument|
           try_add_container_type argument
+          try_add_container_type @db.resolve_aliases argument
         end
       end
 
@@ -34,11 +37,11 @@ module Bindgen
         return if templ.arguments.size < arg_count
 
         # Add if we don't already know of this instantiation
-        instantiation = templ.arguments[0, arg_count].map(&.full_name)
-
-        unless container.instantiations.includes?(instantiation)
-          container.instantiations << instantiation
+        instantiation = templ.arguments[0...arg_count].map do |arg|
+          @db.resolve_aliases(arg).full_name
         end
+
+        container.instantiations << instantiation
       end
 
       # Returns the count of template arguments expected for a container of

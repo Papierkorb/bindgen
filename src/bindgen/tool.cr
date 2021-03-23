@@ -48,6 +48,7 @@ module Bindgen
       logger.info { "success!" }
       0 # Success!
 
+
     rescue err : ExitError
       logger.error(exception: err) { err.message }
       err.code # Failure
@@ -65,21 +66,21 @@ module Bindgen
     private def run_steps : Statistics
       stats = Statistics.new
 
-      logger.info {"find paths"}
+      logger.info { "find paths" }
       if path_config = @config.find_paths
         stats.measure("Find paths") { find_paths(path_config) }
       end
 
-      logger.info {"Parse C++"}
+      logger.info { "Parse C++" }
       document = stats.measure("Parse C++") { parse_cpp_sources }
 
-      logger.info {"Build graph"}
+      logger.info { "Build graph" }
       graph = stats.measure("Build graph") { build_graph(document) }
 
-      logger.info {"Processors"}
+      logger.info { "Processors" }
       stats.measure("Processors") { @processors.process(graph, document) }
 
-      logger.info {"Generators"}
+      logger.info { "Generators" }
       stats.measure("Generators") { @generators.process(graph) }
 
       stats.finish!

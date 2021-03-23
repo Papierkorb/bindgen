@@ -52,6 +52,52 @@ A setter is a method which:
 If these rules are fulfilled, then the `set` prefix is removed, and a Crystal
 writer method is created: `setWindowTitle() -> #window_title=`
 
+#### §2.1.4 Overloaded operators
+
+An overloaded operator is a method which:
+
+1. Is either a method, or a non-member function taking a wrapped type by lvalue
+   reference in the first function parameter
+2. Corresponds to a Crystal method in the table below
+
+|C++ operator|Crystal method|
+|-|-|
+|`+()`, `-()`, `~()`|`operator` dropped|
+|`++()`|`succ!`|
+|`++(int)`|`post_succ!`|
+|`--()`|`pred!`|
+|`--(int)`|`post_pred!`|
+|`!()`|`not`|
+|`*()`|`deref`|
+|`==(T)`, `!=(T)`, `<(T)`, `>(T)`, `<=(T)`, `>=(T)`|`operator` dropped|
+|`+(T)`, `-(T)`, `*(T)`, `/(T)`, `%(T)`, `&(T)`, `|(T)`, `^(T)`, `<<(T)`, `>>(T)`|`operator` dropped|
+|`+=(T)`|`add!(T)`|
+|`-=(T)`|`sub!(T)`|
+|`*=(T)`|`mul!(T)`|
+|`/=(T)`|`div!(T)`|
+|`%=(T)`|`mod!(T)`|
+|`&=(T)`|`bit_and!(T)`|
+|`|=(T)`|`bit_or!(T)`|
+|`^=(T)`|`bit_xor!(T)`|
+|`<<=(T)`|`lshift!(T)`|
+|`>>=(T)`|`rshift!(T)`|
+|`&&(T)`|`and(T)`|
+|`||(T)`|`or(T)`|
+|`[](T)`|`[](T)`|
+|`()(*T)`|`call(*T)`|
+
+Both `T` and the return type in the table can be any type; const-ness of the
+operator is not considered.  Non-member operators are automatically converted
+into methods in the wrapper classes.  Bindgen always uses the operators
+directly, and never invokes them as regular method calls.
+
+The following C++ operators are ignored: `=(T)`, `<=>(T)`, `&()`, `->()`,
+`->*(T)`, `,(T)`, all conversion operators.
+
+The following Crystal operators are overloadable, but unused by Bindgen:
+`&+`, `&-`, `&+(T)`, `&-(T)`, `&*(T)`, `&**(T)`, `//(T)`, `===(T)`, `<=>(T)`,
+`[]?(*T)`, `[]=(*T, U)`.
+
 ### §2.2 Arguments
 
 #### §2.2.1 Conversion
@@ -74,7 +120,7 @@ by using the `from_crystal` template: `my_from_crystal(arg_name)`.
 2. A type with `converter` set would be wrapped by using the `converter` module:
    `MyConverter.unwrap(arg_name)`.
 
-#### §2.2.4 Unnamed arguments
+#### §2.2.2 Unnamed arguments
 
 C++ allows the declaration of unnamed arguments, like this: `void foo(int)`.
 To wrap these methods, such arguments are given a name like `unnamed_arg_X`,
@@ -83,7 +129,7 @@ where `X` is the zero-indexed index of the affected argument.
 Given `void foo(int, int two, int)`, the generated wrapper prototype would look
 like this: `foo(unnamed_arg_0 : Int32, two : Int32, unnamed_arg_2 : Int32)`.
 
-#### §2.2.5 Argument renaming
+#### §2.2.3 Argument renaming
 
 If an argument has a name which is a reserved word in Crystal, it gets an
 underscore (`_`) appended: `void foo(int next) -> foo(next_ : Int32)`.
@@ -170,7 +216,8 @@ virtual method if the Crystal method and the C++ method share the same name.
 
 ```cpp
 class Foo {
-  virtual int doWork() { ... }
+public:
+  virtual int doWork() = 0;
 };
 ```
 
@@ -187,6 +234,356 @@ end
 The arguments and result values are proxied back and forth from C++ like normal
 wrappers do.  The rules of argument handling is the same.  Such overrides will
 look and behave the same to C++ as any other virtual C++ method.
+
+**Note**: Calling `super` in the body of a Crystal method that overrides a
+concrete C++ virtual method is not supported.  **The process will crash due to
+a stack overflow!**
+
+#### §2.3.5 Base-class wrapper
+
+A `Superclass` wrapper is defined for every impure abstract class in C++.  This
+wrapper is returned by the `#superclass` method; both the type and the method
+are private within the original Crystal wrapper.  Concrete virtual methods of
+the C++ type are mirrored in the superclass wrapper, except these methods always
+invoke the original C++ methods, ignoring method overrides from Crystal.
+
+```cpp
+class Foo {
+public:
+  virtual int bar(int x);
+  virtual int baz(int x) = 0;
+};
+```
+
+Will generate:
+
+```crystal
+class Foo
+  private class Superclass
+    def bar(x)
+      # ...
+    end
+  end
+
+  private def superclass : Superclass
+    # ...
+  end
+end
+```
+
+This allows sub-classes of `Foo` to do the following:
+
+```crystal
+class MyFoo < Foo
+  def bar(x)
+    superclass.bar(x) + superclass.bar(x - 1)
+    # equivalent to: super + super(x - 1)
+  end
+end
+```
+
+**Note**: The wrapped methods always refer to the C++ methods.  If another class
+inherits from `MyFoo` and overrides `#bar`, the overriding method may refer to
+`MyFoo#bar` using `super` directly.
+
+### §2.4 Instance properties
+
+Property methods can be generated for any static or instance variable in a
+Crystal wrapper corresponding to a C++ `class`, `struct`, or `union`, if all of
+the following criteria are met:
+
+* The member's visibility is `public` or `protected` (the latter is mapped to
+  `private` in Crystal)
+* The member is not an lvalue or rvalue reference
+* The type's `copy_structure` is not set
+* The type's `instance_variable` settings do not reject the member
+* The member is not inside a nested anonymous type that names another member
+  (this is supported by §3.2.2)
+* The member does not satisfy the requirements for wrapped static constants (see
+  §2.4.5)
+* The method is not a setter for a `const` member
+
+The names of property methods are underscored according to the member name.
+
+```cpp
+struct Point {
+  int xPos, yPos;
+protected:
+  const int version;
+};
+```
+
+Will be wrapped as: (implementations omitted)
+
+```crystal
+class Point
+  def x_pos : Int32 end
+  def x_pos=(x_pos : Int32) : Void end
+  def y_pos : Int32 end
+  def y_pos=(y_pos : Int32) : Void end
+  private def version : Int32 end
+end
+```
+
+### §2.4.1 Class type properties
+
+If a data member is a value of another wrapped type, the getter allocates a copy
+of the variable in C/C++ (using the C++ type's copy constructor), so it is safe
+to modify the returned object without altering the original value.
+
+```cpp
+struct Line {
+  Point start;
+};
+```
+
+```crystal
+class Line
+  def start : Point end
+  def start=(start : Point) : Void end
+end
+
+def start_from_zero(line : Line)
+  # This has no effect!
+  # `line.start` returns a copy of the property
+  line.start.x_pos = 0
+end
+```
+
+### §2.4.2 Pointer properties
+
+If a data member is a pointer to a wrapped type, instances of the wrapped type
+can be passed to C++ directly without having to construct any pointers in
+Crystal.  These properties may additionally be configured as nilable, in which
+case they may accept and return `nil` as well, corresponding to C++'s `nullptr`.
+
+```cpp
+struct LinkedList {
+  LinkedList *child;
+  LinkedList *prev; // nilable
+};
+```
+
+Generates:
+
+```crystal
+class LinkedList
+  def child() : LinkedList end
+  def child=(child : LinkedList) : Void end
+  def prev() : LinkedList? end
+  def prev=(child : LinkedList?) : Void end
+end
+```
+
+Pointers of non-wrapped types, including primitive types, are exposed as Crystal
+`Pointer(T)`s, and they are always nilable, using `Pointer(T).null` instead
+of `nil`.
+
+```cpp
+struct OutParam {
+  int *index;
+  bool *found;
+};
+```
+
+```crystal
+class OutParam
+  def index : Int32* end
+  def index=(index : Int32*) : Void end
+  def found : Bool* end
+  def found=(found : Bool*) : Void end
+end
+```
+
+### §2.4.3 Anonymous members
+
+Properties inside nested anonymous types are allowed as long as they are
+directly accessible from the instance's top level.
+
+```cpp
+struct Props {
+  struct {
+    int x, y; // accessible from top level
+  } point; // not wrapped
+  union {
+    int foo;
+    struct {
+      char bar;
+      char baz;
+    };
+  };
+};
+```
+
+```crystal
+class Props
+  def foo : Int32 end
+  def foo=(foo : Int32) : Void end
+  def bar : Char end
+  def bar=(bar : Char) : Void end
+  def baz : Char end
+  def baz=(baz : Char) : Void end
+end
+```
+
+### §2.4.4 Static data members
+
+Static variables have the wrapper class itself as the receiver.  The names for
+constant member getters are still underscored, and their initializers are NOT
+copied to the Crystal wrappers.
+
+```cpp
+struct Application {
+  static Application *instance;
+  static const int VERSION; // not defined
+};
+```
+
+```crystal
+class Application
+  def self.instance : Application end
+  def self.instance=(instance : Application) : Void end
+  def self.version : Int32 end
+end
+```
+
+### §2.4.5 Static constants
+
+If a static variable additionally satisfies the following conditions, a wrapped
+constant will be generated instead of a getter method:
+
+* The member is `const` or `constexpr`
+* The member's initializer is available in the parsed C++ sources
+* The member is an integral, floating-point, or boolean value
+
+```cpp
+struct Application {
+  static const int VERSION = 103;
+  static constexpr double epsilon = 0.000001;
+};
+```
+
+```crystal
+class Application
+  VERSION = 103
+  EPSILON = 1.0e-6
+end
+```
+
+### §2.5 Constructors
+
+Bindgen copies the non-special constructors of each class to the corresponding
+Crystal wrapper, provided they are accessible and not deleted.  Copy
+constructors and move constructors are not copied.
+
+```cpp
+struct Foo {
+  Foo();
+  Foo(const Foo &);
+  Foo(Foo &&);
+  Foo(int) = delete;
+};
+
+class Bar {
+  Bar();
+};
+```
+
+generates
+
+```crystal
+class Foo
+  def initialize() end
+end
+
+class Bar
+  # `#initialize()` is not defined
+end
+```
+
+### §2.5.1 Implicit constructors
+
+Bindgen is able to generate default constructors for classes that are
+default-constructible in C++ but have no user-provided constructors.
+
+```cpp
+struct Foo {
+  int x;
+};
+
+struct Bar {
+  int &x;
+};
+```
+
+```crystal
+class Foo
+  def initialize() end
+end
+
+class Bar
+  # `#initialize()` is not defined
+end
+```
+
+### §2.5.2 Aggregate constructors
+
+Wrapper classes that obey the following rules receive an aggregate constructor
+where each field of the class is initialized by a named argument:
+
+* The class contains at least 1 non-static data member.
+* All fields of the class are public, non-anonymous members that do not have
+  in-class default initializers.
+* The class is not polymorphic.
+* The class does not inherit from any other class.
+* The class has no user-provided constructors.
+* The class is not a C++ `union`.
+
+```cpp
+struct Point {
+  int x;
+  int y;
+};
+```
+
+```crystal
+class Point
+  def initialize(*, x : Int32, y : Int32) end
+end
+```
+
+### §2.6 Generic types
+
+Only sequential container types are instantiated on the Crystal side, as if each
+container implements the following interface:
+
+```crystal
+module Container(T)
+  include Indexable(T)
+
+  # All containers must be default-constructible
+  # abstract def initialize
+
+  abstract def unsafe_fetch(index : Int) : T
+  abstract def push(value : T) : Void
+  abstract def size : Int32
+
+  def <<(x : T)
+    push(x)
+    self
+  end
+
+  def concat(values : Enumerable(T))
+    values.each { |v| self << v }
+    self
+  end
+end
+```
+
+Bindgen automatically collects all instantiations of each container type that
+appear in method argument types or return types; explicit instantiations may be
+configured with the `containers` section.  Aliases to complete container types
+and container type arguments are both supported.
 
 ## §3. Crystal bindings
 
@@ -205,7 +602,7 @@ The name consists out of the following parts (in this order):
 
 All of these parts are joined by a single underscore (`_`).
 
-**Argument type mangling**
+#### Argument type mangling
 
 The argument list is a list of all types of the arguments, in the order they
 appear in the method prototype.  Each argument types C++ name is taken and
@@ -216,21 +613,142 @@ transformed, such that:
 3. All alpha-numeric characters are kept
 4. All other characters are replaced with `_`
 
-**Method types**
+#### Method types
 
 The method type marker mainly depends on the method type.  However, special
 generated methods may use custom markers to distinguish them.
 
 * Member methods don't have a marker
 * Static methods use `STATIC`
+* Property methods use either `GETTER` or `SETTER` (see §2.4)
 * Constructors use `CONSTRUCT`
 * Destructors use `DESTRUCT`
+* Overloaded operators use `OPERATOR`, followed by a name that uniquely
+  identifies the operator
 
-**Examples**
+#### Examples
 
-1. Member method `void Foo::bar(int *&) -> bg_Foo_bar_int_XR`
-2. Static method: `void Foo::bar(std::string) -> bg_Foo_STATIC_bar_std__string`
-3. Method without arguments: `void Foo::bar() -> bg_Foo_bar_` (Trailing `_`)
+1. Member method `void Foo::bar(int *&)` -> `bg_Foo_bar_int_XR`
+2. Static method: `void Foo::bar(std::string)` ->
+   `bg_Foo_STATIC_bar_std__string`
+3. Method without arguments: `void Foo::bar()` -> `bg_Foo_bar_` (Trailing `_`)
+4. Operator method: `bool Foo::operator==(const Foo &)` ->
+   `bg_Foo__OPERATOR_eq_const_Foo_R`
+
+### §3.2 Structures
+
+Structures (`struct` / `union`) marked with `copy_structure` are available under
+`lib Binding`.  Built-in types can be used directly, as are pointers to other
+types.
+
+```cpp
+class Wrapper { }; // structure not copied
+
+struct Point {
+  int x, y;
+  bool z;
+  Wrapper *w;
+  Point *p;
+};
+
+union Conv {
+  int a;
+  float b;
+};
+```
+
+```crystal
+lib Binding
+  struct Point
+    x : Int32
+    y : Int32
+    z : Bool
+    w : Wrapper* # refers to the return value of `Wrapper#to_unsafe`
+    p : Point*
+  end
+
+  union Conv
+    a : Int32
+    b : Float32
+  end
+end
+```
+
+#### §3.2.1 Name rewriting
+
+The names of a struct and its enclosing namespaces are CamelCased, and then
+joined together by underscores (`_`).
+
+* `Point` → `Point`
+* `foo_bar` → `FooBar`
+* `MyLib::core::val_array` → `MyLib_Core_ValArray`
+
+#### §3.2.2 Nested anonymous types
+
+Unnamed structures nested inside another structure are also copied, provided
+that the structure names a data member and the enclosing structure is also
+copied.
+
+```cpp
+struct Outer {
+  struct {
+    int bar;
+  } foo;
+};
+
+Outer { }.foo.bar; // => 0
+```
+
+```crystal
+struct Outer
+  foo : Outer_Unnamed0
+end
+
+struct Outer_Unnamed0
+  bar : Int32
+end
+
+Binding::Outer.new.foo.bar # => 0
+```
+
+#### §3.2.3 Anonymous members
+
+If the unnamed structure does not name a member, its contents are merged into
+the enclosing type.  This is only done when the structures are both `struct`s or
+both `union`s; otherwise, a unique member name is generated for the anonymous
+member holding the structure.
+
+```cpp
+struct Outer {
+  struct {
+    int bar;
+  };
+  union {
+    float baz;
+    bool quux;
+  };
+};
+
+Outer x;
+x.bar; // => 0
+x.quux; // => false
+```
+
+```crystal
+struct Outer
+  bar : Int32
+  unnamed_arg_1 : Outer_Unnamed0
+end
+
+struct Outer_Unnamed0
+  baz : Float32
+  quux : Bool
+end
+
+x = Binding::Outer.new
+x.bar # => 0
+x.unnamed_arg_1.quux # => false
+```
 
 ## §4. C++ wrapper functions
 
@@ -256,8 +774,29 @@ Given a `QFlags<ApplicationFlag>`, the generated enumeration will look like
 
 ```cr
 @[Flags]
-enum ApplicationFlag : Int32
+enum ApplicationFlag : UInt32
   # Constants ...
+end
+```
+
+### §5.4 Nested anonymous enums
+
+An unnamed enumeration type inside a wrapped class will dump its enumerators
+into the enclosing wrapper as constants, instead of generating an enumeration.
+The underlying type of the enumeration type is respected.
+
+```cpp
+struct Calculator {
+  enum { PLUS, MINUS, TIMES, DIVIDE };
+};
+```
+
+```crystal
+class Calculator
+  Plus = 0u32
+  Minus = 1u32
+  Times = 2u32
+  Divide = 3u32
 end
 ```
 
@@ -272,11 +811,26 @@ second the connection method, which are then exposed as Crystal wrappers.
 * Emission method: `changed(one : Int32) : Void`
 * Connection method: `on_changed(&block : Int32 -> Void)`
 
-### §Q.1.1
+### §Q.1.1 Signal connection object
 
 The connection method returns an connection object, which responds to
 `#disconnect`.  Calling this method breaks the connection.  Subsequent calls to
 this method have no effect.
+
+### §Q.1.2 Overloaded signals
+
+An overload is defined for each signature of a connection method that may take
+different sets of parameters.  The overloads take the expected types of the
+signal parameters, as mandatory function arguments.  This only happens to
+overloaded signals; type arguments are not required for signals with unique
+signatures.
+
+* Given these signals:
+  * `void changed(int one)`
+  * `void changed(bool two)`
+* Connection methods:
+  * `on_changed(type1 : Int32.class, &block : Int32 -> Void)`
+  * `on_changed(type1 : Bool.class, &block : Bool -> Void)`
 
 ### §Q.2 QFlags
 

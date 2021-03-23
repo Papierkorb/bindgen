@@ -1,3 +1,5 @@
+require "./type/cpp_type_parser"
+
 module Bindgen
   module Parser
     # Stores information about a specific C++ type.
@@ -9,42 +11,71 @@ module Bindgen
       CRYSTAL_PROC = "CrystalProc"
 
       # Type kinds.  Currently not used by the clang tool.
+      # TODO: use `Parser::TypeKind` instead
       enum Kind
         Class
         Struct
         Enum
-        Function
+        Function # `CrystalProc`; template type in C++, non-generic in Crystal
       end
 
-      # ATTENTION: Changes here have to be kept in sync with `Parser::Argument`s mapping!!
-      # Also make sure to update other methods in here and in `Argument` as required!
-      property kind : Kind = Kind::Class
-      property isConst : Bool
-      property isMove : Bool
-      property isReference : Bool
-      property isBuiltin : Bool
-      property isVoid : Bool
-      property pointer : Int32
-      property baseName : String
-      property fullName : String
+      # ATTENTION: Make sure to update other methods in here and in `Argument`
+      # as required!
+
+      # Type kind.
+      getter kind = Bindgen::Parser::Type::Kind::Class
+
+      # Is this type constant?
+      @[JSON::Field(key: "isConst")]
+      getter? const : Bool
+
+      # Is this a C++ rvalue reference type?
+      @[JSON::Field(key: "isMove")]
+      getter? move : Bool
+
+      # Is this a C++ lvalue reference type?
+      @[JSON::Field(key: "isReference")]
+      getter? reference : Bool
+
+      # Is this type a C++ built-in type?
+      @[JSON::Field(key: "isBuiltin")]
+      getter? builtin : Bool
+
+      # Is it C++ `void`?  Note that `void *` is also void.
+      # See also `#pure_void?`
+      @[JSON::Field(key: "isVoid")]
+      getter? void : Bool
+
+      # Total number of indirections from pointers and lvalue references.
+      getter pointer : Int32
+
+      # Unqualified base name for easier mapping to Crystal.
+      #
+      # E.g., the base name of `const QWidget *&` is `QWidget`.
+      @[JSON::Field(key: "baseName")]
+      getter base_name : String
+
+      # Fully qualified, full name, for the C++ bindings.
+      @[JSON::Field(key: "fullName")]
+      getter full_name : String
+
+      # Is this type nilable?  For compatibility with `Argument`.
       @[JSON::Field(key: "acceptsNull")]
-      property nilable : Bool = false
-      property template : Template?
+      getter? nilable = false
 
-      def initialize(@kind, @isConst, @isMove, @isReference, @isBuiltin, @isVoid, @pointer,
-         @baseName, @fullName, @nilable, @template)
-      end
+      # Template information, if this type is a template type.
+      getter template : Template?
 
       # `Void` type
       VOID = new(
-        isConst: false,
-        isMove: false,
-        isReference: false,
-        isBuiltin: true,
-        isVoid: true,
+        const: false,
+        move: false,
+        reference: false,
+        builtin: true,
+        void: true,
         pointer: 0,
-        baseName: "void",
-        fullName: "void",
+        base_name: "void",
+        full_name: "void",
         template: nil,
         nilable: false,
       )
@@ -52,14 +83,14 @@ module Bindgen
       # Empty type, as is returned by the parser for constructors.  Only valid
       # as a return type of a constructor method.
       EMPTY = new(
-        isConst: false,
-        isMove: false,
-        isReference: false,
-        isBuiltin: true,
-        isVoid: false,
+        const: false,
+        move: false,
+        reference: false,
+        builtin: true,
+        void: false,
         pointer: 0,
-        baseName: "",
-        fullName: "",
+        base_name: "",
+        full_name: "",
         template: nil,
         nilable: false,
       )
@@ -67,84 +98,52 @@ module Bindgen
       # Returns a `Type` of a C++ built-in type *cpp_name*.
       def self.builtin_type(cpp_name : String, pointer = 0, reference = false)
         new(
-          isConst: false,
-          isMove: false,
-          isReference: reference,
-          isBuiltin: true,
-          isVoid: (cpp_name == "void"),
+          const: false,
+          move: false,
+          reference: reference,
+          builtin: true,
+          void: (cpp_name == "void"),
           pointer: pointer,
-          baseName: cpp_name,
-          fullName: cpp_name,
+          base_name: cpp_name,
+          full_name: cpp_name,
           template: nil,
           nilable: false,
         )
       end
 
-      # Parser for qualified C++ type-names.  It's really stupid though.
+      # Returns a `Type` of a fully qualified C++ typename *type_name*.  Extra
+      # pointer indirections can be set by *pointer_depth*.
       def self.parse(type_name : String, pointer_depth = 0)
-        name = type_name.strip # Clean the name
-        reference = false
-        const = false
-
-        # Is it const-qualified?
-        if name.starts_with?("const ")
-          const = true
-          name = name[6..-1] # Remove `const `
-        end
-
-        # Is it a reference?
-        if name.ends_with?('&')
-          reference = true
-          pointer_depth += 1
-          name = name[0..-2] # Remove ampersand
-        end
-
-        # Is it a pointer?
-        while name.ends_with?('*')
-          pointer_depth += 1
-          name = name[0..-2] # Remove star
-        end
-
-        # Build the `Type`
-        new(
-          isConst: const,
-          isMove: false,
-          isReference: reference,
-          isBuiltin: false, # Oh well
-          isVoid: (name == "void"),
-          pointer: pointer_depth,
-          baseName: name.strip,
-          fullName: type_name,
-          template: nil,
-          nilable: false,
-        )
+        CppTypeParser.new.parse(type_name, pointer_depth)
       end
 
       # Creates a `Type` describing a Crystal `Proc` type, which returns a
       # *return_type* using *arguments*.
       #
-      # The generated type will use `CrystalProc` as base type.
+      # The generated type will be considered a built-in type.
       def self.proc(return_type : Type, arguments : Enumerable(Type))
-        base = "CrystalProc"
+        base = CRYSTAL_PROC
 
         template_args = [return_type] + arguments.to_a
         template = Template.new(
-          fullName: base,
-          baseName: base,
+          full_name: base,
+          base_name: base,
           arguments: template_args,
         )
 
-        # Build the `Type``
+        typer = Cpp::Typename.new
+        specialization = typer.template_class(base, template_args.map(&.full_name))
+        # Build the `Type`
         new(
           kind: Kind::Function,
-          isConst: false,
-          isMove: false,
-          isReference: false,
-          isBuiltin: false,
-          isVoid: false,
+          const: false,
+          move: false,
+          reference: false,
+          builtin: true,
+          void: false,
           pointer: 0,
-          baseName: base,
-          fullName: base,
+          base_name: specialization,
+          full_name: specialization,
           template: template,
           nilable: false,
         )
@@ -159,8 +158,8 @@ module Bindgen
       # 3. If `#pointer > 0`, remove one (`int *` -> `int`)
       # 4. Else, it's the base-type already.  Return `nil`.
       def decayed : Type?
-        is_const = @isConst
-        is_ref = @isReference
+        is_const = @const
+        is_ref = @reference
         ptr = @pointer
 
         if is_const # 1.
@@ -179,87 +178,171 @@ module Bindgen
 
         Type.new(
           kind: @kind,
-          isConst: is_const,
-          isReference: is_ref,
-          isMove: false,
-          isBuiltin: @isBuiltin,
-          isVoid: @isVoid,
+          const: is_const,
+          reference: is_ref,
+          move: false,
+          builtin: @builtin,
+          void: @void,
           pointer: ptr,
-          baseName: @baseName,
-          fullName: typer.full(@baseName, is_const, type_ptr, is_ref),
+          base_name: @base_name,
+          full_name: typer.full(@base_name, is_const, type_ptr, is_ref),
           template: @template,
           nilable: @nilable,
         )
       end
 
-      def_equals_and_hash @baseName, @fullName, @isConst, @isReference, @isMove, @isBuiltin, @isVoid, @pointer, @kind, @nilable
-
-      def initialize(@baseName, @fullName, @isConst, @isReference, @pointer, @isMove = false,
-                     @isBuiltin = false, @isVoid = false, @kind = Kind::Class, @template : Template? = nil, @nilable = false)
+      # If the type is a pointer and not a reference, returns a copy of this
+      # type that is nilable, otherwise returns `nil`.
+      def make_pointer_nilable : Type?
+        if @pointer > 0 && !@reference && !@move
+          Type.new(
+            kind: @kind,
+            const: @const,
+            reference: false,
+            move: false,
+            builtin: @builtin,
+            void: @void,
+            pointer: @pointer,
+            base_name: @base_name,
+            full_name: @full_name,
+            template: @template,
+            nilable: true,
+          )
+        end
       end
 
-      # Is this type nilable?  For compatibility with `Argument`.
-      getter? nilable : Bool
+      # Checks whether this type uses *name* in its base name or any of its
+      # template arguments.  Does not check for template names.
+      def uses_typename?(name : String)
+        if template = @template
+          template.arguments.any?(&.uses_typename?(name))
+        else
+          @base_name == name
+        end
+      end
+
+      # Performs type substitution with the given *replacements*.
+      #
+      # Substitution is performed if this type's base name is exactly one of the
+      # type arguments, but not if the type is a templated type of the same
+      # name.  Substitution is applied recursively on template type arguments.
+      # All substitutions are applied simultaneously.
+      def substitute(replacements : Hash(String, Type)) : Type
+        if template = @template
+          substitute_template(replacements, template)
+        elsif type = replacements[@base_name]?
+          substitute_base(type)
+        else
+          self
+        end
+      end
+
+      # Substitutes all uses of *name* with the given *type*.
+      def substitute(name : String, with type : Type) : Type
+        substitute({name, type})
+      end
+
+      # :ditto:
+      def substitute(replacements : Tuple(String, Type)) : Type
+        if template = @template
+          substitute_template(replacements, template)
+        elsif @base_name == replacements[0]
+          substitute_base(replacements[1])
+        else
+          self
+        end
+      end
+
+      # Helper for `#substitute`.  Performs type substitution on the type's
+      # template arguments.
+      private def substitute_template(replacements, template) : Type
+        typer = Cpp::Typename.new
+        template_args = template.arguments.map(&.substitute(replacements))
+        template_base = template.base_name
+        template_full = typer.template_class(template_base, template_args.map(&.full_name))
+
+        subst_template = Template.new(
+          base_name: template_base,
+          full_name: template_full,
+          arguments: template_args,
+        )
+
+        typer = Cpp::Typename.new
+        type_ptr = @pointer - (reference? ? 1 : 0)
+
+        Type.new(
+          kind: @kind,
+          const: @const,
+          reference: @reference,
+          move: @move,
+          builtin: @builtin,
+          void: @void,
+          pointer: @pointer,
+          base_name: template_full,
+          full_name: typer.full(template_full, @const, type_ptr, @reference),
+          template: subst_template,
+          nilable: @nilable,
+        )
+      end
+
+      # Helper for `#substitute`.  Performs basic type substitution on this
+      # type.  Const-ness, references, and pointers are propagated.
+      private def substitute_base(type)
+        const = type.const? || const?
+        reference = type.reference? || reference?
+        move = !reference && (type.move? || move?)
+        pointer = @pointer + type.pointer - (type.reference? && reference? ? 1 : 0)
+
+        if @pointer > 0 && !reference? && type.reference?
+          reference = false
+          pointer -= 1
+        end
+
+        typer = Cpp::Typename.new
+        type_ptr = pointer - (reference ? 1 : 0)
+
+        Type.new(
+          kind: type.kind,
+          const: const,
+          reference: reference,
+          move: move,
+          builtin: type.builtin?,
+          void: type.void?,
+          pointer: pointer,
+          base_name: type.base_name,
+          full_name: typer.full(type.base_name, const, type_ptr, reference),
+          template: type.template,
+          nilable: type.nilable?,
+        )
+      end
+
+      def_equals_and_hash @base_name, @full_name, @const, @reference, @move,
+        @builtin, @void, @pointer, @kind, @nilable, @template
+
+      def initialize(
+        @base_name, @full_name, @const, @reference, @pointer, @move = false,
+        @builtin = false, @void = false, @kind = Kind::Class, @template = nil,
+        @nilable = false
+      )
+      end
 
       # Checks if this type equals the *other* type, except for nil-ability.
       def equals_except_nil?(other : Type)
-        {% for i in %i[baseName fullName isConst isReference isMove isBuiltin isVoid pointer kind] %}
-        return false if @{{ i.id }} != other.{{ i.id }}
+        {% for i in %i[base_name full_name const reference move builtin void pointer kind template] %}
+          return false if @{{ i.id }} != other.@{{ i.id }}
         {% end %}
 
         true
       end
 
-      # Is this type constant?
-      def const?
-        @isConst
-      end
-
-      # Does the type use move-semantics?
-      def move?
-        @isMove
-      end
-
-      # Is this a C++ reference type?
-      def reference?
-        @isReference
-      end
-
-      # Is this type a C++ built-in type?
-      def builtin?
-        @isBuiltin
-      end
-
-      # Is it C++ `void`?  Note that `void *` is also void.
-      # See also `#pure_void?`
-      def void?
-        @isVoid
-      end
-
       # Returns `true` if this type is `void`, and nothing else.
       def pure_void?
-        @isVoid && @pointer == 0
-      end
-
-      # Unqualified base name for easier mapping to Crystal.
-      #
-      # E.g., the base name of `const QWidget *&` is `QWidget`.
-      def base_name
-        @baseName
-      end
-
-      # Fully qualified, full name, for the C++ bindings.
-      def full_name
-        @fullName
+        @void && @pointer == 0
       end
 
       # The mangled type name for C++ bindings.
       def mangled_name
-        if @kind.function? && (templ = @template)
-          Util.mangle_type_name(@fullName) + "_" + templ.mangled_name
-        else
-          Util.mangle_type_name @fullName
-        end
+        Util.mangle_type_name @full_name
       end
     end
   end

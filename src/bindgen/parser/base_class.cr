@@ -4,25 +4,24 @@ module Bindgen
     class BaseClass
       include JSON::Serializable
 
-      property isVirtual : Bool
-      property inheritedConstructor : Bool
-      property name : String
-      property access : AccessSpecifier
+      # Is this inheritance virtual?
+      @[JSON::Field(key: "isVirtual")]
+      getter? virtual : Bool
 
-      def initialize(@name, @access = AccessSpecifier::Public, @isVirtual = false, @inheritedConstructor = false)
+      # Does the `Bindgen::Class` derive its constructors from this class?
+      @[JSON::Field(key: "inheritedConstructor")]
+      getter? inherited_constructor : Bool
+
+      # Fully qualified name of the base class.
+      getter name : String
+
+      # Visibility of the base class.
+      getter access = Bindgen::Parser::AccessSpecifier::Public
+
+      def initialize(@name, @access = AccessSpecifier::Public, @virtual = false, @inherited_constructor = false)
       end
 
       delegate public?, protected?, private?, to: @access
-
-      # If this inheritance is virtual
-      def virtual?
-        @isVirtual
-      end
-
-      # If the `Bindgen::Class` derives its constructors from this class.
-      def inherited_constructor?
-        @inheritedConstructor
-      end
     end
   end
 end

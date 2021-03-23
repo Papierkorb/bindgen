@@ -4,17 +4,36 @@ module Bindgen
     class Enums < Base
       def process(graph : Graph::Node, doc : Parser::Document)
         doc.enums.each do |name, enumeration|
-          config = @config.enums[name]
+          if enumeration.anonymous?
+            config = Configuration::Enum.new(
+              destination: enumeration.name,
+            )
+          else
+            config = @config.enums[name]
+          end
+
           add_enum(graph, config, enumeration)
         end
       end
 
       # Adds *enumeration* according to *config* into the *root*.
       private def add_enum(root, config, enumeration)
-        builder = Graph::Builder.new(@db)
         origin = reconfigure_enum(config, enumeration)
 
-        builder.build_enum(origin, config.destination, root)
+        if origin.anonymous?
+          # Re-parent the anonumous enum if the enclosing class is wrapped.
+          path = Graph::Path.from(config.destination)
+          if parent = @db[path.parent.to_s]?
+            if parent.generate_wrapper? && (wrapper_name = parent.wrapper_type)
+              path = Graph::Path.from(wrapper_name, path.last_part)
+            end
+          end
+
+          emit_enum(origin, path, root)
+        else
+          builder = Graph::Builder.new(@db)
+          builder.build_enum(origin, config.destination, root)
+        end
       end
 
       # Reconfigures *enumeration* according to the users *config*.
@@ -25,9 +44,34 @@ module Bindgen
         Parser::Enum.new(
           name: enumeration.name,
           type: enumeration.type, # Make configurable?
-          isFlags: is_flags,
+          flags: is_flags,
+          anonymous: enumeration.anonymous?,
           values: camelcase_fields(config, fields),
         )
+      end
+
+      # Writes the enumerators of the given *enumeration* to the *destination*
+      # path relative to *root*.
+      private def emit_enum(enumeration, destination, root)
+        builder = Graph::Builder.new(@db)
+        type = Crystal::Type.new(@db)
+
+        # Enums aren't copied in C++ but constants are, and we don't need them
+        # in C++.
+        path = Graph::Path.from(destination)
+        parent, _ = builder.parent_and_local_name(root, path)
+        host = parent.platform_specific(Graph::Platform::Crystal)
+        value_type = Parser::Type.parse(enumeration.type)
+
+        enumeration.values.each do |name, value|
+          if typed_value = type.convert(value, value_type)
+            Graph::Constant.new(
+              parent: host,
+              name: name.underscore.upcase,
+              value: typed_value,
+            )
+          end
+        end
       end
 
       # CamelCases all field names, if they're not already camel-cased.

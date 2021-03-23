@@ -11,7 +11,6 @@ module Bindgen
         type_name: "Void",
         reference: false,
         pointer: 0,
-        conversion: nil,
         nilable: false,
       )
 
@@ -53,7 +52,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_binding)
+        return unless @db.try_or(klass.origin.name, true, &.generate_binding?)
 
         logger.trace { "visiting class #{klass.diagnostics_path}" }
 
@@ -109,7 +108,7 @@ module Bindgen
 
       # Makes sure all types in *call* are have an alias to `Void`.
       private def add_type_aliases(call)
-        logger.trace &.emit "add type aliases for call", name: call.name,  origin: call.origin.binding_method_name
+        logger.trace &.emit "add type aliases for call", name: call.name, origin: call.origin.class_name
 
         add_type_alias call.result
         call.arguments.each { |arg| add_type_alias(arg) }
@@ -123,10 +122,11 @@ module Bindgen
 
         return if type.builtin? || type.void? # Built-ins don't need aliases
         return if @aliases.has_key? expr.type_name
+
         if rules = @db[type]?
-          return if rules.builtin
-          return if rules.ignore
-          return if rules.copy_structure
+          return if rules.builtin?
+          return if rules.ignore?
+          return if rules.copy_structure?
           return if rules.kind.enum?
           return if rules.graph_node.is_a?(Graph::Enum)
         end

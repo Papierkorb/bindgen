@@ -12,8 +12,7 @@ module Bindgen
       end
 
       def visit_class(klass)
-        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper)
-        
+        return unless @db.try_or(klass.origin.name, true, &.generate_wrapper?)
         logger.trace { "visiting class #{klass.diagnostics_path}" }
 
         # The parent class already has the `@unwrap`
@@ -28,12 +27,13 @@ module Bindgen
       end
 
       private def add_unwrap_variable(klass) : Call::Result
-        pass = Crystal::Pass.new(@db)
+        logger.trace { "add_unwrap_variable #{klass.diagnostics_path}" }
+
         typer = Crystal::Typename.new(@db)
 
         if structure = klass.structure
           type = klass.origin.as_type(pointer: 0)
-          type_name = Graph::Path.local(klass, structure).to_s
+          type_name = Graph::Path.local(from: klass, to: structure).to_s
         else
           type = klass.origin.as_type(pointer: 1)
           type_name = typer.qualified(*typer.binding(type))
@@ -44,11 +44,12 @@ module Bindgen
           type_name: type_name,
           pointer: type.pointer,
           reference: false,
-          conversion: nil,
         )
       end
 
       private def add_to_unsafe_method(klass, unwrap)
+        logger.trace { "add_to_unsafe_method #{klass.diagnostics_path}" }
+
         to_unsafe = CallBuilder::CrystalToUnsafe.new(@db)
         call = to_unsafe.build(klass.origin, unwrap.pointer < 1)
 
@@ -62,6 +63,8 @@ module Bindgen
       end
 
       private def add_unwrap_initialize(klass)
+        logger.trace { "add_unwrap_initialize #{klass.diagnostics_path}" }
+
         unwrap_init = CallBuilder::CrystalUnwrapInitialize.new(@db)
         origin = klass.origin
 
@@ -113,7 +116,7 @@ module Bindgen
         call = CallBuilder::CrystalBinding.new(@db)
         wrapper = CallBuilder::CrystalWrapper.new(@db)
         target = call.build(method.origin, klass_type, CallBuilder::CrystalBinding::InvokeBody)
-        
+
         wrapper.build(method.origin, target)
       end
 

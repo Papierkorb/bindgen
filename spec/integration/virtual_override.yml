@@ -14,3 +14,12 @@ classes:
   Base: Base
   AbstractThing: AbstractThing
   Subclass: Subclass
+  Implicit: Implicit
+  Skip: Skip
+  Module::SuperV: Module::SuperV
+
+types:
+  Subclass:
+    superclass_ignore_methods: [ "^random" ]
+  Skip:
+    generate_superclass: false

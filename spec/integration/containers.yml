@@ -2,6 +2,7 @@
 
 processors:
   - filter_methods
+  - auto_container_instantiation
   - instantiate_containers
   - default_constructor
   - cpp_wrapper

@@ -8,23 +8,26 @@ module Bindgen
       alias Collection = Hash(String, Enum)
 
       # Name of the enumeration type.
-      property name : String
+      getter name : String
+
       # C++ type name, to be mapped later.
-      property type : String
+      getter type : String
+
       # Is this enumeration a flag type?
-      property isFlags : Bool
+      @[JSON::Field(key: "isFlags")]
+      getter? flags : Bool
+
+      # Is this enumeration anonymous?
+      @[JSON::Field(key: "isAnonymous")]
+      getter? anonymous : Bool
+
       # Enum fields
-      property values : Hash(String, Int64)
+      getter values : Hash(String, Int64)
 
-      def initialize(@name, @values, @type = "unsigned int", @isFlags = false)
+      def initialize(@name, @values, @type = "unsigned int", @flags = false, @anonymous = false)
       end
 
-      # Tries to figure out if this enumeration is actually a bit-mask flag.
-      def flags?
-        @isFlags
-      end
-
-      def_equals_and_hash @name, @type, @isFlags, @values
+      def_equals_and_hash @name, @type, @flags, @values
     end
   end
 end
