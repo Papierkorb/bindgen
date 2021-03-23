@@ -464,7 +464,7 @@ module Bindgen
       # Name of the method in C++ and Crystal bindings.  If an explicit
       # `#binding_name` name is set, it'll be returned without further
       # processing.
-      private def binding_method_name
+      def binding_method_name
         if enforced_name = @binding_name
           return enforced_name
         end
