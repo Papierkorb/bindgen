@@ -52,6 +52,9 @@ module Bindgen
     rescue err : ExitError
       logger.error(exception: err) { err.message }
       err.code # Failure
+    rescue ex
+      logger.error(exception: ex) { ex.message }
+      1
     end
 
     private def print_stats(stats)
