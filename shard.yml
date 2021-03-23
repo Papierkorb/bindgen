@@ -9,10 +9,13 @@ authors:
 
 dependencies:
   toka:
-    github: Papierkorb/toka
-    version: ">= 0.1.2"
+    # github: Papierkorb/toka
+    # version: ">= 0.1.2"
+    github: kalinon/toka
+    branch: patch-1
   spoved:
     github: spoved/spoved.cr
+    version: ">= 0.5.1"
 targets:
   bindgen:
     main: src/bindgen.cr
