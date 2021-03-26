@@ -44,7 +44,7 @@ module Bindgen
           when "true"
             ValueType.new
           when "false"
-            { /.*/ => TypeDatabase::InstanceVariableConfig.new ignore: true }
+            {/.*/ => TypeDatabase::InstanceVariableConfig.new ignore: true}
           else
             node.raise "Expected Bool or Hash for instance_variables"
           end

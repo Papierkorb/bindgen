@@ -1,4 +1,5 @@
 require "./type"
+require "./value"
 
 module Bindgen
   module Parser

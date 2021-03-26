@@ -26,8 +26,7 @@ module Bindgen
 
           # C++'s `protected` is closer to Crystal's `private` than to
           # `protected`
-          access = nested_access.protected? ?
-            Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
+          access = nested_access.protected? ? Parser::AccessSpecifier::Private : Parser::AccessSpecifier::Public
           method_name = config.rename ? field.name.gsub(pattern, config.rename) : field.name
           method_name = method_name.underscore
           field_type = config.nilable ? (field.make_pointer_nilable || field) : field
@@ -93,8 +92,7 @@ module Bindgen
       # Builds a C++ wrapper method for a static or instance variable getter.
       # The `lib` binding and the Crystal wrapper method are generated later.
       private def add_getter(klass, access, field_type, field_name, is_static, method_name)
-        method_type = is_static ?
-          Parser::Method::Type::StaticGetter : Parser::Method::Type::MemberGetter
+        method_type = is_static ? Parser::Method::Type::StaticGetter : Parser::Method::Type::MemberGetter
 
         method_origin = Parser::Method.new(
           name: field_name,
@@ -130,8 +128,7 @@ module Bindgen
       # Builds a C++ wrapper method for a static or instance variable setter.
       # The `lib` binding and the Crystal wrapper method are generated later.
       private def add_setter(klass, access, field_type, field_name, is_static, method_name)
-        method_type = is_static ?
-          Parser::Method::Type::StaticSetter : Parser::Method::Type::MemberSetter
+        method_type = is_static ? Parser::Method::Type::StaticSetter : Parser::Method::Type::MemberSetter
         arg = Parser::Argument.new(field_name, field_type)
 
         method_origin = Parser::Method.new(

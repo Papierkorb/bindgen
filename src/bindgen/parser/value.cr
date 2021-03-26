@@ -29,7 +29,7 @@ module Bindgen
         end
       end
 
-      def self.to_json(builder, value)
+      def self.to_json(value, builder : JSON::Builder)
         value.to_json(builder)
       end
     end

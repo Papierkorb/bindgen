@@ -4,10 +4,13 @@ module Bindgen
     #
     # Note: This is *not* a processor by itself!
     class Runner
+      spoved_logger
+
       @processors : Array(Base)
 
       def initialize(config : Configuration, db : TypeDatabase)
         @processors = config.processors.map do |name|
+          logger.debug &.emit "adding processor", name: name
           Processor.create_by_name(Processor::ERROR_KIND, name, config, db).as(Processor::Base)
         end
       end
@@ -18,6 +21,8 @@ module Bindgen
 
         @processors.each do |instance|
           stat_name = instance.class.name.sub(/.*::/, "").underscore
+          logger.debug &.emit "start process", name: stat_name
+
           stats.measure(stat_name) { instance.process(graph, doc) }
         end
 

@@ -7,17 +7,27 @@ module Bindgen
     # parameters.  For example, the following code
     #
     # ```
-    # def f(& : Int32 ->) end
-    # def f(& : Bool ->) end
-    # def f(& : Int32, Bool ->) end
+    # def f(& : Int32 ->)
+    # end
+    #
+    # def f(& : Bool ->)
+    # end
+    #
+    # def f(& : Int32, Bool ->)
+    # end
     # ```
     #
     # is transformed into
     #
     # ```
-    # def f(_type1_ : Int32.class, & : Int32 ->) end
-    # def f(_type1_ : Bool.class, & : Bool ->) end
-    # def f(_type1_ : Int32.class, _type2_ : Bool.class, & : Int32, Bool ->) end
+    # def f(_type1_ : Int32.class, & : Int32 ->)
+    # end
+    #
+    # def f(_type1_ : Bool.class, & : Bool ->)
+    # end
+    #
+    # def f(_type1_ : Int32.class, _type2_ : Bool.class, & : Int32, Bool ->)
+    # end
     # ```
     #
     # Unambiguous methods that accept block arguments are unaffected.

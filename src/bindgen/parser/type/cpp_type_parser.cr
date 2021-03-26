@@ -64,7 +64,8 @@ module Bindgen
 
           typer = Cpp::Typename.new
 
-          Type.new( # Build the `Type`
+          # Build the `Type`
+          Type.new(
             const: const,
             move: false,
             reference: reference,
@@ -103,8 +104,7 @@ module Bindgen
               raise "Extra closing bracket" if stack.empty?
               top = stack.last
               template_type = top.pop?
-              raise "Template argument list without template name" unless
-                template_type.is_a?(Type)
+              raise "Template argument list without template name" unless template_type.is_a?(Type)
 
               suffix = scanner[1]
               arg_list = template_args.map(&.full_name)

@@ -122,7 +122,7 @@ end)
 log "Generating #{makefile_variables}"
 makefile_variables_content = <<-VARS
   CLANG_BINARY := #{clang}
-  CLANG_INCLUDES := #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')}
+  CLANG_INCLUDES := #{system_include_dirs.map { |x| "-I#{File.expand_path(x)}" }.join(' ')}
   CLANG_LIBS := #{get_lib_args(clang_libs + llvm_libs).join(' ')}
 
   LLVM_CONFIG_BINARY := #{llvm_config}
@@ -141,9 +141,9 @@ spec_base_content = {
   generators: {
     cpp: {
       output: "tmp/{SPEC_NAME}.cpp",
-      build:  "#{clang} #{llvm_cxx_flags} #{system_include_dirs.map{ |x| "-I#{File.expand_path(x)}" }.join(' ')}" \
+      build:  "#{clang} #{llvm_cxx_flags} #{system_include_dirs.map { |x| "-I#{File.expand_path(x)}" }.join(' ')}" \
              " -c -o {SPEC_NAME}.o {SPEC_NAME}.cpp -I.. -Wall -Werror -Wno-unused-function" \
-             "#{dynamic ? "" : " -fPIC" }",
+             "#{dynamic ? "" : " -fPIC"}",
       preamble: <<-PREAMBLE
       #include <gc/gc_cpp.h>
       #include "bindgen_helper.hpp"
@@ -162,8 +162,6 @@ spec_base_content = {
   },
 }.to_yaml
 write_if_changed(spec_base, spec_base_content)
-
-
 
 #################################################
 # Helper functions found below.
@@ -186,7 +184,7 @@ end
 
 # Finds clang binary (named 'clang++' or 'clang++-*'. Must
 # satisfy minimum version.
-def find_clang_binary(paths, min_version="6.0.0") : String?
+def find_clang_binary(paths, min_version = "6.0.0") : String?
   log %(Searching for binary clang++ or clang++-* in #{paths.join ':'}. Minimum version #{min_version})
   clang_find_config = <<-YAML
   kind: Executable
@@ -208,7 +206,7 @@ end
 
 # Finds llvm-config binary inside directories in PATH. It must
 # satisfy minimum version.
-def find_llvm_config_binary(paths=nil, min_version="6.0.0") : String?
+def find_llvm_config_binary(paths = nil, min_version = "6.0.0") : String?
   log %(Searching for binary `llvm-config` or `llvm-config-*` in PATH. Minimum version #{min_version})
   llvm_config_find_config = <<-YAML
   kind: Executable
@@ -229,7 +227,7 @@ def find_llvm_config_binary(paths=nil, min_version="6.0.0") : String?
 end
 
 # Finds file os-release
-def find_os_release_file() : String?
+def find_os_release_file : String?
   log %(Searching for file 'os-release')
   os_release_find_config = <<-YAML
   kind: File
@@ -342,7 +340,7 @@ end
 
 # Finds all LLVM and clang libraries, and links to them.  We don't need
 # all of them - Which totally helps with keeping linking times low.
-def find_libraries(paths, prefix, dynamic=false)
+def find_libraries(paths, prefix, dynamic = false)
   if dynamic
     paths
       .flat_map { |path| Dir["#{path}/lib#{prefix}*.so"] }
@@ -386,7 +384,7 @@ end
 # Runs the command and arguments as shell command line in backticks.
 # Returns it's output.chomp.
 def output_of(*args)
-  `#{args.map{|r| "\"#{r}\""}.join ' '}`.chomp
+  `#{args.map { |r| "\"#{r}\"" }.join ' '}`.chomp
 end
 
 # Parses output from clang++ -### ....
@@ -475,23 +473,69 @@ def parse_os_release(path)
 end
 
 # Convenience functions for accessing OPTIONS
-def llvm_bindir() OPTIONS[:llvm_bindir].as String end
-def llvm_libdir() OPTIONS[:llvm_libdir].as String end
-def clang() OPTIONS[:clang].as String end
-def llvm_config() OPTIONS[:llvm_config].as String end
-def llvm_version() OPTIONS[:llvm_version].as String end
-def cppflags() OPTIONS[:cppflags].as Array(String) end
-def ldflags() OPTIONS[:ldflags].as Array(String) end
-def system_include_dirs() OPTIONS[:system_include_dirs].as Array(String) end
-def system_lib_dirs() OPTIONS[:system_lib_dirs].as Array(String) end
-def clang_libs() OPTIONS[:clang_libs].as Array(String) end
-def llvm_libs() OPTIONS[:llvm_libs].as Array(String) end
-def generated_hpp() OPTIONS[:generated_hpp].as String end
-def makefile_variables() OPTIONS[:makefile_variables].as String end
-def spec_base() OPTIONS[:spec_base].as String end
-def llvm_cxx_flags() OPTIONS[:llvm_cxx_flags].as String end
-def llvm_ld_flags() OPTIONS[:llvm_ld_flags].as String end
+def llvm_bindir
+  OPTIONS[:llvm_bindir].as String
+end
 
+def llvm_libdir
+  OPTIONS[:llvm_libdir].as String
+end
+
+def clang
+  OPTIONS[:clang].as String
+end
+
+def llvm_config
+  OPTIONS[:llvm_config].as String
+end
+
+def llvm_version
+  OPTIONS[:llvm_version].as String
+end
+
+def cppflags
+  OPTIONS[:cppflags].as Array(String)
+end
+
+def ldflags
+  OPTIONS[:ldflags].as Array(String)
+end
+
+def system_include_dirs
+  OPTIONS[:system_include_dirs].as Array(String)
+end
+
+def system_lib_dirs
+  OPTIONS[:system_lib_dirs].as Array(String)
+end
+
+def clang_libs
+  OPTIONS[:clang_libs].as Array(String)
+end
+
+def llvm_libs
+  OPTIONS[:llvm_libs].as Array(String)
+end
+
+def generated_hpp
+  OPTIONS[:generated_hpp].as String
+end
+
+def makefile_variables
+  OPTIONS[:makefile_variables].as String
+end
+
+def spec_base
+  OPTIONS[:spec_base].as String
+end
+
+def llvm_cxx_flags
+  OPTIONS[:llvm_cxx_flags].as String
+end
+
+def llvm_ld_flags
+  OPTIONS[:llvm_ld_flags].as String
+end
 
 log "All done."
 exit 0

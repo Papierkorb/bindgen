@@ -9,19 +9,19 @@ describe "copied structure functionality" do
 
       # internal compiler error prevents this from working (#9744)
       def union_like?(_x : T) forall T
-#        {% begin %}
-#          {% for var in T.instance_vars %}
-#            offsetof({{ T }}, @{{ var }})
-#            p sizeof(typeof({{ T }}.new.{{ var }}))
-#          {% end %}
+        #        {% begin %}
+        #          {% for var in T.instance_vars %}
+        #            offsetof({{ T }}, @{{ var }})
+        #            p sizeof(typeof({{ T }}.new.{{ var }}))
+        #          {% end %}
 
-#          {{ T.struct? }} &&
-#            {% for var in T.instance_vars %}
-#              offsetof({{ T }}, @{{ var }}) == 0 &&
-#              sizeof(typeof({{ T }}.new.{{ var }})) <= sizeof({{ T }}) &&
-#            {% end %}
-            true
-#        {% end %}
+        #          {{ T.struct? }} &&
+        #            {% for var in T.instance_vars %}
+        #              offsetof({{ T }}, @{{ var }}) == 0 &&
+        #              sizeof(typeof({{ T }}.new.{{ var }})) <= sizeof({{ T }}) &&
+        #            {% end %}
+        true
+        #        {% end %}
       end
 
       context "core functionality" do

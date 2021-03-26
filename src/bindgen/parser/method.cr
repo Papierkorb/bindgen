@@ -2,6 +2,8 @@ module Bindgen
   module Parser
     # Describes a method as found by the clang tool.
     class Method
+      spoved_logger
+
       include JSON::Serializable
 
       # Collection of methods
@@ -462,7 +464,7 @@ module Bindgen
       # Name of the method in C++ and Crystal bindings.  If an explicit
       # `#binding_name` name is set, it'll be returned without further
       # processing.
-      private def binding_method_name
+      def binding_method_name
         if enforced_name = @binding_name
           return enforced_name
         end
@@ -485,10 +487,12 @@ module Bindgen
       # Converts *name* to an operator method in Crystal wrappers.
       private def to_crystal_operator_name(name)
         return "call" if name == "operator()"
-
+        logger.trace { "generating crystal operator name for: #{name}" }
         case @arguments.size
-        when 0 then to_crystal_unary_operator_name(name)
-        when 1 then to_crystal_binary_operator_name(name)
+        when 0
+          to_crystal_unary_operator_name(name)
+        when 1
+          to_crystal_binary_operator_name(name)
         else
           raise "Unexpected operator #{name.inspect}"
         end
@@ -557,11 +561,9 @@ module Bindgen
         when "operator>>=" then "rshift!"
         when "operator++"  then "post_succ!"
         when "operator--"  then "post_pred!"
-
-        # non-overridable Crystal operators
-        when "operator&&"  then "and"
-        when "operator||"  then "or"
-
+          # non-overridable Crystal operators
+        when "operator&&" then "and"
+        when "operator||" then "or"
         else
           name[8..-1] # Remove `operator` prefix
         end

@@ -133,8 +133,8 @@ module Bindgen
 
         typer = Cpp::Typename.new
         specialization = typer.template_class(base, template_args.map(&.full_name))
-
-        new( # Build the `Type`
+        # Build the `Type`
+        new(
           kind: Kind::Function,
           const: false,
           move: false,

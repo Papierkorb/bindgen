@@ -165,10 +165,10 @@ module Bindgen
         typer = Cpp::Typename.new
 
         kind = case type_kind
-        when .struct? then Type::Kind::Struct
-        when .enum? then Type::Kind::Enum
-        else Type::Kind::Class
-        end
+               when .struct? then Type::Kind::Struct
+               when .enum?   then Type::Kind::Enum
+               else               Type::Kind::Class
+               end
 
         Type.new(
           kind: kind,

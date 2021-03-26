@@ -25,6 +25,8 @@ module Bindgen
       # Instantiates the *container* (Of any type), placing the built classes
       # into *root*.
       private def instantiate_container(container, root)
+        logger.trace { "instantiate container #{container.class}" }
+
         case container.type
         when .sequential?
           add_sequential_containers(container, root)
@@ -97,7 +99,8 @@ module Bindgen
           pointer: 0,
         )
 
-        Graph::Alias.new( # Build the `typedef`.
+        Graph::Alias.new(
+          # Build the `typedef`.
           origin: origin,
           name: cpp_type_name,
           parent: host,

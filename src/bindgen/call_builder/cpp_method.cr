@@ -14,13 +14,13 @@ module Bindgen
         class_name ||= method.class_name
 
         body = case
-        when in_superclass
-          SuperclassBody.new(class_name, target.not_nil!)
-        when target
-          VirtualBody.new(class_name, target, virtual_target)
-        else
-          PureBody.new(class_name, virtual_target)
-        end
+               when in_superclass
+                 SuperclassBody.new(class_name, target.not_nil!)
+               when target
+                 VirtualBody.new(class_name, target, virtual_target)
+               else
+                 PureBody.new(class_name, virtual_target)
+               end
 
         Call.new(
           origin: method,

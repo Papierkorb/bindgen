@@ -15,22 +15,22 @@ describe "a basic C++ wrapper" do
         it "supports member operator overloading" do
           subject = Test::Ops.new
 
-          (subject +   1).should eq(1)
-          (subject -   2).should eq(4)
-          (subject *   3).should eq(9)
-          (subject /   4).should eq(16)
-          (subject %   5).should eq(25)
-          (subject &   6).should eq(36)
-          (subject |   7).should eq(49)
-          (subject ^   8).should eq(64)
-          (subject <<  9).should eq(81)
+          (subject + 1).should eq(1)
+          (subject - 2).should eq(4)
+          (subject * 3).should eq(9)
+          (subject / 4).should eq(16)
+          (subject % 5).should eq(25)
+          (subject & 6).should eq(36)
+          (subject | 7).should eq(49)
+          (subject ^ 8).should eq(64)
+          (subject << 9).should eq(81)
           (subject >> 10).should eq(100)
           subject.and(11).should eq(121)
           subject.or(12).should eq(144)
           (subject == 13).should eq(169)
           (subject != 14).should eq(196)
-          (subject <  15).should eq(225)
-          (subject >  16).should eq(256)
+          (subject < 15).should eq(225)
+          (subject > 16).should eq(256)
           (subject <= 17).should eq(289)
           (subject >= 18).should eq(324)
           subject[19].should eq(361)
@@ -65,22 +65,22 @@ describe "a basic C++ wrapper" do
         it "supports non-member operator overloading" do
           subject = Test::FreeOps.new
 
-          (subject +   1).should eq(1)
-          (subject -   2).should eq(4)
-          (subject *   3).should eq(9)
-          (subject /   4).should eq(16)
-          (subject %   5).should eq(25)
-          (subject &   6).should eq(36)
-          (subject |   7).should eq(49)
-          (subject ^   8).should eq(64)
-          (subject <<  9).should eq(81)
+          (subject + 1).should eq(1)
+          (subject - 2).should eq(4)
+          (subject * 3).should eq(9)
+          (subject / 4).should eq(16)
+          (subject % 5).should eq(25)
+          (subject & 6).should eq(36)
+          (subject | 7).should eq(49)
+          (subject ^ 8).should eq(64)
+          (subject << 9).should eq(81)
           (subject >> 10).should eq(100)
           subject.and(11).should eq(121)
           subject.or(12).should eq(144)
           (subject == 13).should eq(169)
           (subject != 14).should eq(196)
-          (subject <  15).should eq(225)
-          (subject >  16).should eq(256)
+          (subject < 15).should eq(225)
+          (subject > 16).should eq(256)
           (subject <= 17).should eq(289)
           (subject >= 18).should eq(324)
 
@@ -147,8 +147,8 @@ describe "a basic C++ wrapper" do
           {{
             Test::Aggregate.methods.any? do |m|
               m.name == "initialize" && \
-                m.splat_index == 0 && \
-                m.args.map(&.name.stringify) == ["", "x", "y", "z"]
+                 m.splat_index == 0 && \
+                 m.args.map(&.name.stringify) == ["", "x", "y", "z"]
             end
           }}.should be_true
         end

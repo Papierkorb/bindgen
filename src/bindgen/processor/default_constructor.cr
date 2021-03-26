@@ -76,13 +76,13 @@ module Bindgen
 
         allowed = !fields.empty? # 1.
         allowed &&= fields.all? do |field|
-          field.public? && # 2.
-            !field.has_default? && # 3.
+          field.public? &&                 # 2.
+            !field.has_default? &&         # 3.
             !@db[field]?.try(&.anonymous?) # 4.
         end
 
         allowed &&= !klass.has_virtual_methods? # 5.
-        allowed &&= klass.bases.empty? # 6.
+        allowed &&= klass.bases.empty?          # 6.
 
         allowed &&= klass.methods.none? do |method|
           !method.builtin? && method.any_constructor? # 7.

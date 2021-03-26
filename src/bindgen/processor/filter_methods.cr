@@ -36,6 +36,7 @@ module Bindgen
 
       # Removes the *method* from its parent.
       private def remove_method(method)
+        logger.trace { "removing method #{method.diagnostics_path}" }
         parent = method.parent.as(Graph::Container)
         parent.nodes.delete method
       end

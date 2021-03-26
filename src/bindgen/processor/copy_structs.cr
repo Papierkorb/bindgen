@@ -15,7 +15,7 @@ module Bindgen
 
           klass = find_structure(doc, cpp_name)
           graph = rules.graph_node.as(Graph::Class)
-          next if graph.structure # Already has a structure?
+          next if graph.structure                    # Already has a structure?
           next if unused_structures.includes?(graph) # Will be inlined?
 
           # Can't use `Struct | CppUnion`, as compiler turns it to `Container+`
@@ -119,19 +119,19 @@ module Bindgen
         node = rules.try(&.graph_node).as?(Graph::Class)
 
         inlinable = case
-        when !field.name.empty?
-          false # named members are never inlined
-        when field.static?
-          false # Static data members are never inlined
-        when !rules.try(&.copy_structure?)
-          false # cannot inline field if its structure isn't copied
-        when !node.try(&.origin.anonymous?)
-          false # named types are never inlined
-        when klass.cpp_union? != node.try(&.origin.cpp_union?)
-          false # a C union cannot be inlined inside a struct, and vice-versa
-        else
-          true
-        end
+                    when !field.name.empty?
+                      false # named members are never inlined
+                    when field.static?
+                      false # Static data members are never inlined
+                    when !rules.try(&.copy_structure?)
+                      false # cannot inline field if its structure isn't copied
+                    when !node.try(&.origin.anonymous?)
+                      false # named types are never inlined
+                    when klass.cpp_union? != node.try(&.origin.cpp_union?)
+                      false # a C union cannot be inlined inside a struct, and vice-versa
+                    else
+                      true
+                    end
 
         {node, inlinable}
       end

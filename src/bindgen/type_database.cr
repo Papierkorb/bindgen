@@ -2,6 +2,8 @@ module Bindgen
   # Database of type mapping data for wrapper-code generation.  Configuration
   # for common (and built-in) C/C++ types is automatically loaded and added.
   class TypeDatabase
+    spoved_logger
+
     # Describes different styles of argument passing.
     enum PassBy
       Original  # Keep the original type
@@ -130,11 +132,11 @@ module Bindgen
       property graph_node : Graph::Node?
 
       def initialize(
-        @crystal_type = nil, @cpp_type = nil, @binding_type = nil,
+        @crystal_type : String? = nil, @cpp_type : String? = nil, @binding_type : String? = nil,
         @from_cpp = Template::None.new, @to_cpp = Template::None.new, @converter = nil,
         @from_crystal = Template::None.new, @to_crystal = Template::None.new,
         @kind = Parser::Type::Kind::Class, @ignore = false,
-        @pass_by = PassBy::Original, @wrapper_pass_by = nil,
+        @pass_by = PassBy::Original, @wrapper_pass_by : PassBy? = nil,
         @sub_class = true, @copy_structure = false, @generate_wrapper = true,
         @generate_binding = true, @generate_superclass = true,
         @builtin = false, @ignore_methods = [] of String,
@@ -149,10 +151,10 @@ module Bindgen
       # `lib Binding`.
       def lib_type : String?
         typename = if @copy_structure || @builtin || @kind.enum?
-          @binding_type || @crystal_type || @cpp_type
-        else
-          @binding_type || @cpp_type
-        end
+                     @binding_type || @crystal_type || @cpp_type
+                   else
+                     @binding_type || @cpp_type
+                   end
 
         if typename
           parts = typename.split("::").map(&.camelcase)
@@ -230,6 +232,8 @@ module Bindgen
     getter cookbook : Cpp::Cookbook
 
     def initialize(config : Configuration, cookbook : String | Cpp::Cookbook, with_builtins = true)
+      logger.info { "creating new database" }
+
       if with_builtins
         builtins = self.class.load_builtins
         config = builtins.merge(config)
@@ -309,6 +313,8 @@ module Bindgen
     #
     # Also see `#get_or_add` to add rules from processors.
     def add(name : String, rules : TypeConfig)
+      logger.trace &.emit "adding alias", name: name
+
       raise "#{name} is already an alias" if @aliases.has_key?(name)
       @types[name] = rules
     end
@@ -339,7 +345,7 @@ module Bindgen
         underlying_type = Parser::Type.parse(aliased).substitute(@aliases)
         if underlying_type.uses_typename?(name)
           raise "Recursive type alias found: " \
-            "#{name.inspect} refers to #{underlying_type.full_name.inspect}"
+                "#{name.inspect} refers to #{underlying_type.full_name.inspect}"
         end
 
         # If the existing collection of underlying types refer to our newly
@@ -348,7 +354,7 @@ module Bindgen
           replaced_t = t.substitute(name, underlying_type)
           if replaced_t.uses_typename?(n)
             raise "Recursive type alias found: " \
-              "#{n.inspect} refers to #{replaced_t.full_name.inspect}"
+                  "#{n.inspect} refers to #{replaced_t.full_name.inspect}"
           end
           {n, replaced_t}
         end
@@ -393,6 +399,8 @@ module Bindgen
     # Adds a type configuration to the type database.  If a configuration for
     # this type was set by the user, it's updated - *not* replaced!
     def add_sparse_type(cpp_name : String, crystal_name : String?, kind)
+      logger.trace &.emit "adding sparse type", cpp_name: cpp_name, crystal_name: crystal_name
+
       config = @types[cpp_name]?
       new_config = config.nil?
 

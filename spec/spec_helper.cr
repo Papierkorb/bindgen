@@ -3,6 +3,10 @@ require "../src/bindgen/library"
 
 # ## Helpers
 
+Spec.before_suite {
+# spoved_logger :debug, bind: true, dispatcher: :sync
+}
+
 def watchdog(deadline = 10.seconds)
   # alarm() / SIGALRM doesn't trigger reliably :(
   watcher = Process.fork do

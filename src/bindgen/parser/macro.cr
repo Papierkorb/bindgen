@@ -1,3 +1,5 @@
+require "./value"
+
 module Bindgen
   module Parser
     # Stores information on a C++ macro (a `#define`).

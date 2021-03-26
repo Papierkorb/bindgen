@@ -41,33 +41,33 @@ module Bindgen
       # qualification.
       def find(base_name : String, is_reference, is_pointer, pass_by : TypeDatabase::PassBy) : Template::Base
         template_string = case pass_by
-        when .original?
-          nil # No conversion required.
-        when .reference?
-          if is_reference # Reference -> Referene
-            nil
-          elsif is_pointer # Pointer -> Reference
-            pointer_to_reference(base_name)
-          else # Value -> Reference
-            value_to_reference(base_name)
-          end
-        when .pointer?
-          if is_reference # Reference -> Pointer
-            reference_to_pointer(base_name)
-          elsif is_pointer # Pointer -> Pointer
-            nil
-          else # Value -> Pointer
-            value_to_pointer(base_name)
-          end
-        when .value?
-          if is_reference # Reference -> Value
-            reference_to_value(base_name)
-          elsif is_pointer # Pointer -> Value
-            pointer_to_value(base_name)
-          else # Value -> Value
-            nil
-          end
-        end
+                          when .original?
+                            nil # No conversion required.
+                          when .reference?
+                            if is_reference # Reference -> Referene
+                              nil
+                            elsif is_pointer # Pointer -> Reference
+                              pointer_to_reference(base_name)
+                            else # Value -> Reference
+                              value_to_reference(base_name)
+                            end
+                          when .pointer?
+                            if is_reference # Reference -> Pointer
+                              reference_to_pointer(base_name)
+                            elsif is_pointer # Pointer -> Pointer
+                              nil
+                            else # Value -> Pointer
+                              value_to_pointer(base_name)
+                            end
+                          when .value?
+                            if is_reference # Reference -> Value
+                              reference_to_value(base_name)
+                            elsif is_pointer # Pointer -> Value
+                              pointer_to_value(base_name)
+                            else # Value -> Value
+                              nil
+                            end
+                          end
 
         Template.from_string(template_string, simple: true)
       end

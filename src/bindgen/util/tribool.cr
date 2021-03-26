@@ -9,7 +9,7 @@ module Bindgen
     #
     # Use this type in a serializable field like this:
     #
-    # ```crystal
+    # ```
     # getter my_option = Util::Tribool.unset
     # ```
     struct Tribool

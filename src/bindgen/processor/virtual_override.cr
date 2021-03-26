@@ -22,6 +22,8 @@ module Bindgen
       end
 
       def process(graph : Graph::Container, doc : Parser::Document)
+        logger.trace { "process #{graph.diagnostics_path}" }
+
         @binding = graph.by_name(Graph::LIB_BINDING).as(Graph::Library)
         @all_classes = doc.classes
         super
@@ -29,6 +31,9 @@ module Bindgen
 
       def visit_class(klass : Graph::Class)
         return if klass.wrapped_class # Don't change `Impl` classes.
+
+        logger.trace { "visting class #{klass.diagnostics_path}" }
+
         if subclass?(klass.origin) && @db.try_or(klass.origin.name, true, &.sub_class?)
           superclass = create_superclass(klass)
           add_superclass_init(superclass, klass)
@@ -233,8 +238,7 @@ module Bindgen
         proc_name = "_self_->bgJump.#{method.mangled_name}"
         parent_method_name = in_superclass ? method.name.chomp("_SUPER") : method.name
         parent_target = "#{parent_class}::#{parent_method_name}"
-        target = original.build(method, name: parent_target) if
-          in_superclass || !(method.pure? || method.private?)
+        target = original.build(method, name: parent_target) if in_superclass || !(method.pure? || method.private?)
 
         wrapper.build(
           method: method,

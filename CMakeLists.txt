@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(bindgen)
 
+# To define a specific LLVM install set the path here:
+# set(LLVM_DIR /usr/local/opt/llvm/lib/cmake/llvm)
+# set(LLVM_DIR /usr/local/opt/llvm@7/lib/cmake/llvm)
+# set(LLVM_DIR /usr/local/opt/llvm@9/lib/cmake/llvm)
+
 add_subdirectory(clang)
 
 # Find crystal bin
@@ -15,7 +20,7 @@ if(NOT EXISTS ${shards_bin})
 endif()
 
 add_custom_target(shards ALL
-  COMMAND ${shards_bin} update
+  COMMAND ${shards_bin} update --ignore-crystal-version
 )
 
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/bin)
@@ -23,6 +28,6 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/bin)
 endif()
 
 add_custom_target(bindgen ALL
-  COMMAND ${crystal_bin} build --release src/bindgen.cr -o ${PROJECT_SOURCE_DIR}/bin/bindgen
+  COMMAND ${crystal_bin} build --release src/bindgen.cr --error-trace -o ${PROJECT_SOURCE_DIR}/bin/bindgen
   DEPENDS parser shards
 )

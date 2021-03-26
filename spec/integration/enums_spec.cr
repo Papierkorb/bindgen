@@ -30,7 +30,7 @@ describe "enumeration types functionality" do
 
       context "Qt-specific functionality" do
         it "recognizes `QFlags<T>`" do
-          {{ Test::Flags.has_attribute?("Flags") }}.should be_true
+          {{ Test::Flags.annotation(Flags) ? true : false }}.should be_true
           Test::Flags.names.should eq(%w{P Q R})
           Test::Flags.values.map(&.to_i).should eq([1, 4, 12])
           Test::Flags::None.value.should eq(0)
