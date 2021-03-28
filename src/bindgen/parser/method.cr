@@ -606,7 +606,7 @@ module Bindgen
         when "operator<=>" then "comp"
         when "operator[]"  then "at"
         else
-          raise "Unexpected operator #{@name.inspect}"
+          raise "Unexpected operator #{@name.inspect} in #{@class_name}"
         end
       end
 
