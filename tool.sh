@@ -3,7 +3,7 @@
 # Helper script to invoke `bindgen.cr`
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  BASE="$(dirname "$(readlink "$0")")"
+  BASE="$(dirname "$(greadlink -f "$0")")"
 else
   BASE="$(dirname "$(readlink -f "$0")")"
 fi
