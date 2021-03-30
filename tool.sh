@@ -2,7 +2,11 @@
 
 # Helper script to invoke `bindgen.cr`
 
-BASE="$(dirname "$(readlink -f "$0")")"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  BASE="$(dirname "$(greadlink -f "$0")")"
+else
+  BASE="$(dirname "$(readlink -f "$0")")"
+fi
 
 CLANG_DIR="$BASE/clang/"
 SOURCE_FILE="$BASE/src/bindgen.cr"

@@ -43,6 +43,7 @@ module Bindgen
 
       # Checks if *type* is ignored.
       private def type_ignored?(type) : Bool
+        # logger.notice { type.base_name } if type.is_a?(Parser::Type)
         @db.try_or(type, false) { |config| config.ignore? || config.anonymous? }
       end
     end

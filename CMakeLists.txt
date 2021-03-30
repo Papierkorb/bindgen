@@ -20,7 +20,7 @@ if(NOT EXISTS ${shards_bin})
 endif()
 
 add_custom_target(shards ALL
-  COMMAND ${shards_bin} update --ignore-crystal-version
+  COMMAND ${shards_bin} update
 )
 
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/bin)

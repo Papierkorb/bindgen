@@ -49,6 +49,7 @@ log "Link against LLVM shared libraries: #{dynamic}. (Adjust with env BINDGEN_DY
 
 # Determine which llvm-config we are using
 unless OPTIONS[:llvm_config] ||= find_llvm_config_binary min_version: "6.0.0"
+  log "Cant find llvm config"
   print_help_and_exit
 end
 log "Using llvm-config binary in #{OPTIONS[:llvm_config].inspect}."
@@ -70,6 +71,7 @@ OPTIONS[:llvm_libdir] = output_of(OPTIONS[:llvm_config], "--libdir")
 
 # Determine which clang++ we are using
 unless OPTIONS[:clang] ||= find_clang_binary([llvm_bindir], min_version: "6.0.0")
+  log "Cant find clang"
   print_help_and_exit
 end
 log "Using clang binary in #{OPTIONS[:clang].inspect}. Querying it."
@@ -105,7 +107,11 @@ if OPTIONS[:print_llvm_libs]
 end
 
 # Provide user with help if we didn't find libraries in the output.
-print_help_and_exit if llvm_libs.empty? || clang_libs.empty?
+if llvm_libs.empty? || clang_libs.empty?
+  log "Cannot find LLVM libs" if llvm_libs.empty?
+  log "Cannot find Clang libs" if clang_libs.empty?
+  print_help_and_exit
+end
 
 # If this is a full run (i.e. not asking for specific things), continue:
 

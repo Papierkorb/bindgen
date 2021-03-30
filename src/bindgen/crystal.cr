@@ -12,7 +12,7 @@ module Bindgen
       begin lib fun struct union enum macro out require
       case when select then of abstract rescue ensure is_a? alias
       pointerof sizeof instance_sizeof as as? typeof
-      super private protected asm uninitialized nil?
+      super private protected asm uninitialized nil? in
     ]
 
     # All (overridable) Crystal operators

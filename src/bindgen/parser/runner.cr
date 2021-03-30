@@ -38,15 +38,15 @@ module Bindgen
 
       # Calls the clang tool and returns its output as string.
       def run : String
-        logger.notice { "start" }
+        logger.info { "start" }
         generate_source_file do |file|
           binary_path = File.expand_path Util.template(@binary_path, replacement: nil)
           command = "#{binary_path} #{arguments(file).join(" ")}"
-          logger.notice { "Runner command: #{command}" }
+          logger.trace { "Runner command: #{command}" }
           puts "Runner command: #{command}" if ENV["VERBOSE"]?
           result = `#{command}`
           raise "clang/parser failed to execute." unless $?.success?
-          logger.notice { "end" }
+          logger.info { "end" }
           result
         end
       end
