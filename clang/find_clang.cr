@@ -49,7 +49,7 @@ log "Link against LLVM shared libraries: #{dynamic}. (Adjust with env BINDGEN_DY
 
 # Determine which llvm-config we are using
 unless OPTIONS[:llvm_config] ||= find_llvm_config_binary min_version: "6.0.0"
-  log "Cant find clang"
+  log "Cant find llvm config"
   print_help_and_exit
 end
 log "Using llvm-config binary in #{OPTIONS[:llvm_config].inspect}."
