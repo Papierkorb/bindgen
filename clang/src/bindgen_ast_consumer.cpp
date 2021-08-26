@@ -47,7 +47,7 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 	for (const std::string &className : ClassList) {
 		DeclarationMatcher classMatcher = cxxRecordDecl(isDefinition(), hasName(className)).bind("recordDecl");
 
-#if __clang_major__ >= 11
+#if __clang_major__ >= 10
 		auto handler = std::make_unique<RecordMatchHandler>(m_document, className);
 #else
 		auto handler = make_unique<RecordMatchHandler>(m_document, className);
@@ -60,7 +60,7 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 	if (FunctionMatchHandler::isActive()) {
 		DeclarationMatcher funcMatcher = functionDecl(unless(hasParent(cxxRecordDecl()))).bind("functionDecl");
 
-#if __clang_major__ >= 11
+#if __clang_major__ >= 10
 		auto handler = std::make_unique<FunctionMatchHandler>(m_document);
 #else
 		auto handler = make_unique<FunctionMatchHandler>(m_document);
@@ -74,7 +74,7 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeBasicMatchFinder() {
 		DeclarationMatcher enumMatcher = enumDecl(hasName(enumName)).bind("enumDecl");
 		DeclarationMatcher typedefMatcher = typedefNameDecl(hasName(enumName)).bind("typedefNameDecl");
 
-#if __clang_major__ >= 11
+#if __clang_major__ >= 10
 		auto handler = std::make_unique<EnumMatchHandler>(m_document, enumName);
 #else
 		auto handler = make_unique<EnumMatchHandler>(m_document, enumName);
@@ -99,7 +99,7 @@ clang::ast_matchers::MatchFinder BindgenASTConsumer::makeDependentMatchFinder() 
 			unless(cxxMethodDecl()),
 			hasParameter(0, hasType(references(cxxRecordDecl(hasName(className)))))).bind("operatorDecl");
 
-#if __clang_major__ >= 11
+#if __clang_major__ >= 10
 		auto handler = std::make_unique<OperatorMatchHandler>(m_document, className);
 #else
 		auto handler = make_unique<OperatorMatchHandler>(m_document, className);
