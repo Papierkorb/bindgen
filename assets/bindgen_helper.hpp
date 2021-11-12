@@ -104,5 +104,11 @@ struct CrystalProc {
   }
 };
 
+template <typename T>
+struct CrystalGCWrapper: public T, public gc_cleanup
+{
+  using T::T;
+};
+
 #endif // __cplusplus
 #endif // BINDGEN_HELPER_HPP

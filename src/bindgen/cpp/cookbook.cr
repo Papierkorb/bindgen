@@ -167,7 +167,7 @@ module Bindgen
     # Configuration name is `boehmgc-cpp`, aliased as `cpp` for convenience.
     class BoehmGcCppCookbook < BareCppCookbook
       def constructor_name(method_name : String, class_name : String) : String?
-        "new (UseGC) #{class_name}"
+        "new (UseGC) CrystalGCWrapper<#{class_name}>"
       end
 
       def value_to_pointer(type : String) : String?
