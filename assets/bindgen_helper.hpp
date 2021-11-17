@@ -110,5 +110,17 @@ struct CrystalGCWrapper: public T, public gc_cleanup
   using T::T;
 };
 
+/// A simple wrapper around a non-pointer type that allows a single
+/// dereference operation.
+template <typename T>
+struct bg_deref {
+  T data;
+
+  template<typename... Args>
+  bg_deref(Args&&... args) : data(std::forward<Args>(args)...) {}
+
+  T operator*() && { return std::move(data); }
+};
+
 #endif // __cplusplus
 #endif // BINDGEN_HELPER_HPP

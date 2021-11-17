@@ -51,7 +51,8 @@ module Bindgen
         logger.trace { "add_to_unsafe_method #{klass.diagnostics_path}" }
 
         to_unsafe = CallBuilder::CrystalToUnsafe.new(@db)
-        call = to_unsafe.build(klass.origin, unwrap.pointer < 1)
+        isstruct = @db.try_or(klass.origin.name, false, &.kind.struct?)
+        call = to_unsafe.build(klass.origin, unwrap.pointer < 1 && !isstruct)
 
         host = klass.platform_specific(PLATFORM)
 

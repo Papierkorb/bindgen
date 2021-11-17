@@ -28,7 +28,7 @@ module Bindgen
         case type
         when .any_constructor?
           if type_copied?(method.class_name)
-            method.class_name
+            "bg_deref<#{method.class_name}>"
           else # Support shadow sub-classing.
             name = class_name_for_new(method.class_name)
             @db.cookbook.constructor_name(method.name, name)
