@@ -31,8 +31,9 @@ module Bindgen
         scope = "private" if klass.origin.private?
         prefix = "abstract" if klass.abstract?
         suffix = "< #{klass.base_class}" if klass.base_class
+        isstruct = @db.try_or(klass.origin.name, false, &.kind.struct?)
 
-        code_block scope, prefix, "class", klass.name, suffix do
+        code_block scope, prefix, isstruct ? "struct" : "class", klass.name, suffix do
           write_included_modules(klass.included_modules)
           write_instance_variables(klass.instance_variables)
           super

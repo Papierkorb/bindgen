@@ -33,7 +33,7 @@ module Bindgen
           type: klass_type,
           type_name: type_name,
           name: "_self_",
-          call: "self",
+          call: @db.try_or(klass_type, false, &.kind.struct?) ? "pointerof(@unwrap)" : "self",
           reference: false,
           pointer: 1, # It's always a pointer
         )
