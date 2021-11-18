@@ -36,6 +36,9 @@ module Bindgen
           end
 
           copy_virtual_methods(klass, wrapped)
+
+          # Unify the argument types for all virtual methods
+          unify_virtual_methods(klass)
         end
 
         # Abstract classes can't be directly instantiated.
@@ -203,6 +206,31 @@ module Bindgen
           fields: klass.fields.select { |f| !f.static? },
           methods: klass.methods.map { |m| unabstract_method(m) },
         )
+      end
+
+      private def unify_virtual_methods(klass)
+        klass.origin.wrappable_methods.select(&.virtual?).each do |method|
+          # Find the same virtual method in some parent class
+          current = klass
+          while base = current.origin
+                  .bases
+                  .reject(&.private?)
+                  .reject(&.virtual?)
+                  .compact_map { |b| @db[b.name]?.try(&.graph_node).as?(Graph::Class) }.first?
+            # Search more equivalent method in base class
+            if base_method = base.origin.wrappable_methods
+                 .each
+                 .select(&.virtual?)
+                 .find { |base_method| base_method.equals_virtually?(method) }
+              # Found, so unify the arguments ...
+              method.merge_args!(base_method)
+              # ... and stop (no need to go further up the inheritance tree)
+              break
+            end
+            # Method not found, try next ancestor
+            current = base
+          end
+        end
       end
 
       # C++ body doing a `static_cast<T*>(_self_)`.
