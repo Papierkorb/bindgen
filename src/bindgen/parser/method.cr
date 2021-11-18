@@ -648,6 +648,17 @@ module Bindgen
         )
       end
 
+      # Unify arguments of this and another method.
+      #
+      # Modifies the argument list of this method.
+      def merge_args!(other : Method)
+        args = [] of Argument
+
+        @arguments.size.times do |i|
+          @arguments[i] = @arguments[i].merge(other.arguments[i])
+        end
+      end
+
       # Performs type substitution on the argument and return types of this
       # method using the given *replacements*.
       def substitute_type(replacements : Hash(String, Parser::Type)) : Method
